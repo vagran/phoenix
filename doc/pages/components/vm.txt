@@ -1,0 +1,42 @@
+---//$Id: vm.txt 183 2011-03-25 07:07:50Z vagran $//
+
+====== Phoenix virtual memory subsystem ======
+
+VM subsystem is one of the most important subsystems in the Phoenix OS. Actually it is a fundamental component which has a central position around which the whole system is built.
+
+===== Virtual address space distribution =====
+
+The lower 2GB is a space for all executable binaries linking. So all executables are built with an assumption that all sections and symbols will be located in lower 2GB of VM space. This is required to allow compiler to use 32 bits offsets when referencing program symbols. The kernel binary is mapped to the top of the lowest 2GB and stay there constantly for all processes.
+
+^  Phoenix virtual memory model  ^
+|{{:athena:product:phoenix:components:memory_model.png|Phoenix virtual memory model}}|
+
+===== VM model main objects =====
+
+The following objects are fundamental bricks of Phoenix VM subsystem model.
+
+==== Page ====
+
+Page object represents physical memory page. In Phoenix it is always has 4KB size.
+
+==== Blob ====
+
+Blob represents some data object which could be mapped to some region of virtual address space. It can be mapped completely or some have some portion at some offset mapped. It can be mapped more than once to different location sharing physical pages. Each mapping corresponds to one map entry object.
+
+  * Size -- a blob has some fixed size which is assigned to it on its creation.
+  * Allocated pages -- in typical cases pages of a blob are allocated on the first access. While they were not accessed they are not allocated -- i.e. does not consume nor physical pages nor external storage space. Pages can be optionally zeroed during allocation (practically taken from pool of zeroed physical pages).
+  * Resident pages -- blob may have not all pages present in memory. Some of them can be swapped to external storage. They are loaded to the memory on an access.
+
+==== Entity ====
+
+Entity is some object which can be mapped in virtual memory. Entity has on or more blobs attached and describes how they should be mapped in virtual memory.
+
+==== Map ====
+
+Map describes some region of virtual address space. Maps could be organized to hierarchy so that any map could have any numbers of submaps.
+
+==== Map entry ====
+
+Map entry represents some region in a map. It could be either reserved space or associated with some blob or entity.
+
+

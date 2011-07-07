@@ -1,0 +1,76 @@
+====== Language level objects model ======
+
+Since Phoenix uses object-oriented programming approach most of its data structures and objects are represented as C++ class instances. There are several conventions and rules which should be followed for all C++ code in the kernel and user-space:
+
+  * All objects should be derived from '''Object''' base class.
+  * References management approach is used -- every time pointer to some object is stored, the reference is created. No direct call of '''delete''' operator should be used, '''Release''' method of pointer object should be used instead. An object is destroyed when the last reference to it is released. There is a special template class for storing pointer to some object -- '''ObjectPtr'''. It can be used as follows: <code cpp>
+
+ObjectPtr<MyClass> myObj;
+
+if (!NEW(myObj, optional_constr_args, another_arg)) {
+    HandleError();
+}
+
+// '->' operator returns target object.
+myObj->MyMethod();
+
+// as well as '*' operator
+(*myObj) += 2; // call '+=' operator of myObj
+
+// Another option is to use '''OBJ''' macro to declare pointer variable
+// and construct the object at once. This is equivalent to previous code:
+OBJ(MyClass, myObj, optional_constr_args, another_arg);
+// However 'new' call can fail so a check is necessary in most cases:
+if (!myObj) {
+    HandleError();
+}
+
+// ObjectPtr has '!' and cast to 'int' and 'bool' operators. They can be
+// used for object pointer validity checking:
+if (myObj) {
+    ItIsValid();
+}
+
+if (!myObj) {
+    ItIsInvalid();
+}
+
+// Release method can be used to release the reference and invalidate a pointer
+myObj.Release();
+
+// 'ObjectPtr' constructor has optional argument which can accept pointer to an
+// object which owns this pointer. This can be used by referenced object for
+// finding the object which references it (mostly in debugging and troubleshooting
+// purposes).
+ObjectPtr<MyClass> myObj(this);
+// or
+COBJ(this, MyClass, myObj, optional_constr_args, another_arg);
+// 'MYOBJ' macro implies first argument is 'this' for 'COBJ' macro. The
+// following code is equivalent to the previous one:
+MYOBJ(MyClass, myObj, optional_constr_args, another_arg);
+
+</code> The reference to the object is held until a pointer object scope is valid. Once the pointer object is destructed the reference is released. The reference can be released explicitly by calling its '''Release''' method. After that the pointer object is not valid anymore and cannot be used.\\ Such approach allows full control over objects referencing and releasing. For example, using simple reference counter it is not possible to validate each referencing/dereferencing operation but when deleting pointer to object it is possible to check if it is currently in list. So it is not possible to release one pointer twice. In debug builds additional verification can be compiled to check if the pointer is not already in the list. In case of memory leaks it is possible to check which pointers are still referencing an object.
+  * There is only one permitted way to pass object pointer outside some scope -- to use '''Get''' method of '''ObjectPtr''' with pointer to another '''ObjectPtr''' class which should receive pointer and new reference to the target object: <code cpp>
+
+bool
+GetMyClass(ObjectPtr<MyClass> *p)
+{
+    return myObj.Get(p);
+}
+</code> Alternatively '=' operator can be used: <code cpp>
+bool
+GetMyClass(ObjectPtr<MyClass> &p)
+{
+    p = myObj;
+    return (bool)p;
+}
+// or
+bool
+GetMyClass(ObjectPtr<MyClass> *p)
+{
+    *p = myObj;
+    return (bool)*p;
+}
+
+</code> Every time new object is assigned to a pointer object either by '''NEW''' macro or by '''Get'''/'''=''' the previous target object is automatically released.
+  * When an object is referenced by '''ObjectPtr''' instance, the object adds it in its list of references to himself. If the pointer object is constructed with owning object argument, the pointer is added to the list of pointers owned by this object. This can be used for various purposes, e.g. full objects relationships graph can be created and analyzed for cyclic references.

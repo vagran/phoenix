@@ -1,0 +1,54 @@
+====== System calls programming interface ======
+
+Phoenix system calls design is focused on most convenient implementation and usability by user and kernel side developers. All system calls actually are represented as methods of special classes derived from '''GateObject''' class. Return value of system methods could be any type -- registers %rax:%rdx are preserved as well as SSE registers. In the class declaration the system methods are declared by '''SYSCALL_DECL''' macro, and in the class implementation by '''SYSCALL_IMPL''' macro. Here is an example with approximate code to which these macros will be unfolded:
+<code cpp>
+
+class MyGateClass : public GateObject {
+
+    // This declares system method with the following prototype:
+    // SomeClass *MyGateClass::GetClass(int a, int b);
+    SYSCALL_DECL(MyGateClass, GetClass, SomeClass *, (int a, int b));
+    // and will be unfolded to something like this:
+private:
+    SomeClass *GetClass_impl(int a, int b);
+    SyscallEntry<&GetClass_impl, GATE_CLASS_ID> sce_GetClass;
+public:
+    SomeClass *GetClass(int a, int b) __asm__("SC_SomeClass_GetClass") __attribute__((__noinline__));
+    
+};
+
+// Implementation is created by this macro:
+SYSCALL_IMPL(MyGateClass, GetClass, SomeClass *, (int a, int b))
+// unfolded to
+SomeClass *MyGateClass::GetClass(int a, int b)
+// and followed by method body
+{
+    return DoSomething(a, b);
+}
+
+</code>
+
+System gate objects are always constructed and destructed in the kernel. User space code can only call their methods. Accessing data members by user code is not allowed.
+
+The methods implementations are created in two versions:
+  * For the kernel they implemented in corresponding cpp-file by '''SYSCALL_IMPL''' macro. If somebody calls system method from the kernel he will directly call its implementation. There is also header file generated with all system methods global indexes, indexes ranges for gate classes etc.
+  * For the user mode they are implemented in a separate assembler file which is automatically generated from header files by Perl script which processes all '''SYSCALL_DECL''' macro occurrences. The assembler file contains simple entry points for all system calls, each entry point just stores required parameters (e.g. its global index) on stack and issuing '''SYSCALL''' instruction. <code asm>
+.globl SC_SomeClass_GetClass
+SC_SomeClass_GetClass:
+    pushq $123
+    movl %rsp, %r12d
+    syscall
+</code> '''syscall''' instruction passes control to global system calls entry point which switches to the kernel stack, copies fixed amount of user stack data to the kernel stack, gets from the stack passed parameters (e.g. system call global index), validates arguments (e.g. passed pointer to an object, see [[#objects validation]]) and passes control to the method implementation. After the method returns, an original user code return address is taken from the stack, the user stack pointer adjusted correspondingly and '''sysret''' instruction executed. Returned value preserved in '''%rax:%rdx''' registers.
+
+Due to implementation specifics (methods with non-mangled names) there are several limitations:
+  * It is not possible to have methods with the same name and different arguments in one class.
+  * Operators should be defined inline and should produce call to corresponding methods.
+
+====== Objects validation ======
+
+When a system call is issued the first argument is always a pointer to the corresponding system gate object. This pointer must be validated by the kernel before passing it to the the system call implementation. The following actions are done for an object pointer validation:
+  * Ensure the pointer is in the kernel address space range.
+  * Ensure the memory pointed by it is currently mapped in the kernel virtual address space with correct permissions.
+  * Cast the pointer to the '''GateObject''' class pointer and check it a have magic value and a pointer to itself in the corresponding members.
+  * Validate the invoked system call index with the range of indexes allocated for the class of provided object.
+If any of the listed checks fail the thread fault is raised.

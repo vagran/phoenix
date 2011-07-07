@@ -1,0 +1,12 @@
+====== Lists ======
+
+Here are described main design patterns to use for implementing various data collection structures -- linked lists, queues, stacks, trees etc.
+
+===== Linked lists =====
+
+TODO
+
+
+===== Trees =====
+
+TODO

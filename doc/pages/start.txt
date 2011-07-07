@@ -1,0 +1,15 @@
+---//$Id: start.txt 181 2011-03-05 11:37:45Z vagran $//
+====== Phoenix OS ======
+
+Phoenix OS -- object-oriented orthogonally persistent operating system. It is completely written in C++. Main features and ideas:
+  * PC platform is the main hardware set for which PhobOS is designed. Only 64-bits systems are supported. Full SMP support is implemented.
+  * Phoenix design is focused on nowadays and future technologies. So it has very limited or almost none support of legacy devices and interfaces.
+  * Phoenix implements orthogonal persistence -- it stores all its state before and restores after reboot. Probably there will be implemented snapshotting mechanism which will make the system fault tolerant -- even after power failure it will be able to recover its state which existed a few moments before the failure.
+  * Phoenix has global address space -- every object in the system has its own unique linear address which can be visible either to its process only or shared between other processes. Persistence feature is applied to whole PhobOS global address space.
+  * Phoenix doesn't have filesystem in its traditional meaning. Disk partitions are used to store image of global address space (something similar to UNIX swap partitions) with transparent compression. Everything is stored in memory objects. All objects are managed by reference counters -- the object is preserved until someone references him. The object is destroyed when last reference is closed. Circular references are resolved automatically. However Phoenix still could have files -- objects which could contain some binary data (e.g. executable image in ELF format) and are registered in some namespace. Namespaces allow retrieve registered objects by its path in the namespace. Support for traditional filesystems exists -- disk partition with some filesystem could be mounted in Phoenix global address space -- it is represented as a namespace with objects corresponding to files in mounted filesystem.
+
+For more implementation details see [[athena:product:phoenix:architecture|architecture overview page]].
+
+Information about Phoenix development environment can be found on [[athena:project:phoenix:dev_env|the corresponding page]].
+
+Project management system is available [[https://sourceforge.net/apps/trac/ast-phoenix/|there]].
