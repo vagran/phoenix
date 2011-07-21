@@ -1,4 +1,3 @@
----//$Id: architecture.txt 183 2011-03-25 07:07:50Z vagran $//
 ====== System architecture overview ======
 
 Here is a brief overview of the Phoenix system architecture.
@@ -15,7 +14,7 @@ Only [[http://en.wikipedia.org/wiki/Extensible_Firmware_Interface|EFI]]((Extensi
 
 ===== Booting =====
 
-The Phoenix kernel supports its own boot specification which is created based on Multiboot specification with EFI-specific changes. Separate bootloader is used which is an EFI application with gzipped Phoenix ELF kernel in its payload. It loads the kernel and EFI system tables among with boot arguments.
+The Phoenix kernel supports its own boot specification which is created based on Multiboot specification with EFI-specific changes. Separate bootloader is used which is an EFI application with gzipped Phoenix ELF kernel in its payload. It loads the kernel and EFI system tables among with boot arguments. See detailed description of the EFI loader on [[athena:product:phoenix:components:efi_loader|this page]].
 
 Two versions of bootloader compiled - one for 32-bit EFI and another one for 64-bit. Both enter kernel in 64-bits mode.
 

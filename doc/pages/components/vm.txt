@@ -1,5 +1,3 @@
----//$Id: vm.txt 183 2011-03-25 07:07:50Z vagran $//
-
 ====== Phoenix virtual memory subsystem ======
 
 VM subsystem is one of the most important subsystems in the Phoenix OS. Actually it is a fundamental component which has a central position around which the whole system is built.

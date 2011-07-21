@@ -1,0 +1,12 @@
+====== EFI boot-loader ======
+
+The Phoenix kernel is loaded by EFI boot-loader and this is the only option for its loading. The boot-loader is a simple EFI application which task is to load the kernel ELF image in the memory (libelf is used for that) and pass control to it providing EFI handler, EFI system tables pointer and optional command line arguments which were provided to the boot-loader itself.
+
+Different variants of kernel loading with different command line arguments should be configured using EFI built-in boot manager. The first argument to the boot-loader is treated as kernel image file name. Whole the provided command line is propagated to the kernel unchanged.
+
+The boot-loader is built using approach which is implemented in [[https://sourceforge.net/projects/gnu-efi/|GNU EFI project]] -- PE+ executable is built by GCC with speculative linking.
+
+===== References =====
+
+  * [[http://www.uefi.org/specs/|UEFI specification]]
+  * [[https://sourceforge.net/projects/gnu-efi/|GNU EFI project]]
