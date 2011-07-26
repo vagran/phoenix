@@ -1,5 +1,5 @@
 /*
- * /phoenix/kernel/make/link.ld
+ * /phoenix/kernel/make/link.lds
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011, Artyom Lebedev <artyom.lebedev@gmail.com>

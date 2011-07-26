@@ -4,7 +4,7 @@ The Phoenix kernel is loaded by EFI boot-loader and this is the only option for 
 
 Different variants of kernel loading with different command line arguments should be configured using EFI built-in boot manager. The first argument to the boot-loader is treated as kernel image file name. Whole the provided command line is propagated to the kernel unchanged.
 
-The boot-loader is built using approach which is implemented in [[https://sourceforge.net/projects/gnu-efi/|GNU EFI project]] -- PE+ executable is built by GCC with speculative linking.
+The boot-loader is built using approach which is implemented in [[https://sourceforge.net/projects/gnu-efi/|GNU EFI project]] -- PE+ executable is built by GCC with speculative linking and further converting to PE+ image using "objcopy" utility.
 
 ===== References =====
 

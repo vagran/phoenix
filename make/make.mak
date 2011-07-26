@@ -33,9 +33,9 @@ ifdef APP
 
 ifndef LINK_SCRIPT
 ifeq ($(STATIC),1)
-LINK_SCRIPT = $(PHOENIX_ROOT)/make/link.app.ld
+LINK_SCRIPT = $(PHOENIX_ROOT)/make/link.app.lds
 else
-LINK_SCRIPT = $(PHOENIX_ROOT)/make/link.dynapp.ld
+LINK_SCRIPT = $(PHOENIX_ROOT)/make/link.dynapp.lds
 endif
 endif
 
@@ -78,7 +78,7 @@ LINK_FLAGS += -r
 else ifdef LIB
 
 ifndef LINK_SCRIPT
-LINK_SCRIPT = $(PHOENIX_ROOT)/make/link.lib.ld
+LINK_SCRIPT = $(PHOENIX_ROOT)/make/link.lib.lds
 endif
 
 BINARY_NAME = lib$(LIB).a
@@ -110,7 +110,7 @@ endif
 
 ifdef IS_PROFILE_ROOT
 export PROFILE_ROOT = $(CURDIR)
-RMBUILD = rm -rf $(COMPILE_DIR)
+RMBUILD = $(RM) -rf $(COMPILE_DIR)
 endif
 
 ifdef PROFILE_NAME

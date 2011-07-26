@@ -16,6 +16,7 @@ export OBJCOPY = $(TOOLS_BIN)$(TOOLS_PREFIX)objcopy
 export INSTALL = install
 export DD = dd
 export CP = cp
+export RM = rm
 export MOUNT = mount
 export UMOUNT = umount
 export DF = df

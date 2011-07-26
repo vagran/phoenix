@@ -15,7 +15,7 @@ COMPILE_FLAGS_CXX = -fno-exceptions -fno-rtti
 COMPILE_FLAGS_C =
 COMPILE_FLAGS_ASM = -DASSEMBLER
 LINK_FLAGS = -static -nodefaultlibs -nostartfiles -nostdinc -nostdinc++
-LINK_SCRIPT = $(KERNROOT)/make/link.ld
+LINK_SCRIPT = $(KERNROOT)/make/link.lds
 AR_FLAGS = rcs
 
 INCLUDE_DIRS = $(KERNROOT) $(KERNROOT)/sys
@@ -54,7 +54,7 @@ endif
 
 ifeq ($(MAKEIMAGE),1)
 IMAGE = $(OBJ_DIR)/kernel
-RMBUILD = rm -Rf $(COMPILE_DIR)
+RMBUILD = $(RM) -rf $(COMPILE_DIR)
 else
 SRCS = $(wildcard *.S *.c *.cpp)
 OBJS_LOCAL = $(subst .S,.o,$(subst .c,.o,$(subst .cpp,.o,$(SRCS))))

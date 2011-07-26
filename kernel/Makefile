@@ -8,6 +8,6 @@
 export KERNROOT = $(PHOENIX_ROOT)/kernel
 MAKEIMAGE = 1
 
-SUBDIRS = init
+SUBDIRS = init boot
 
 include $(KERNROOT)/make/make.mak
