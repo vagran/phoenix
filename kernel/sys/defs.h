@@ -7,15 +7,22 @@
  * See COPYING file for copyright details.
  */
 
+/** @file defs.h
+ * Common system definitions.
+ *
+ * Here are defined common macros used across whole the system.
+ */
+
 #ifndef DEFS_H_
 #define DEFS_H_
 
-/** Macros for concatenating identifiers */
 #define __CONCAT2(x, y)             x##y
+/** Macro for concatenating identifiers */
 #define __CONCAT(x, y)              __CONCAT2(x, y)
 
-/** Macros for stringifying identifiers */
+
 #define __STR2(x)                   # x
+/** Macro for stringifying identifiers */
 #define __STR(x)                    __STR2(x)
 
 /** Generate file-scope unique identifier with a given prefix */
@@ -58,7 +65,7 @@
 /** Macro for defining inline assembler blocks */
 #define ASM                         __asm__ __volatile__
 
-/** Shortcuts for various compiler attributes */
+/* Shortcuts for various compiler attributes */
 #define __packed                    __attribute__((packed))
 #define __format(type, fmtIdx, argIdx)  __attribute__ ((format(type, fmtIdx, argIdx)))
 #define __noreturn                  __attribute__ ((noreturn))
@@ -74,7 +81,7 @@
 #define RoundUp2(size, balign)      (((size) + (balign) - 1) & (~((balign) - 1)))
 #define RoundDown2(size, balign)    ((size) & (~((balign) - 1)))
 
-/** Branching hints for the compiler */
+/* Branching hints for the compiler */
 #define Likely(condition)            __builtin_expect((condition), 1)
 #define Unlikely(condition)         __builtin_expect((condition), 0)
 

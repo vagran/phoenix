@@ -23,6 +23,7 @@ export DF = df
 export SUDO_ASKPASS = /usr/bin/ssh-askpass
 export SUDO = sudo
 export MKE2FS = mke2fs
+export DOXYGEN = $(TOOLS_BIN)doxygen
 
 export NAT_CC = gcc
 export NAT_LD = gcc
