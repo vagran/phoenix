@@ -23,9 +23,9 @@ LINK_FLAGS += -nodefaultlibs -nostartfiles -nostdinc -nostdinc++ \
 	
 COMPILE_FLAGS += $(foreach inc,$(INCLUDES),-I$(inc))
 
-#TARGET variable must be either DEBUG or RELEASE
-ifndef TARGET
-export TARGET = RELEASE
+#PHOENIX_TARGET variable must be either DEBUG or RELEASE
+ifndef PHOENIX_TARGET
+export PHOENIX_TARGET = RELEASE
 endif
 
 ########
@@ -53,11 +53,11 @@ LINK_FILES += $(APP_RUNTIME_LIB)
 ifeq ($(STATIC),1)
 LINK_FLAGS += -Bstatic
 LINK_FILES += $(COMMON_LIB) $(USER_LIB)
-LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(TARGET)/lib$(lib).a)
+LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(PHOENIX_TARGET)/lib$(lib).a)
 else
 LINK_FLAGS += -Bdynamic
 LINK_FILES += $(subst .a,.sl,$(COMMON_LIB) $(USER_LIB))
-LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(TARGET)/lib$(lib).sl)
+LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(PHOENIX_TARGET)/lib$(lib).sl)
 endif
 
 ifeq ($(EXPORTABLE),1)
@@ -87,7 +87,7 @@ ifneq ($(STATIC),1)
 LINK_FLAGS += -Bdynamic -init __sl_initialize -fini __sl_finalize
 BINARY_NAME += lib$(LIB).sl
 LINK_FILES += $(SL_RUNTIME_LIB) 
-LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(TARGET)/lib$(lib).sl)
+LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(PHOENIX_TARGET)/lib$(lib).sl)
 endif
 
 ifeq ($(EXPORTABLE),1)
@@ -115,19 +115,19 @@ endif
 
 ifdef PROFILE_NAME
 COMPILE_DIR = $(PROFILE_ROOT)/build
-OBJ_DIR = $(COMPILE_DIR)/$(TARGET)
+OBJ_DIR = $(COMPILE_DIR)/$(PHOENIX_TARGET)
 endif
 
 ifdef BINARY_NAME
 BINARY = $(foreach bin,$(BINARY_NAME),$(OBJ_DIR)/$(bin))
 endif
 
-ifeq ($(TARGET),RELEASE)
+ifeq ($(PHOENIX_TARGET),RELEASE)
 COMPILE_FLAGS += -O2
-else ifeq ($(TARGET),DEBUG)
+else ifeq ($(PHOENIX_TARGET),DEBUG)
 COMPILE_FLAGS += -ggdb3 -DDEBUG -O0 -DENABLE_TRACING -DSERIAL_DEBUG -DDEBUG_MALLOC
 else
-$(error Target not supported: $(TARGET))
+$(error Target not supported: $(PHOENIX_TARGET))
 endif
 
 SRCS += $(wildcard *.S *.c *.cpp)
@@ -228,7 +228,7 @@ INSTALLED_BINARY = $(filter-out %.a %.o, $(BINARY))
 ifneq ($(INSTALLED_BINARY),)
 install: $(INSTALLED_BINARY) $(SUBDIRS_TARGET)
 	$(foreach bin,$(INSTALLED_BINARY),$(INSTALL) -D $(bin) \
-		$(INSTALL_ROOT)/$(TARGET)$(INSTALL_DIR)/$(notdir $(bin));)
+		$(INSTALL_ROOT)/$(PHOENIX_TARGET)$(INSTALL_DIR)/$(notdir $(bin));)
 endif
 else
 install: $(SUBDIRS_TARGET)

@@ -21,22 +21,22 @@ AR_FLAGS = rcs
 INCLUDE_DIRS = $(KERNROOT) $(KERNROOT)/sys
 INCLUDE_FLAGS = $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
-#TARGET variable must be either DEBUG or RELEASE
-ifndef TARGET
+#PHOENIX_TARGET variable must be either DEBUG or RELEASE
+ifndef PHOENIX_TARGET
 TARGET = RELEASE
-export TARGET
+export PHOENIX_TARGET
 endif
 
-ifeq ($(TARGET),RELEASE)
+ifeq ($(PHOENIX_TARGET),RELEASE)
 COMPILE_FLAGS += -O2
-else ifeq ($(TARGET),DEBUG)
+else ifeq ($(PHOENIX_TARGET),DEBUG)
 COMPILE_FLAGS += -ggdb3 -DDEBUG -O0 -DENABLE_TRACING -DSERIAL_DEBUG -DDEBUG_MALLOC
 else
-$(error Target not supported: $(TARGET))
+$(error Target not supported: $(PHOENIX_TARGET))
 endif
 
 COMPILE_DIR = $(KERNROOT)/build
-OBJ_DIR = $(COMPILE_DIR)/$(TARGET)
+OBJ_DIR = $(COMPILE_DIR)/$(PHOENIX_TARGET)
 
 SUBDIRS_TARGET = $(foreach item,$(SUBDIRS),$(item).dir)
 
