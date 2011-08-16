@@ -7,9 +7,11 @@
  * See COPYING file for copyright details.
  */
 
-/*
- * High-level entry point if the kernel.
+/** @file main.cpp
+ * High-level entry point of the kernel.
  */
+
+#include <sys.h>
 
 int
 Main(void)

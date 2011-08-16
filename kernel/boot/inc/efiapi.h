@@ -13,11 +13,6 @@ Abstract:
 
     Global EFI runtime & boot service interfaces
 
-
-
-
-Revision History
-
 --*/
 
 //
@@ -91,7 +86,7 @@ EFI_STATUS
 
 
 #define EFI_OPTIONAL_PTR            0x00000001
-#define EFI_INTERNAL_FNC            0x00000002      // Pointer to internal runtime fnc
+#define EFI_INTERNAL_FNC            0x00000002      // Pointer to internal runtime function
 #define EFI_INTERNAL_PTR            0x00000004      // Pointer to internal runtime data
 
 
@@ -106,8 +101,6 @@ EFI_STATUS
 //
 // EFI Events
 //
-
-
 
 #define EVT_TIMER                           0x80000000
 #define EVT_RUNTIME                         0x40000000
@@ -203,7 +196,7 @@ VOID
 
 
 //
-// EFI platform varibles
+// EFI platform variables
 //
 
 #define EFI_GLOBAL_VARIABLE     \
@@ -527,6 +520,69 @@ EFI_STATUS
 (EFIAPI *EFI_RESERVED_SERVICE) (
     );
 
+typedef
+EFI_STATUS
+(EFIAPI *EFI_CONNECT_CONTROLLER) (
+    IN EFI_HANDLE               ControllerHandle,
+    IN EFI_HANDLE               *DriverImageHandle OPTIONAL,
+    IN EFI_DEVICE_PATH_PROTOCOL *RemainingDevicePath OPTIONAL,
+    IN BOOLEAN                  Recursive
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_DISCONNECT_CONTROLLER) (
+    IN EFI_HANDLE               ControllerHandle,
+    IN EFI_HANDLE               DriverImageHandle OPTIONAL,
+    IN EFI_HANDLE               ChildHandle OPTIONAL
+    );
+
+enum {
+    EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL =      0x00000001,
+    EFI_OPEN_PROTOCOL_GET_PROTOCOL =            0x00000002,
+    EFI_OPEN_PROTOCOL_TEST_PROTOCOL =           0x00000004,
+    EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER =     0x00000008,
+    EFI_OPEN_PROTOCOL_BY_DRIVER =               0x00000010,
+    EFI_OPEN_PROTOCOL_EXCLUSIVE =               0x00000020
+};
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_OPEN_PROTOCOL) (
+    IN EFI_HANDLE               Handle,
+    IN EFI_GUID                 *Protocol,
+    OUT VOID                    **Interface OPTIONAL,
+    IN EFI_HANDLE               AgentHandle,
+    IN EFI_HANDLE               ControllerHandle,
+    IN UINT32                   Attributes
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_CLOSE_PROTOCOL) (
+    IN EFI_HANDLE               Handle,
+    IN EFI_GUID                 *Protocol,
+    IN EFI_HANDLE               AgentHandle,
+    IN EFI_HANDLE               ControllerHandle
+    );
+
+typedef struct {
+    EFI_HANDLE                  AgentHandle;
+    EFI_HANDLE                  ControllerHandle;
+    UINT32                      Attributes;
+    UINT32                      OpenCount;
+} EFI_OPEN_PROTOCOL_INFORMATION_ENTRY;
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_OPEN_PROTOCOL_INFORMATION) (
+    IN EFI_HANDLE               Handle,
+    IN EFI_GUID                 *Protocol,
+    OUT EFI_OPEN_PROTOCOL_INFORMATION_ENTRY **EntryBuffer,
+    OUT UINTN                   *EntryCount
+    );
+
+
 //
 // Standard EFI table header
 //
@@ -541,7 +597,7 @@ typedef struct _EFI_TABLE_HEARDER {
 
 
 //
-// EFI Runtime Serivces Table
+// EFI Runtime Services Table
 //
 
 #define EFI_RUNTIME_SERVICES_SIGNATURE  0x56524553544e5552
@@ -567,7 +623,7 @@ typedef struct  {
     EFI_CONVERT_POINTER             ConvertPointer;
 
     //
-    // Variable serviers
+    // Variable services
     //
 
     EFI_GET_VARIABLE                GetVariable;
@@ -575,7 +631,7 @@ typedef struct  {
     EFI_SET_VARIABLE                SetVariable;
 
     //
-    // Misc
+    // Miscellaneous
     //
 
     EFI_GET_NEXT_HIGH_MONO_COUNT    GetNextHighMonotonicCount;
@@ -648,12 +704,25 @@ typedef struct _EFI_BOOT_SERVICES {
     EFI_EXIT_BOOT_SERVICES          ExitBootServices;
 
     //
-    // Misc functions
+    // Miscellaneous functions
     //
 
     EFI_GET_NEXT_MONOTONIC_COUNT    GetNextMonotonicCount;
     EFI_STALL                       Stall;
     EFI_SET_WATCHDOG_TIMER          SetWatchdogTimer;
+
+    //
+    // DriverSupport Services
+    //
+
+    EFI_CONNECT_CONTROLLER          ConnectController;
+    EFI_DISCONNECT_CONTROLLER       DisconnectController;
+
+    //
+    // Open and Close Protocol Services
+    EFI_OPEN_PROTOCOL               OpenProtocol;
+    EFI_CLOSE_PROTOCOL              CloseProtocol;
+    EFI_OPEN_PROTOCOL_INFORMATION   OpenProtocolInformation;
 
 } EFI_BOOT_SERVICES;
 
@@ -687,9 +756,6 @@ typedef struct _EFI_CONFIGURATION_TABLE {
 //
 // EFI System Table
 //
-
-
-
 
 #define EFI_SYSTEM_TABLE_SIGNATURE      0x5453595320494249
 #define EFI_SYSTEM_TABLE_REVISION      (EFI_SPECIFICATION_MAJOR_REVISION<<16) | (EFI_SPECIFICATION_MINOR_REVISION)

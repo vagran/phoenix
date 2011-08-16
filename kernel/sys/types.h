@@ -7,19 +7,17 @@
  * See COPYING file for copyright details.
  */
 
-
 #ifndef TYPES_H_
 #define TYPES_H_
 
-/* These types should be used in all the Phoenix code */
-typedef char                i8;
-typedef short               i16;
-typedef int                 i32;
-typedef long                i64;
-typedef unsigned char       u8;
-typedef unsigned short      u16;
-typedef unsigned int        u32;
-typedef unsigned long       u64;
+/** @file types.h
+ * Common system types.
+ *
+ * This files contains definitions for most of commonly used system types. It
+ * relies on machine-dependent types defined in file md_types.h.
+ */
+
+#include <md_types.h>
 
 /* These types defined for compatibility with 3rd parties components */
 typedef i8                  int8_t;
@@ -34,14 +32,6 @@ typedef u32                 u_int32_t;
 typedef u32                 uint32_t;
 typedef u64                 u_int64_t;
 typedef u64                 uint64_t;
-
-#if (__SIZEOF_POINTER__ == 8)
-typedef i64                 intptr_t;
-typedef u64                 uintptr_t;
-#else
-typedef i32                 intptr_t;
-typedef u32                 uintptr_t;
-#endif
 
 #define U8_MAX      TYPE_UINT_MAX(u8)
 #define I8_MAX      TYPE_INT_MAX(i8)
@@ -75,27 +65,19 @@ typedef u32                 uintptr_t;
 #define QUAD_MAX    LONG_MAX
 #define QUAD_MIN    LONG_MIN
 
-typedef uintptr_t   vaddr_t; /**< Virtual address */
-typedef uintptr_t   vsize_t; /**< Virtual size */
-typedef u64         paddr_t; /**< Physical address */
-typedef u64         psize_t; /**< Physical size */
-
 #define VSIZE_MAX   TYPE_UINT_MAX(vsize_t)
 
 typedef __SIZE_TYPE__ size_t;
 
 typedef void *Handle;
 
-typedef uintptr_t   waitid_t;
-
-typedef void (*FUNC_PTR)();
-
 /* Variable arguments */
-typedef u8* va_list;
 
-#define va_size(arg)        roundup2(sizeof(arg), sizeof(int))
-#define va_start(va, arg)   ((va) = ((u8 *)&arg) + va_size(arg))
-#define va_end(va)
-#define va_arg(va, type)    ((va) += va_size(type), *(type *)((va) - va_size(type)))
+typedef __builtin_va_list       va_list;
+
+#define va_start(ap, last)      __builtin_va_start((ap), (last))
+#define va_arg(ap, type)        __builtin_va_arg((ap), type)
+#define va_copy(dest, src)      __builtin_va_copy((dest), (src))
+#define va_end(ap)              __builtin_va_end(ap)
 
 #endif /* TYPES_H_ */

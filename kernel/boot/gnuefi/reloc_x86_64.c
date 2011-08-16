@@ -35,28 +35,8 @@
     SUCH DAMAGE.
 */
 
-#include <sys.h>
+#include <types.h>
 #include <elf.h>
-
-#undef NULL
-#define uint64_t	efi_uint64_t
-#define int64_t		efi_int64_t
-#define uint32_t	efi_uint32_t
-#define int32_t		efi_int32_t
-#define uint16_t	efi_uint16_t
-#define int16_t		efi_int16_t
-#define uint8_t		efi_uint8_t
-#define int8_t		efi_int8_t
-
-#undef NULL
-#define uint64_t	efi_uint64_t
-#define int64_t		efi_int64_t
-#define uint32_t	efi_uint32_t
-#define int32_t		efi_int32_t
-#define uint16_t	efi_uint16_t
-#define int16_t		efi_int16_t
-#define uint8_t		efi_uint8_t
-#define int8_t		efi_int8_t
 
 #include <efi.h>
 #include <efilib.h>

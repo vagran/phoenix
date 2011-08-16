@@ -8,15 +8,10 @@ Phoenix is designed to run on 64-bits CPUs compatible with Intel(r) 64 architect
 
 ACPI((Advanced Configuration and Power Interface)) is the main source of hardware configuration information. APM((Advanced Power Management)), the MP((MultiProcessor)) Specification and the PnP((Plug and Play)) BIOS Specification are claimed legacy, completely replaced by ACPI and not supported.
 
-===== BIOS =====
+===== Firmware =====
 
 Only [[http://en.wikipedia.org/wiki/Extensible_Firmware_Interface|EFI]]((Extensible Firmware Interface)) is supported to be a platform firmware. This is a new standard which replaces legacy PC BIOS.
 
-===== Booting =====
-
-The Phoenix kernel supports its own boot specification which is created based on Multiboot specification with EFI-specific changes. Separate bootloader is used which is an EFI application with gzipped Phoenix ELF kernel in its payload. It loads the kernel and EFI system tables among with boot arguments. See detailed description of the EFI loader on [[athena:product:phoenix:components:efi_loader|this page]].
-
-Two versions of bootloader compiled - one for 32-bit EFI and another one for 64-bit. Both enter kernel in 64-bits mode.
 
 ===== Disks =====
 
@@ -29,3 +24,37 @@ See main article about [[athena:product:phoenix:components:vm|Phoenix virtual me
 ===== TCP/IP =====
 
 TCP/IP stack implementation is planned. Only IPv6 support will be implemented.
+
+===== Data model =====
+
+Phoenix is fully object oriented OS.  It implements principles of orthogonal persistence. See [[athena:product:phoenix:architecture:data_model|main article]] for details.
+
+===== Kernel =====
+
+Phoenix is a microkernel-based system. It is attempted to move out of the kernel as most functionality as possible. The kernel primary responsibilities are:
+  * Virtual memory management -- physical pages management, physical maps management.
+  * Inter-containers calls routing, invoking containers manager, invoking called container if permitted.
+  * Threads management -- switching contexts, threads scheduling, permissions control, CPUs load balancing, waiting for event.
+  * Hardware access -- providing low level interface for hardware access to user-space drivers with permissions control -- access to I/O ports, physical memory, interrupts routing. The kernel itself does not manage any hardware -- each device is managed by corresponding user-space driver.
+
+The kernel is not preemptive -- contexts are switched only when transiting from kernel-mode to user-mode or by explicit request, e.g. waiting in system call.
+
+Phoenix uses user-space drivers -- containers and threads which request either shared or exclusive access to specific hardware resources (ports, physical memory, interrupts). Only privileged containers can obtain such access.
+
+Single kernel stack is used instead of per-thread stacks. The kernel is stateless. Threads cannot be blocked inside kernel code. Instead thread wait channel ID and continuation entry point are saved in the TCB, and kernel stack is discarded. Nothing from kernel data is persistent. The only persistent data are containers virtual memory and TCBs.
+
+==== Multiprocessing ====
+
+The kernel is aware of multiprocessing but it does not initialize APs. Instead it provides abstract interface for registering new processors, installing boot trampolines etc. Separate CPU device driver is responsible for detecting all installed CPUs, hyper-threading support, LAPICs initialization and initialization of APs. The kernel takes all necessary measures (locks, semaphores, barriers, caches management) to support multiprocessing and its schedulers is able to balance threads between available CPUs when they registered by CPU driver.
+
+==== Interrupts processing ====
+
+As by concept the kernel does not manage devices. Interrupts controllers also have separate driver for them. The driver initializes interrupts controllers and provides interface for other drivers for registering their interrupts handlers. The kernel creates entry points for all possible IRQs (256) and allows user space code to subscribe on IRQs invocation. When IRQ entry point is invoked the kernel propagates the request to the Objects Manager which checks which threads are waiting for this event and use special system call to interrupt a thread and call a corresponding handler in its context. The system call interrupts the thread, stores its state in the thread stack and invokes the provided handler in a required container. Return address points to special kernel entry which will restore thread state from the stack and switch back to the interrupted code. The thread interruption is done by marking TCB and waking up the thread if required. When the scheduler will switch to that thread it will process with interrupting. If the thread was waiting for some event(s) it will return to this state after an interrupt processing. The thread which was active when the interrupt
+occurred is passed to the handler. CPU exceptions in kernel mode are fatal.
+===== System bootstrap =====
+
+The Phoenix kernel supports its own boot specification. Separate bootloader is used which is an EFI application. It loads the kernel specified in its command line arguments and passes to it EFI system tables among with boot arguments. See detailed description of the EFI loader on [[athena:product:phoenix:components:efi_loader|this page]].
+
+Kernel bootstrap consists of several phases. At the first phase kernel fully initializes itself -- physical and virtual memory, attaches all CPUs and interrupts controllers, sets up timers. At the next phase it installs several packages from RAM-disk attached to the kernel image. The RAM-disk is a simple concatenation of several executable images for which the kernel provides simple access driver. Firstly, the kernel installs components manager, which installs the rest kernel-attached packages. They should include at least disk driver. After initial user-space environment is installed from RAM-disk and running, the next phase starts. Last saved checkpoint is restored from non-volatile storage. Bootstrap entities (threads and containers from RAM-disk) are destroyed after restoration finished. In order to avoid address conflicts in global address space, bootstrap entities allocated in a special dedicated virtual memory region which is never used during normal system functioning.
+
+There is also possible another scenario -- at the last phase it can be detected that there are no valid system partitions or checkpoints. In such case (e.g. the first system run) initial set of packages (these from RAM-disk) is installed in working space and system partitions are created.

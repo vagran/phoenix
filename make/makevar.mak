@@ -54,7 +54,8 @@ export INSTALL_ROOT = $(PHOENIX_ROOT)/install
 # Default load address for binary executables
 export DEF_LOAD_ADDRESS = 0x1000
 
-INCLUDE_DIRS = $(PHOENIX_ROOT)/kernel $(PHOENIX_ROOT)/kernel/sys $(PHOENIX_ROOT)/include
+INCLUDE_DIRS = $(PHOENIX_ROOT)/kernel $(PHOENIX_ROOT)/kernel/sys \
+	$(PHOENIX_ROOT)/kernel/sys/arch/$(PHOENIX_ARCH) $(PHOENIX_ROOT)/include 
 INCLUDE_FLAGS += $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
 NAT_INCLUDE_DIRS = /usr/include

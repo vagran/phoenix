@@ -1,13 +1,22 @@
 ====== Phoenix virtual memory subsystem ======
 
-VM subsystem is one of the most important subsystems in the Phoenix OS. Actually it is a fundamental component which has a central position around which the whole system is built.
+VM subsystem is one of the most important subsystems in the Phoenix OS which reflects whole the system design.
 
 ===== Virtual address space distribution =====
 
-The lower 2GB is a space for all executable binaries linking. So all executables are built with an assumption that all sections and symbols will be located in lower 2GB of VM space. This is required to allow compiler to use 32 bits offsets when referencing program symbols. The kernel binary is mapped to the top of the lowest 2GB and stay there constantly for all processes.
+The lower 2GB is a space for all executable binaries linking. So all executables are built with an assumption that all sections and symbols will be located in lower 2GB of VM space. This is required to allow compiler to use 32 bits offsets when referencing program symbols. Each container has its own private virtual address space in the lowest 2GB where its executable image and all required shared libraries are mapped.
+
+The kernel image is mapped to the top of the lowest 2GB and stay there constantly for all processes. At the top of kernel linkage space **kernel gate area** is located. At this location the kernel can place entry points which can be executed by user space in order to enter kernel mode.
+
+2GB above linkage space is the system data space -- all kernel objects are placed there. All pages mapped to this region are wired and never paged out. Memory mapped devices also mapped in this region. Corresponding page tables are shared between all address spaces. The region is mapped for system-only access.
+
+The space above is the global data space. This region is used for allocating all containers memory. When a container is activated it has mapped only its own pages in global address space (and shared pages, see map entries description). This space is divided in two parts -- small bootstrap area and the rest space for normal memory. Bootstrap area is used for system bootstrapping -- it is used for containers created when system is booting. Each of these areas are in turn divided on other two parts -- resident and normal areas. Memory allocated in a resident area consists from wired pages and is used by resident containers (e.g. devices drivers). The resident area size should be reasonably small because there is no meaning for having this area greater than size of available physical memory. Normal area is used all the rest allocations and pages in this area are normally involved in paging.
+
+The top of virtual address space contains recursive page tables mappings used for accessing content of physical address translation tables. The mapping reflects content of active address space tables. This area has system-only access and used by physical maps management code in the kernel.
 
 ^  Phoenix virtual memory model  ^
 |{{:athena:product:phoenix:components:memory_model.png|Phoenix virtual memory model}}|
+
 
 ===== VM model main objects =====
 
@@ -15,26 +24,50 @@ The following objects are fundamental bricks of Phoenix VM subsystem model.
 
 ==== Page ====
 
-Page object represents physical memory page. In Phoenix it is always has 4KB size.
+Page object represents physical memory page. In Phoenix it always has 4KB size.
 
-==== Blob ====
+Page can **wired** -- locked into physical memory and will not be paged out until wiring counter is not zero.
 
-Blob represents some data object which could be mapped to some region of virtual address space. It can be mapped completely or some have some portion at some offset mapped. It can be mapped more than once to different location sharing physical pages. Each mapping corresponds to one map entry object.
+During system start-up all available physical memory is revised and page descriptors array is created. Array size correspond to range of managed pages. In order to eliminate additional pages wasting for the array itself, the physical memory for the array is taken from the top of available physical memory.
 
-  * Size -- a blob has some fixed size which is assigned to it on its creation.
-  * Allocated pages -- in typical cases pages of a blob are allocated on the first access. While they were not accessed they are not allocated -- i.e. does not consume nor physical pages nor external storage space. Pages can be optionally zeroed during allocation (practically taken from pool of zeroed physical pages).
-  * Resident pages -- blob may have not all pages present in memory. Some of them can be swapped to external storage. They are loaded to the memory on an access.
+^ Mapping elements sizes ^^^
+| PTE | 1 page | 4KB |
+| PDE | 512 pages | 2MB |
+| PDPTE | 256K pages | 1GB |
+| PLM4E | 128M pages | 512GB |
 
-==== Entity ====
-
-Entity is some object which can be mapped in virtual memory. Entity has on or more blobs attached and describes how they should be mapped in virtual memory.
+Access control is done by PTEs flags. All other entities have maximal permissions (excluding recursive mapping entities which have system-only access).
 
 ==== Map ====
 
-Map describes some region of virtual address space. Maps could be organized to hierarchy so that any map could have any numbers of submaps.
+Map describes either entire virtual address space or some region of virtual address space (submap). Maps could be organized to hierarchy so that any map could have any numbers of submaps. Submaps can be used, for example, to limit allocation regions. Activating some map means switching entire virtual address space to a new one. A map has a buddy allocator which allocates space in the map. Space can be allocated at fixed position or selected by an allocator. For each allocated entry a new entity is created -- **map entry** which holds information about that region usage.
+
+Map stores only machine-independent part of mapping information. A map has pointer to associated **physical map** object which stores machine-dependent information such as physical address translation tables.
+
+==== Physical map ====
+
+Physical map represents machine-dependent part of virtual address space. Typically it contains physical address translation (PAT) tables and have methods to activate address space in hardware (e.g. write PAT tables root pointer to a corresponding CPU register).
 
 ==== Map entry ====
 
-Map entry represents some region in a map. It could be either reserved space or associated with some blob or entity.
+Map entry represents some region in a map. It could be either reserved space, memory mapped device, or representing some region of some container memory. It describes how the content of corresponding virtual address space region should be processed, for example, in case of page faults. It also describes properties of the region mapping, such as protection, caching, paging etc.
 
+Map entries can be organized in hierarchical structures. One map entry could reference another entry as a source of data pages. The referenced entry can belong to the same or to another map. This allows mapping some memory region of one container to another container (or to the same one but to different address and optionally with different protection) saving physical memory pages. Copy-on-write (COW) protection can be used for such mapping. The following relations persist between such entries:
+  * Backing entry -- entry which is a source of data pages for a given entry.
+  * Shadow entry -- entry which is a child entry for a given entry. It "shadows" some part of backing entry pages -- when it is accessed, pages which exists in shadow entry are taken from it, the rest pages are taken from backing entry. If shadow entry has COW protection and there is a write access to a page which does not exist in shadow entry, the corresponding page is copied from backing entry and inserted in shadow entry where its content is modified.
 
+A shadow entry can map either entire backing entry or only part of it from arbitrary page-aligned offset. Its projection should not cross backing entry boundaries.
+
+Each page in map entry can have the following state:
+  * Non-existent pages -- the pages are not yet allocate. Usually pages in an entry are allocated on the first access.
+  * Allocated pages -- in typical cases pages of an entry are allocated on the first access. While they were not accessed they are not allocated -- i.e. does not consume nor physical pages nor external storage space. Pages can be optionally zeroed during allocation (practically taken from pool of zeroed physical pages).
+  * Resident pages -- allocated pages which are currently resident in physical memory. An entry may have not all pages present in physical memory. Some of them can be swapped to external storage. They are loaded to the memory on an access.
+
+===== Memory management =====
+
+The kernel is managing physical pages and physical maps. Corresponding interfaces are provided for allocating and freeing physical pages, entering them to physical maps with required permissions. Memory Manager component has permissions for using these interfaces. It is responsible for managing maps and map entries for all containers and threads.
+
+Pagers also have access to kernel paging interfaces.
+===== Memory allocations =====
+
+Buddy allocator is used for allocating space in the global address space. It is used for allocating large blocks (staring from one page and greater) which are passed to scalable slab allocator which splits these large blocks to smaller well fitted units. This approach ensures optimal memory utilization.

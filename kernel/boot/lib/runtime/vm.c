@@ -60,8 +60,6 @@ RtLibEnableVirtualMappings (
 
         ConvertPointer (EFI_INTERNAL_PTR, (VOID **)&LibRuntimeRaiseTPL);
         ConvertPointer (EFI_INTERNAL_PTR, (VOID **)&LibRuntimeRestoreTPL);
-
-        // that was it :^)
     }
 }
 

@@ -10,11 +10,6 @@ Abstract:
 
     EFI to compile bindings
 
-
-
-
-Revision History
-
 --*/
 
 #ifndef __GNUC__
@@ -22,60 +17,9 @@ Revision History
 #endif
 
 //
-// Basic int types of various widths
+// Basic integer types of various widths
 //
-
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L )
-
-    // No ANSI C 1999/2000 stdint.h integer width declarations 
-
-    #if defined(_MSC_EXTENSIONS)
-
-        // Use Microsoft C compiler integer width declarations 
-
-        typedef unsigned __int64    uint64_t;
-        typedef __int64             int64_t;
-        typedef unsigned __int32    uint32_t;
-        typedef __int32             int32_t;
-        typedef unsigned short      uint16_t;
-        typedef short               int16_t;
-        typedef unsigned char       uint8_t;
-        typedef char                int8_t;
-    #elif defined(__GNUC__)
-        typedef unsigned long long  uint64_t __attribute__((aligned (8)));
-        typedef long long           int64_t __attribute__((aligned (8)));
-        typedef unsigned int        uint32_t;
-        typedef int                 int32_t;
-        typedef unsigned short      uint16_t;
-        typedef short               int16_t;
-        typedef unsigned char       uint8_t;
-        typedef char                int8_t;
-    #elif defined(UNIX_LP64)
-
-        /*  Use LP64 programming model from C_FLAGS for integer width declarations */
-
-       typedef unsigned long       uint64_t;
-       typedef long                int64_t;
-       typedef unsigned int        uint32_t;
-       typedef int                 int32_t;
-       typedef unsigned short      uint16_t;
-       typedef short               int16_t;
-       typedef unsigned char       uint8_t;
-       typedef char                int8_t;
-    #else
-
-       /*  Assume P64 programming model from C_FLAGS for integer width declarations */
-
-       typedef unsigned long long  uint64_t __attribute__((aligned (8)));
-       typedef long long           int64_t __attribute__((aligned (8)));
-       typedef unsigned int        uint32_t;
-       typedef int                 int32_t;
-       typedef unsigned short      uint16_t;
-       typedef short               int16_t;
-       typedef unsigned char       uint8_t;
-       typedef char                int8_t;
-    #endif
-#endif
+#include <types.h>
 
 //
 // Basic EFI types of various widths

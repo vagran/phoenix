@@ -28,21 +28,6 @@
 /** Generate file-scope unique identifier with a given prefix */
 #define __UID(str)                  __CONCAT(str, __COUNTER__)
 
-/** Offset of member in POD data type */
-#define OFFSETOF(struc_name, field_name) ((uintptr_t)&((struc_name *)0)->field_name)
-
-/** Type of member in structure or class */
-#define TYPEOF(struc_name, field_name) typeof(((struc_name *)0)->field_name)
-
-/** Size of member in structure or class */
-#define SIZEOF(struc_name, field_name) sizeof(((struc_name *)0)->field_name)
-
-/** Size of array */
-#define SIZEOFARRAY(name)           (sizeof(name) / sizeof((name)[0]))
-
-/** Get pointer to field of type 'type' at given offset in given object */
-#define FIELDAT(obj, type, offs)    ((type *)((u8 *)(obj) + (offs)))
-
 /** Provide binary constants in the code */
 #define BIN(x) ((x & 0x1) | ((x & 0x10) ? 0x2 : 0) | \
     ((x & 0x100) ? 0x4 : 0) | ((x & 0x1000) ? 0x8 : 0) | \
@@ -82,7 +67,7 @@
 #define RoundDown2(size, balign)    ((size) & (~((balign) - 1)))
 
 /* Branching hints for the compiler */
-#define Likely(condition)            __builtin_expect((condition), 1)
+#define Likely(condition)           __builtin_expect((condition), 1)
 #define Unlikely(condition)         __builtin_expect((condition), 0)
 
 /** Macro for referencing unused parameters */
