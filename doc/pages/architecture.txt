@@ -32,16 +32,17 @@ Phoenix is fully object oriented OS.  It implements principles of orthogonal per
 ===== Kernel =====
 
 Phoenix is a microkernel-based system. It is attempted to move out of the kernel as most functionality as possible. The kernel primary responsibilities are:
-  * Virtual memory management -- physical pages management, physical maps management.
+  * Physical memory management -- physical maps and physical pages management.
   * Inter-containers calls routing, invoking containers manager, invoking called container if permitted.
-  * Threads management -- switching contexts, threads scheduling, permissions control, CPUs load balancing, waiting for event.
+  * Threads management -- switching contexts, maintaining working set of TCBs.
   * Hardware access -- providing low level interface for hardware access to user-space drivers with permissions control -- access to I/O ports, physical memory, interrupts routing. The kernel itself does not manage any hardware -- each device is managed by corresponding user-space driver.
+  * Exception routing -- containers can register handlers for CPU exceptions processing.
 
 The kernel is not preemptive -- contexts are switched only when transiting from kernel-mode to user-mode or by explicit request, e.g. waiting in system call.
 
 Phoenix uses user-space drivers -- containers and threads which request either shared or exclusive access to specific hardware resources (ports, physical memory, interrupts). Only privileged containers can obtain such access.
 
-Single kernel stack is used instead of per-thread stacks. The kernel is stateless. Threads cannot be blocked inside kernel code. Instead thread wait channel ID and continuation entry point are saved in the TCB, and kernel stack is discarded. Nothing from kernel data is persistent. The only persistent data are containers virtual memory and TCBs.
+Single kernel stack is used instead of per-thread stacks. The kernel is stateless. Threads cannot be blocked inside kernel code. Instead thread wait channel ID and continuation entry point are saved in the TCB, and kernel stack is discarded. Nothing from kernel data is persistent. The only persistent data are containers virtual memory.
 
 ==== Multiprocessing ====
 

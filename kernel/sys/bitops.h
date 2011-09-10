@@ -25,8 +25,9 @@
 /** Check if specified bit is cleared in a string */
 #define BitIsClear(a, i)     (!BitIsSet(a, i))
 
-/** @fn static inline int BitFirstSet(void *a, u32 numBits)
- * Find the first set bit in a provided string.
+namespace {
+
+/** Find the first set bit in a provided string.
  *
  * This function finds the first bit set in a provided bits string. Scanning for
  * a bit in a byte is done starting from least significant bits.
@@ -34,7 +35,7 @@
  * @param numBits Total number of bits in a provided string.
  * @return The first set bit index, -1 if no bits set.
  */
-static inline int
+inline int
 BitFirstSet(void *a, u32 numBits)
 {
     u32 numWords = (numBits + sizeof(u32) * NBBY - 1) / (sizeof(u32) * NBBY);
@@ -60,7 +61,7 @@ BitFirstSet(void *a, u32 numBits)
  * @param numBits Total number of bits in a provided string.
  * @return The first cleared bit index, -1 if no bits set.
  */
-static inline int
+inline int
 BitFirstClear(void *a, u32 numBits)
 {
     u32 numWords = (numBits + sizeof(u32) * NBBY - 1) / (sizeof(u32) * NBBY) ;
@@ -77,5 +78,7 @@ BitFirstClear(void *a, u32 numBits)
     }
     return -1;
 }
+
+} /* Anonymous namespace */
 
 #endif /* BITOPS_H_ */

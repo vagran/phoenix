@@ -8,7 +8,7 @@ Since Phoenix is object oriented OS the system should have some way to manage ob
 
 Thread is just an execution context. An address space is associated with a container, not a thread. However a stack is a thread attribute so the stack is preserved when switching to some container. Stack is always private for a thread. So threads could continuously migrate between containers. When some container is invoked it becomes current for the calling thread. At any time only one container can be current for some thread. The kernel tracks containers invocation backtrace (calling stack) in order to keep reference counting. Kernel also maintains list of objects referenced by a thread. When a container is not longer referenced (not in backtrace of any thread and no objects created by it currently exist) it is deactivated -- destruction thread is launched and an executable image is unmapped when it terminates.
 
-Thread state is stored in a TCB (Thread Control Block) which is allocated in global address space. TCB is persistent and its virtual address is unique and can be used as thread identifier. TCB contains a thread saved context. In case the thread is blocked, the TCB contains wait channel ID and continuation entry point with arguments. TCBs are managed by the kernel and stored in special memory region which is subject for paging (excluding TCBs for resident threads which are stored in separate resident area).
+Thread state is stored in a TCB (Thread Control Block). TCB contains a thread saved context among with other meta-information. In case the thread is blocked, the TCB contains wait channel ID and continuation entry point with arguments. TCBs are managed by the Threads Manager and are synchronized with the kernel.
 
 When container is activated the kernel provides an instance of system object to the construction thread. Methods of this object can be used to invoke kernel services -- similarly to system calls of conventional operating systems. System method invocation processing is very similar to calling system-wide object method -- the difference is that no container is activated -- class implementation is located in the kernel.
 
@@ -45,6 +45,12 @@ Containers and threads can be marked as bootstrap. In such case all the memory u
 Containers are used when implementing global system classes (e.g. fonts, applications). Shared libraries can be used for some common classes used by most of containers implementations (e.g. strings, vectors, lists, trees). Code of shared libraries stored on the same physical pages which are mapped to many containers. Run-time linking is performed by run-time linker -- separate user-space class located in separate container. The kernel is not aware of shared libraries. It looks for corresponding record in
 executable image (PT_INTERP for ELF format) and invokes container of associated interpreter (the record should contain corresponding GUID) which maps and relocates shared libraries images.
 
+====== Threads Manager (TM) ======
+
+Threads manager is responsible for maintaining TCBs, idle threads creation, threads scheduling and synchronizing TCBs with the kernel.
+
+The kernel has a limited working set of TCBs which are TCBs of currently active threads. The TM periodically downloads used TCBs (pulls) and uploads new TCBs (pushes) to the kernel. TM uses periodic timer interrupts for switching TCBs in the kernel by a special system call. When TCBs are pushed by TM to the kernel, the TM specifies default TCBs switching order. The kernel uses this order to select next thread when the active thread is deactivated in the kernel (by waiting call). The TM should specify idle thread to be last in the list of TCBs in the kernel. The idle thread is implemented in the TM container. When the kernel switches to the idle thread, it checks if there are some more active threads to run in this round, and uploads their TCBs to the kernel if found. If no more threads left for this round, it starts the next one. All running threads are again pushed to the kernel. If the are no running threads left, the idle thread executes idle actions -- both in user space and in the kernel (e.g. zeroing physical pages in the pool, power management). If all idle actions finished it halts the processor by a corresponding system call.
+
 ====== Components manager (CM) ======
 
 Components manager is a class (in a separate container) which stores all executable images and other resources in its address space. Components are organized in packages -- set of blobs -- binary data, analog of files in a conventional OS, they can be executable images or any other resources represented as bytes stream. CM can be invoked in order to install new package, find which package contains some class or interface implementation, find shared library etc. CM represents every blob in its memory so that corresponding region of its container can be mapped to other container space, for example, in order to map some section of executable image. When a package is uninstalled the CM releases its reference to it so the package will still be present in the system until the last reference will be released by the code which still uses it.
@@ -64,6 +70,7 @@ The object manager keeps containers calling chain (containers backtrace or conta
 The object manager marks memory used for storing meta information for resident threads and containers as resident.
 
 Garbage collector is implemented in OM.
+
 ====== Memory manager (MM) ======
 
 Memory manager is responsible for memory allocations in global address space. It keeps all meta-information required for the allocator.

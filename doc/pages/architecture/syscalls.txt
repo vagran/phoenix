@@ -1,54 +1,50 @@
-====== System calls programming interface ======
+====== System calls and cross-container calls ======
 
-Phoenix system calls design is focused on most convenient implementation and usability by user and kernel side developers. All system calls actually are represented as methods of special classes derived from '''GateObject''' class. Return value of system methods could be any type -- registers %rax:%rdx are preserved as well as SSE registers. In the class declaration the system methods are declared by '''SYSCALL_DECL''' macro, and in the class implementation by '''SYSCALL_IMPL''' macro. Here is an example with approximate code to which these macros will be unfolded:
+The design of Phoenix system calls and cross-container calls (CCC) has some shared features. When a CCC is issued it first enters the kernel in the way it is done for the system calls.
+
+===== System calls =====
+
+The Phoenix system calls design is focused on most convenient implementation and usability by user and kernel side developers. All system calls actually are represented as methods of special classes derived from '''ScObject''' class. Return value of system methods could be any type -- registers %rax:%rdx are preserved as well as SSE registers. 
 <code cpp>
 
-class MyGateClass : public GateObject {
+class MyScClass : public ScObject {
 
-    // This declares system method with the following prototype:
-    // SomeClass *MyGateClass::GetClass(int a, int b);
-    SYSCALL_DECL(MyGateClass, GetClass, SomeClass *, (int a, int b));
-    // and will be unfolded to something like this:
-private:
-    SomeClass *GetClass_impl(int a, int b);
-    SyscallEntry<&GetClass_impl, GATE_CLASS_ID> sce_GetClass;
 public:
-    SomeClass *GetClass(int a, int b) __asm__("SC_SomeClass_GetClass") __attribute__((__noinline__));
+    SomeClass *GetClass(int a, int b) SC_DECL(MyScClass, GetClass);
+    // will be unfolded to
+    // SomeClass *GetClass(int a, int b) __asm__("SC_MyScClass_GetClass") __attribute__((__noinline__));
     
 };
 
-// Implementation is created by this macro:
-SYSCALL_IMPL(MyGateClass, GetClass, SomeClass *, (int a, int b))
-// unfolded to
-SomeClass *MyGateClass::GetClass(int a, int b)
-// and followed by method body
+SomeClass *
+MyGateClass::GetClass(int a, int b)
 {
     return DoSomething(a, b);
 }
 
 </code>
 
-System gate objects are always constructed and destructed in the kernel. User space code can only call their methods. Accessing data members by user code is not allowed.
+System call objects are always constructed and destructed in the kernel. User space code can only call their methods. Accessing data members by user code is not allowed.
 
-The methods implementations are created in two versions:
-  * For the kernel they implemented in corresponding cpp-file by '''SYSCALL_IMPL''' macro. If somebody calls system method from the kernel he will directly call its implementation. There is also header file generated with all system methods global indexes, indexes ranges for gate classes etc.
-  * For the user mode they are implemented in a separate assembler file which is automatically generated from header files by Perl script which processes all '''SYSCALL_DECL''' macro occurrences. The assembler file contains simple entry points for all system calls, each entry point just stores required parameters (e.g. its global index) on stack and issuing '''SYSCALL''' instruction. <code asm>
-.globl SC_SomeClass_GetClass
-SC_SomeClass_GetClass:
+Additional C++ source file is generated from the headers with SC objects declarations by Perl script which processes all SC_DECL macro occurrences. The file is created in two versions -- one for compiling with the kernel and another one for user space code.
+  * For the kernel the generated file contains method implementation for mapping exported methods indexes to their addresses. If somebody calls system method from the kernel he will directly call its implementation.
+  * For the user mode the file contains all exported methods implementations in Assembler. Each method implementation just stores required parameters (e.g. its global index) on stack and issuing '''SYSCALL''' instruction. <code asm>
+.globl SC_MyScClass_GetClass
+SC_MyScClass_GetClass:
     pushq $123
-    movl %rsp, %r12d
     syscall
-</code> '''syscall''' instruction passes control to global system calls entry point which switches to the kernel stack, copies fixed amount of user stack data to the kernel stack, gets from the stack passed parameters (e.g. system call global index), validates arguments (e.g. passed pointer to an object, see [[#objects validation]]) and passes control to the method implementation. After the method returns, an original user code return address is taken from the stack, the user stack pointer adjusted correspondingly and '''sysret''' instruction executed. Returned value preserved in '''%rax:%rdx''' registers.
+</code> '''syscall''' instruction passes control to global system calls entry point which switches to the kernel stack, gets from the user stack passed parameters (e.g. system call global index), validates arguments and passes control to the method implementation. After the method returns, an original user code return address is taken from the stack, the user stack pointer adjusted correspondingly and '''sysret''' instruction executed. Returned value preserved in '''%rax:%rdx''' registers.
+
+The system calls objects are global for the system. Every object is a singleton in the kernel. The user code doesn't get the real address of the object. Instead it gets some object ID value casted to the type of pointer to the corresponding class. When a system call is invoked the kernel checks the class pointer and if it falls to SC objects IDs range it identifies the system call (this is the way for distinguishing between system calls and cross-containers calls). After that the kernel retrieves and substitues a real kernel address for the object which method is invoked.
 
 Due to implementation specifics (methods with non-mangled names) there are several limitations:
   * It is not possible to have methods with the same name and different arguments in one class.
   * Operators should be defined inline and should produce call to corresponding methods.
 
-====== Objects validation ======
+===== Cross-containers calls =====
 
-When a system call is issued the first argument is always a pointer to the corresponding system gate object. This pointer must be validated by the kernel before passing it to the the system call implementation. The following actions are done for an object pointer validation:
-  * Ensure the pointer is in the kernel address space range.
-  * Ensure the memory pointed by it is currently mapped in the kernel virtual address space with correct permissions.
-  * Cast the pointer to the '''GateObject''' class pointer and check it a have magic value and a pointer to itself in the corresponding members.
-  * Validate the invoked system call index with the range of indexes allocated for the class of provided object.
-If any of the listed checks fail the thread fault is raised.
+Cross-containers calls are issued in a very similar way with the system calls issuing. Each exportable class also has auto-generated C++ source file in two versions -- one is compiled with the container which implements the class and another one with all containers which use the class. Calling an exported method from another container also causes the thread to enter in the kernel. The kernel validates the call, finds the container which implements the corresponding class, finds real address of the invoked method in this container, switches to the container, replaces the return address and exits from the kernel to the address found. The return address is replaced by address of special kernel entry point. It will check the containers call stack for the thread, find previous container and return address in it, switch to it and exits to user space to the address found.
+
+===== Calls validation =====
+
+Object Manager is responsible for calls validation. When OM container is activated it installs calls validation hooks in the kernel. After that each system or inter-container call is validated for permissions for calling thread/container.

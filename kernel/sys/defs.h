@@ -67,10 +67,26 @@
 #define RoundDown2(size, balign)    ((size) & (~((balign) - 1)))
 
 /* Branching hints for the compiler */
-#define Likely(condition)           __builtin_expect((condition), 1)
-#define Unlikely(condition)         __builtin_expect((condition), 0)
+/** Give a hint for the compiler that a given conditional statement is likely to
+ * be true.
+ *
+ * Usage example: @n
+ * if (Likely(someCondition)) { ... }
+ */
+#define Likely(condition)           __builtin_expect(!!(condition), 1)
+/** Give a hint for the compiler that a given conditional statement is likely to
+ * be false.
+ *
+ * Usage example: @n
+ * if (Unlikely(someCondition)) { ... }
+ */
+#define Unlikely(condition)         __builtin_expect(!!(condition), 0)
 
-/** Macro for referencing unused parameters */
-#define UNUSED(x)                   (void)(x)
+/** Macro for marking unused parameters.
+ *
+ * Usage example: @n
+ * int SomeFunction(int UNUSED someParam) { ... }
+ */
+#define UNUSED                      __attribute__((unused))
 
 #endif /* DEFS_H_ */
