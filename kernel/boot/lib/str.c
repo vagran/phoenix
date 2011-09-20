@@ -353,6 +353,8 @@ MetaMatch (
             break;
         }
     }
+    /* NOT REACHED */
+    return FALSE;
 }
 
 

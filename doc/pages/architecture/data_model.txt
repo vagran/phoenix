@@ -18,7 +18,7 @@ The executable image has a single entry point -- the one which address is specif
   * System notification, for example, about interrupt for which this container/thread is registered or about system event such as restart. The entry point for notifications can be overwritten to another entry address.
   * Default entry point -- if the container constructor requests to launch a thread in this container and does not provide entry address, new thread is launched from this entry point.
 
-When a thread wants to receive notification from the system it must register for required event. It should specify container and entry point address for notification handler. When the event is fired the kernel saves all registers on a thread stack, put as return address a place where the thread was interrupted, switches to another container if required and invokes registered entry point. If container switch occurs return address points to the same code which is used for returns from inter-containers calls. Before returning the thread should restore all saved registers from the stack in proper sequence (library stub should be provided for that).
+When a thread wants to receive notification from the system it must register for required event. It should specify container and entry point address (optional) for notification handler. When the event is fired the kernel saves all registers on a thread stack, put as return address a place where the thread was interrupted, switches to another container if required and invokes registered entry point. If container switch occurs return address points to the same code which is used for returns from inter-containers calls. Before returning the thread should restore all saved registers from the stack in proper sequence (library stub should be provided for that).
 
 All containers and threads are subjects for system persistence. All containers data and thread contexts are preserved on non-volatile storage between system reboots.
 
@@ -49,7 +49,16 @@ executable image (PT_INTERP for ELF format) and invokes container of associated 
 
 Threads manager is responsible for maintaining TCBs, idle threads creation, threads scheduling and synchronizing TCBs with the kernel.
 
-The kernel has a limited working set of TCBs which are TCBs of currently active threads. The TM periodically downloads used TCBs (pulls) and uploads new TCBs (pushes) to the kernel. TM uses periodic timer interrupts for switching TCBs in the kernel by a special system call. When TCBs are pushed by TM to the kernel, the TM specifies default TCBs switching order. The kernel uses this order to select next thread when the active thread is deactivated in the kernel (by waiting call). The TM should specify idle thread to be last in the list of TCBs in the kernel. The idle thread is implemented in the TM container. When the kernel switches to the idle thread, it checks if there are some more active threads to run in this round, and uploads their TCBs to the kernel if found. If no more threads left for this round, it starts the next one. All running threads are again pushed to the kernel. If the are no running threads left, the idle thread executes idle actions -- both in user space and in the kernel (e.g. zeroing physical pages in the pool, power management). If all idle actions finished it halts the processor by a corresponding system call.
+The kernel has a limited working set of TCBs which are TCBs of currently active threads. The TM periodically downloads used TCBs (pulls) and uploads new TCBs (pushes) to the kernel. TM uses periodic timer interrupts for switching TCBs in the kernel by a special system call. When TCBs are pushed by TM to the kernel, the TM specifies default TCBs switching order. The kernel uses this order to select next thread when the active thread is deactivated in the kernel (by waiting call). The TM should specify idle thread to be last in the list of TCBs in the kernel. The idle thread is implemented in the TM container. When the kernel switches to the idle thread, it checks if there are some more active threads to run in this round, and pushes their TCBs to the kernel if found. If no more threads left for this round, it starts the next one. All running threads are again pushed to the kernel. If the are no running threads left, the idle thread executes idle actions -- both in user space and in the kernel (e.g. zeroing physical pages in the pool, power management). If all idle actions finished it halts the processor by a corresponding system call.
+
+Each thread should have a call chain of containers similar to functions calling stack. Each call chain element (CCE) should store thread state (regular cross-container call, container invocation from the kernel etc.), execution context (registers), arguments storage. //There is a fixed amount of chain elements slots in each TCB in the kernel. Whenever the kernel needs some elements (when continuously invoking or returning from some containers) it initiates elements fetching to/from TM.// FIXME
+
+TM is also responsible for waiting channels implementation. The kernel code never blocks execution thread. All waitable methods are finally calling corresponding wait method in TM which allocates wait channel and switches to another thread.
+
+CCE can reflect several states of the corresponding thread:
+  - User space code execution. Thread was interrupted when it was executing some code in the user space. All registers are saved in the CCE.
+  - System call invocation (it could be either a system call or cross-container call start phase). The CCE stores the state which precedes system call processing by the kernel. However it already is in the kernel mode with all arguments saved in the CCE. This state provides an ability to have atomic system calls. In case of external request of the thread state (e.g. during checkpoint creation) or after some additional transition to the user space during the call processing by the kernel (e.g. page fault handling or CCC validation) the system call processing is restarted from its entry point. In case of CCC validation the TCB could have the validation result available at this point so there will not be repeated validation.
+  - System call processing. The CCE contains continuation entry address in the kernel which is invoked after switching to this CCE. Any required parameters are stored in the CCE.
 
 ====== Components manager (CM) ======
 
@@ -57,15 +66,13 @@ Components manager is a class (in a separate container) which stores all executa
 
 ====== Objects manager (OM) ======
 
-This component stores information about threads, containers and objects:
-  * Database of all threads, containers and threads permissions for access to containers, objects and methods in these objects. 
+This component stores information about containers and objects:
+  * Database of all containers and threads permissions for access to containers, objects and methods in these objects. 
   * References between objects. Object is living until last reference to it is released.
 
 B-trees are used for indexing the information. Using B-trees allows to optimize paging.
 
 Objects are owned by a container. Each exported object keeps reference to its container. Component manager holds one reference to each installed container. When some container is uninstalled the components manager releases its reference to the container but it is not actually destroyed until there is at least one exported object. When last exported object is destroyed, it releases the last reference to the container and the container is destroyed. When some thread creates an object, it belongs to the container which is current for the thread. If some fault occurs in the thread an exception is thrown. Exception handlers chain is traversed in all containers in the thread calling chain. The handlers can release their references to used objects.
-
-The object manager keeps containers calling chain (containers backtrace or containers calling stack) for each thread.
 
 The object manager marks memory used for storing meta information for resident threads and containers as resident.
 

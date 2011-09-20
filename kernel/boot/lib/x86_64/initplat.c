@@ -8,11 +8,6 @@ Module Name:
 
 Abstract:
 
-
-
-
-Revision History
-
 --*/
 
 #include "lib.h"
@@ -25,4 +20,3 @@ InitializeLibPlatform (
 
 {
 }
-

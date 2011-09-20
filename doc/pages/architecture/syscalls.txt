@@ -41,6 +41,9 @@ Due to implementation specifics (methods with non-mangled names) there are sever
   * It is not possible to have methods with the same name and different arguments in one class.
   * Operators should be defined inline and should produce call to corresponding methods.
 
+The system calls (and any kernel mode code) never blocks execution thread. All waiting operation are handled inside TM.
+
+
 ===== Cross-containers calls =====
 
 Cross-containers calls are issued in a very similar way with the system calls issuing. Each exportable class also has auto-generated C++ source file in two versions -- one is compiled with the container which implements the class and another one with all containers which use the class. Calling an exported method from another container also causes the thread to enter in the kernel. The kernel validates the call, finds the container which implements the corresponding class, finds real address of the invoked method in this container, switches to the container, replaces the return address and exits from the kernel to the address found. The return address is replaced by address of special kernel entry point. It will check the containers call stack for the thread, find previous container and return address in it, switch to it and exits to user space to the address found.

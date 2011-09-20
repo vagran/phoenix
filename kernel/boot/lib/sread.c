@@ -96,9 +96,10 @@ Returns:
     //
 
     FileHandle = NULL;
-    Status = uefi_call_wrapper(BS->LocateDevicePath, 3, &FileSystemProtocol, FilePath, DeviceHandle);
+    Status = uefi_call_wrapper(BS->LocateDevicePath, 3, &FileSystemProtocol,
+                               FilePath, DeviceHandle);
     if (!EFI_ERROR(Status)) {
-        FileHandle = LibOpenRoot (*DeviceHandle);
+        FileHandle = LibOpenRoot(*DeviceHandle);
     }
 
     Status = FileHandle ? EFI_SUCCESS : EFI_UNSUPPORTED;
@@ -270,6 +271,7 @@ Done:
             }
 
             FreePool (FHand);
+            *SimpleReadHandle = NULL;
         }
     }
 

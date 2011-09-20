@@ -69,8 +69,8 @@ Returns:
 
         if (ImageHandle) {
             Status = uefi_call_wrapper(
-			    BS->HandleProtocol,
-				3,
+                            BS->HandleProtocol,
+                            3,
                             ImageHandle, 
                             &LoadedImageProtocol,
                             (VOID*)&LoadedImage

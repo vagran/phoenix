@@ -67,7 +67,12 @@ Each page in map entry can have the following state:
 
 The kernel is managing physical pages and physical maps. Corresponding interfaces are provided for allocating and freeing physical pages, entering them to physical maps with required permissions. Memory Manager component has permissions for using these interfaces. It is responsible for managing maps and map entries for all containers and threads.
 
-Pagers also have access to kernel paging interfaces.
+Pagers also have access to the kernel paging interfaces.
+
+Physical maps are managed by creating recursive mappings of their page tables hierarchy. Two recursive mappings can exist in the address space (AS) simultaneously -- the current AS mapping and alternative AS mapping (for modifying non-current AS mappings). Each map is referenced by its root paging table physical address.
+
+The kernel has a simple mechanism for allocating own dynamic memory. It uses scalable slab allocator with a simple back-end for virtual memory allocation -- just advancement of current heap top pointer. It is enough because the kernel is stateless and there are small amount of operations with the memeory in the kernel.
+
 ===== Memory allocations =====
 
 Buddy allocator is used for allocating space in the global address space. It is used for allocating large blocks (staring from one page and greater) which are passed to scalable slab allocator which splits these large blocks to smaller well fitted units. This approach ensures optimal memory utilization.

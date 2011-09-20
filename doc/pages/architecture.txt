@@ -33,7 +33,7 @@ Phoenix is fully object oriented OS.  It implements principles of orthogonal per
 
 Phoenix is a microkernel-based system. It is attempted to move out of the kernel as most functionality as possible. The kernel primary responsibilities are:
   * Physical memory management -- physical maps and physical pages management.
-  * Inter-containers calls routing, invoking containers manager, invoking called container if permitted.
+  * Inter-containers calls routing, invoking objects and threads manager, invoking called container if permitted.
   * Threads management -- switching contexts, maintaining working set of TCBs.
   * Hardware access -- providing low level interface for hardware access to user-space drivers with permissions control -- access to I/O ports, physical memory, interrupts routing. The kernel itself does not manage any hardware -- each device is managed by corresponding user-space driver.
   * Exception routing -- containers can register handlers for CPU exceptions processing.
@@ -46,12 +46,12 @@ Single kernel stack is used instead of per-thread stacks. The kernel is stateles
 
 ==== Multiprocessing ====
 
-The kernel is aware of multiprocessing but it does not initialize APs. Instead it provides abstract interface for registering new processors, installing boot trampolines etc. Separate CPU device driver is responsible for detecting all installed CPUs, hyper-threading support, LAPICs initialization and initialization of APs. The kernel takes all necessary measures (locks, semaphores, barriers, caches management) to support multiprocessing and its schedulers is able to balance threads between available CPUs when they registered by CPU driver.
+The kernel is aware of multiprocessing but it does not initialize APs. Instead it provides abstract interface for registering new processors, installing boot trampolines etc. Separate CPU device driver is responsible for detecting all installed CPUs, hyper-threading support, LAPICs initialization and initialization of APs. The kernel takes all necessary measures (locks, semaphores, barriers, caches management) to support multiprocessing. TM scheduler should be able to balance threads between available CPUs when they registered by CPU driver.
 
 ==== Interrupts processing ====
 
-As by concept the kernel does not manage devices. Interrupts controllers also have separate driver for them. The driver initializes interrupts controllers and provides interface for other drivers for registering their interrupts handlers. The kernel creates entry points for all possible IRQs (256) and allows user space code to subscribe on IRQs invocation. When IRQ entry point is invoked the kernel propagates the request to the Objects Manager which checks which threads are waiting for this event and use special system call to interrupt a thread and call a corresponding handler in its context. The system call interrupts the thread, stores its state in the thread stack and invokes the provided handler in a required container. Return address points to special kernel entry which will restore thread state from the stack and switch back to the interrupted code. The thread interruption is done by marking TCB and waking up the thread if required. When the scheduler will switch to that thread it will process with interrupting. If the thread was waiting for some event(s) it will return to this state after an interrupt processing. The thread which was active when the interrupt
-occurred is passed to the handler. CPU exceptions in kernel mode are fatal.
+As by concept the kernel does not manage devices. Interrupts controllers also have separate driver for them. The driver initializes interrupts controllers and provides interface for other drivers for registering their interrupts handlers. The kernel creates entry points for all possible IRQs (256) and allows user space code to subscribe on IRQs invocation. When IRQ entry point is invoked the kernel propagates the request to the Threads Manager (before switching to the user space, CCE for system call invocation is removed and TM is invoked in the context of current thread) which checks which threads are waiting for this event. New CCE is appended for them to invoke required container entry and the threads are activated (if were sleeping). Return address points to special kernel entry which will switch to the previous CCE. CPU exceptions in kernel mode are fatal except page fault which can be handled by a corresponding pager.
+
 ===== System bootstrap =====
 
 The Phoenix kernel supports its own boot specification. Separate bootloader is used which is an EFI application. It loads the kernel specified in its command line arguments and passes to it EFI system tables among with boot arguments. See detailed description of the EFI loader on [[athena:product:phoenix:components:efi_loader|this page]].

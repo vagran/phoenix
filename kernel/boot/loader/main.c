@@ -26,7 +26,7 @@ static struct Option {
     { L"--debugger", &optDebugger }
 };
 
-static EFI_LOADED_IMAGE *loaded_image;
+static EFI_LOADED_IMAGE *loadedImage;
 
 static inline int
 IsSpace(CHAR16 c)
@@ -73,9 +73,9 @@ static void
 WaitDebugger()
 {
     /* Change this value to non-zero in a debugger when attached */
-    int isAttached = 0;
-    Print(L"Image base: 0x%lx\n", loaded_image->ImageBase);
-    Print(L"Image size: 0x%lx\n", loaded_image->ImageSize);
+    volatile int isAttached = FALSE;
+    Print(L"Image base: 0x%lx\n", loadedImage->ImageBase);
+    Print(L"Image size: 0x%lx\n", loadedImage->ImageSize);
     Print(L"Waiting for debugger...");
     while (!isAttached) {
         __asm__ __volatile__("pause");
@@ -83,22 +83,26 @@ WaitDebugger()
     Print(L"Attached\n");
 }
 
-/* Process command line options.
+/*
+ * Process command line options.
  * optionsSize: length of options string in characters.
  */
 static EFI_STATUS
 ProcessOptions(CHAR16 *optionsStr, UINT32 optionsSize)
 {
     struct Option *opt;
+    UINT32 i;
 
     if (!optionsSize) {
         return EFI_INVALID_PARAMETER;
     }
-    /* Do not account null terminator */
-    if (!optionsStr[optionsSize - 1]) {
-        optionsSize--;
+
+    /* Correct options size if null terminator is before the buffer end. */
+    for (i = 0; i < optionsSize; i++) {
+        if (!optionsStr[i]) {
+            optionsSize = i;
+        }
     }
-    WaitDebugger();//temp
 
     /* Skip loader image path */
     optionsStr = SkipSpaces(optionsStr, &optionsSize);
@@ -125,7 +129,7 @@ ProcessOptions(CHAR16 *optionsStr, UINT32 optionsSize)
     }
 
     /* Extract kernel image file name */
-    UINT32 i = optionsSize;
+    i = optionsSize;
     CHAR16 *nextPtr = SkipWord(optionsStr, &i);
     kernelImage = (CHAR16 *)AllocatePool((nextPtr - optionsStr + 1) * sizeof(CHAR16));
     if (!kernelImage) {
@@ -152,8 +156,56 @@ ProcessOptions(CHAR16 *optionsStr, UINT32 optionsSize)
 static EFI_STATUS
 LoadKernel()
 {
+    DbgPrint(D_INFO, "Kernel image: '%s'\n", kernelImage);
+    EFI_DEVICE_PATH *path;
+    EFI_STATUS rc = EFI_SUCCESS;
+    SIMPLE_READ_FILE readHandle = NULL;
+    UINTN handleCount, handleIdx;
+    EFI_HANDLE *handleBuffer;
 
-    return EFI_SUCCESS;
+    rc = uefi_call_wrapper(BS->LocateHandleBuffer, 5,
+                               ByProtocol,
+                               &FileSystemProtocol,
+                               NULL,
+                               &handleCount,
+                               &handleBuffer);
+    if (EFI_ERROR(rc)) {
+        return rc;
+    }
+
+    DbgPrint(D_INFO, "handleCount = %d\n", handleCount);
+
+    for (handleIdx = 0; handleIdx < handleCount; handleIdx++) {
+        EFI_HANDLE deviceHandle;
+
+        path = FileDevicePath(handleBuffer[handleIdx], kernelImage);
+        if (!path) {
+            rc = EFI_NOT_FOUND;
+            break;
+        }
+
+        rc = OpenSimpleReadFile(TRUE, NULL, 0, &path, &deviceHandle, &readHandle);
+        if (!EFI_ERROR(rc)) {
+            break;
+        }
+
+        FreePool(path);
+        path = NULL;
+    }
+
+    if (!EFI_ERROR(rc)) {
+        //load kernel
+    }
+
+    if (readHandle) {
+        CloseSimpleReadFile(readHandle);
+    }
+    if (path) {
+        FreePool(path);
+    }
+
+    FreePool(handleBuffer);
+    return rc;
 }
 
 EFI_STATUS
@@ -163,11 +215,11 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 
     InitializeLib(image, systab);
 
-    status = uefi_call_wrapper(systab->BootServices->OpenProtocol,
+    status = uefi_call_wrapper(BS->OpenProtocol,
                                6,
                                image,
                                &LoadedImageProtocol,
-                               (void **)&loaded_image,
+                               (void **)&loadedImage,
                                image,
                                NULL,
                                EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
@@ -176,8 +228,12 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
         return status;
     }
 
-    rc = ProcessOptions(loaded_image->LoadOptions,
-                        loaded_image->LoadOptionsSize / sizeof(CHAR16));
+#   ifdef EFI_DEBUG
+    DbgPrint(D_INFO, "Image base: 0x%lx\n", loadedImage->ImageBase);
+#   endif
+
+    rc = ProcessOptions(loadedImage->LoadOptions,
+                        loadedImage->LoadOptionsSize / sizeof(CHAR16));
 
     if (!EFI_ERROR(rc)) {
         if (optDebugger) {
@@ -186,7 +242,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
         rc = LoadKernel();
     }
 
-    status = uefi_call_wrapper(systab->BootServices->CloseProtocol,
+    status = uefi_call_wrapper(BS->CloseProtocol,
                                4,
                                image,
                                &LoadedImageProtocol,

@@ -59,7 +59,7 @@ extern UINTN     EFIDebug;
 #define D_NET_ULTRA   0x00008000          // SNI Driver
 #define D_TXTIN       0x00010000          // Simple Input Driver
 #define D_TXTOUT      0x00020000          // Simple Text Output Driver
-#define D_ERROR_ATA	  0x00040000		  		// ATA error messages 
+#define D_ERROR_ATA   0x00040000          // ATA error messages
 #define D_ERROR       0x80000000          // Error
 
 #define D_RESERVED    0x7fffC880          // Bits not reserved above
@@ -67,8 +67,12 @@ extern UINTN     EFIDebug;
 //
 // Current Debug level of the system, value of EFIDebug
 //
+#ifdef EFI_DEBUG
+#define EFI_DBUG_MASK   0xffffffff
+#else /* EFI_DEBUG */
 //#define EFI_DBUG_MASK   (D_ERROR | D_WARN | D_LOAD | D_BLKIO | D_INIT)
 #define EFI_DBUG_MASK   (D_ERROR)
+#endif /* EFI_DEBUG */
 
 //
 //

@@ -209,8 +209,10 @@ Returns:
     PRINT_STATE     ps;
     va_list         args;
     UINTN           back;
+#ifdef DBG_PRINT_ATTR
     UINTN           attr;
     UINTN           SavedAttribute;
+#endif
 
 
     if (!(EFIDebug & mask)) {
@@ -235,16 +237,19 @@ Returns:
     if (DbgOut) {
         ps.Attr = DbgOut->Mode->Attribute;
         ps.Context = DbgOut;
-        ps.SetAttr = (INTN (*)(VOID *, UINTN))  DbgOut->SetAttribute;
+        ps.SetAttr = (INTN (*)(VOID *, UINTN)) DbgOut->SetAttribute;
     }
 
+#ifdef DBG_PRINT_ATTR
     SavedAttribute = ps.Attr;
+#endif
 
     back = (ps.Attr >> 4) & 0xf;
     ps.AttrNorm = EFI_TEXT_ATTR(EFI_LIGHTGRAY, back);
     ps.AttrHighlight = EFI_TEXT_ATTR(EFI_WHITE, back);
     ps.AttrError = EFI_TEXT_ATTR(EFI_YELLOW, back);
 
+#ifdef DBG_PRINT_ATTR
     attr = ps.AttrNorm;
 
     if (mask & D_WARN) {
@@ -259,6 +264,7 @@ Returns:
         ps.Attr = attr;
         ps.SetAttr (ps.Context, attr);
     }
+#endif
 
     _Print (&ps);
 
@@ -269,9 +275,11 @@ Returns:
     // Restore original attributes
     //
 
+#ifdef DBG_PRINT_ATTR
     if (ps.SetAttr) {
         ps.SetAttr (ps.Context, SavedAttribute);
     }
+#endif
     
     return 0;
 }
@@ -1017,7 +1025,7 @@ Returns:
             case '*':
                 *Item.WidthParse = va_arg(ps->args, UINTN);
                 break;
-            
+
             case '1':
             case '2':
             case '3':
@@ -1063,15 +1071,14 @@ Returns:
             case 'X':
                 Item.Width = Item.Long ? 16 : 8;
                 Item.Pad = '0';
+                /* FALL THROUGH */
             case 'x':
                 Item.Item.pw = Item.Scratch;
                 ValueToHex (
                     Item.Item.pw, 
                     Item.Long ? va_arg(ps->args, UINT64) : va_arg(ps->args, UINT32)
                     );
-
                 break;
-        
 
             case 'g':
                 Item.Item.pw = Item.Scratch;

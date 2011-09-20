@@ -582,6 +582,45 @@ EFI_STATUS
     OUT UINTN                   *EntryCount
     );
 
+typedef
+EFI_STATUS
+(EFIAPI *EFI_PROTOCOLS_PER_HANDLE) (
+    IN  EFI_HANDLE              Handle,
+    OUT EFI_GUID                ***ProtocolBuffer,
+    OUT UINTN                   *ProtocolBufferCount
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_LOCATE_HANDLE_BUFFER) (
+    IN EFI_LOCATE_SEARCH_TYPE   SearchType,
+    IN EFI_GUID                *Protocol   OPTIONAL,
+    IN VOID                    *SearchKey  OPTIONAL,
+    IN OUT UINTN               *NoHandles,
+    OUT EFI_HANDLE             **Buffer
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_LOCATE_PROTOCOL) (
+    IN  EFI_GUID                *Protocol,
+    IN  VOID                    *Registration   OPTIONAL,
+    OUT VOID                    **Interface
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_INSTALL_MULTIPLE_PROTOCOL_INTERFACES) (
+    IN OUT EFI_HANDLE           *Handle,
+    ...
+    );
+
+typedef
+EFI_STATUS
+(EFIAPI *EFI_UNINSTALL_MULTIPLE_PROTOCOL_INTERFACES) (
+    IN EFI_HANDLE               Handle,
+    ...
+    );
 
 //
 // Standard EFI table header
@@ -723,6 +762,15 @@ typedef struct _EFI_BOOT_SERVICES {
     EFI_OPEN_PROTOCOL               OpenProtocol;
     EFI_CLOSE_PROTOCOL              CloseProtocol;
     EFI_OPEN_PROTOCOL_INFORMATION   OpenProtocolInformation;
+
+    //
+    // Library Services
+    //
+    EFI_PROTOCOLS_PER_HANDLE        ProtocolsPerHandle;     // EFI 1.1+
+    EFI_LOCATE_HANDLE_BUFFER        LocateHandleBuffer;     // EFI 1.1+
+    EFI_LOCATE_PROTOCOL             LocateProtocol;         // EFI 1.1+
+    EFI_INSTALL_MULTIPLE_PROTOCOL_INTERFACES InstallMultipleProtocolInterfaces; // EFI 1.1+
+    EFI_UNINSTALL_MULTIPLE_PROTOCOL_INTERFACES UninstallMultipleProtocolInterfaces; // EFI 1.1+
 
 } EFI_BOOT_SERVICES;
 
