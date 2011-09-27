@@ -23,7 +23,7 @@ bsf(u64 string)
 {
     u64 rc;
 
-    ASM ("bsfq %0, %1" : "=r"(rc) : "r"(string));
+    ASM ("bsfq %[rc], %[string]" : [rc]"=r"(rc) : [string]"r"(string));
     return rc;
 }
 
@@ -32,7 +32,7 @@ inb(u16 port)
 {
     u8 _v;
 
-    ASM ("inb %w1,%0" : "=a" (_v):"Nd" (port));
+    ASM ("inb %w1, %0" : "=a"(_v) : "Nd"(port));
     return _v;
 }
 
@@ -41,7 +41,7 @@ inw(u16 port)
 {
     u16 _v;
 
-    ASM ("inw %w1,%0" : "=a" (_v):"Nd" (port));
+    ASM ("inw %w1, %0" : "=a"(_v) : "Nd"(port));
     return _v;
 }
 
@@ -50,27 +50,27 @@ inl(u16 port)
 {
     u32 _v;
 
-    ASM ("inl %w1,%0" : "=a" (_v):"Nd" (port));
+    ASM ("inl %w1, %0" : "=a"(_v) : "Nd"(port));
     return _v;
 }
 
 __inline void
 outb(u16 port, u8 value)
 {
-    ASM ("outb %b0,%w1" : : "a" (value), "Nd" (port));
+    ASM ("outb %b0, %w1" : : "a"(value), "Nd"(port));
 }
 
 __inline void
 outw(u16 port, u16 value)
 {
-    ASM ("outw %w0,%w1": :"a" (value), "Nd" (port));
+    ASM ("outw %w0, %w1": :"a"(value), "Nd"(port));
 
 }
 
 __inline void
 outl(u16 port, u32 value)
 {
-    ASM ("outl %0,%w1" : : "a" (value), "Nd" (port));
+    ASM ("outl %0, %w1" : : "a"(value), "Nd" (port));
 }
 
 __inline void

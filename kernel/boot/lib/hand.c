@@ -36,7 +36,7 @@ LibLocateProtocol (
     *Interface = NULL;
     Status = LibLocateHandle (ByProtocol, ProtocolGuid, NULL, &NumberHandles, &Handles);
     if (EFI_ERROR(Status)) {
-        DEBUG((D_INFO, "LibLocateProtocol: Handle not found\n"));
+        DBGPRINT((D_INFO, "LibLocateProtocol: Handle not found\n"));
         return Status;
     }
 
@@ -476,7 +476,7 @@ LibInstallProtocolInterfaces (
         // Install it
         //
 
-        DEBUG((D_INFO, "LibInstallProtocolInterface: %d %x\n", Protocol, Interface));
+        DBGPRINT((D_INFO, "LibInstallProtocolInterface: %d %x\n", Protocol, Interface));
         Status = uefi_call_wrapper(BS->InstallProtocolInterface, 4, Handle, Protocol, EFI_NATIVE_INTERFACE, Interface);
         if (EFI_ERROR(Status)) {
             break;
@@ -545,7 +545,7 @@ LibUninstallProtocolInterfaces (
 
         Status = uefi_call_wrapper(BS->UninstallProtocolInterface, 3, Handle, Protocol, Interface);
         if (EFI_ERROR(Status)) {
-            DEBUG((D_ERROR, "LibUninstallProtocolInterfaces: failed %g, %r\n", Protocol, Handle));
+            DBGPRINT((D_ERROR, "LibUninstallProtocolInterfaces: failed %g, %r\n", Protocol, Handle));
         }
     }
 }    

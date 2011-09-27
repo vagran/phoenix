@@ -24,12 +24,12 @@ extern UINTN     EFIDebug;
 #if EFI_DEBUG
 
     #define DBGASSERT(a)        DbgAssert(__FILE__, __LINE__, #a)
-    #define DEBUG(a)            DbgPrint a
+    #define DBGPRINT(a)         DbgPrint a
     
 #else
 
     #define DBGASSERT(a)
-    #define DEBUG(a)
+    #define DBGPRINT(a)
     
 #endif
 

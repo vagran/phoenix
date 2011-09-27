@@ -32,7 +32,7 @@ AllocatePool (
 
     Status = uefi_call_wrapper(BS->AllocatePool, 3, PoolAllocationType, Size, &p);
     if (EFI_ERROR(Status)) {
-        DEBUG((D_ERROR, "AllocatePool: out of pool  %x\n", Status));
+        DBGPRINT((D_ERROR, "AllocatePool: out of pool  %x\n", Status));
         p = NULL;
     }
     return p;

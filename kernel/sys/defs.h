@@ -16,19 +16,21 @@
 #ifndef DEFS_H_
 #define DEFS_H_
 
+/** Get offset of member @a member in structure or class @a type. */
+#define offsetof(type, member)      __builtin_offsetof (type, member)
+
 #define __CONCAT2(x, y)             x##y
-/** Macro for concatenating identifiers */
+/** Macro for concatenating identifiers. */
 #define __CONCAT(x, y)              __CONCAT2(x, y)
 
-
 #define __STR2(x)                   # x
-/** Macro for stringifying identifiers */
+/** Macro for stringifying identifiers. */
 #define __STR(x)                    __STR2(x)
 
-/** Generate file-scope unique identifier with a given prefix */
+/** Generate file-scope unique identifier with a given prefix. */
 #define __UID(str)                  __CONCAT(str, __COUNTER__)
 
-/** Provide binary constants in the code */
+/** Provide binary constants in the code. */
 #define BIN(x) ((x & 0x1) | ((x & 0x10) ? 0x2 : 0) | \
     ((x & 0x100) ? 0x4 : 0) | ((x & 0x1000) ? 0x8 : 0) | \
     ((x & 0x10000) ? 0x10 : 0) | ((x & 0x100000) ? 0x20 : 0) | \
@@ -37,18 +39,21 @@
 /** Number of bits in byte */
 #define NBBY                        8
 
-/** Minimal value of a given signed type */
+/** Minimal value of a given signed type. */
 #define TYPE_INT_MIN(type)          ((type)1 << (sizeof(type) * NBBY - 1))
-/** Maximal value of a given signed type */
-#define TYPE_INT_MAX(type)          (TYPE_INT_MIN(type) - 1)
-/** Maximal value of a given unsigned type */
-#define TYPE_UINT_MAX(type)         (~(type)0)
+/** Maximal value of a given signed type. */
+#define TYPE_INT_MAX(type)          (~TYPE_INT_MIN(type))
+/** Maximal value of a given unsigned type. */
+#define TYPE_UINT_MAX(type)         (~(type)0ul)
 
-/** Modifier for functions which can be called from assembler code */
+/** Modifier for functions which can be called from assembler code. */
 #define ASMCALL                     extern "C" __attribute__((regparm(0)))
 
-/** Macro for defining inline assembler blocks */
+/** Macro for defining inline assembler blocks. */
 #define ASM                         __asm__ __volatile__
+
+/** Macro for explicit definition of function, method or variable assembler name. */
+#define ASM_NAME(name)              __asm__(__STR2(name))
 
 /* Shortcuts for various compiler attributes */
 #define __packed                    __attribute__((packed))
@@ -70,22 +75,28 @@
 /** Give a hint for the compiler that a given conditional statement is likely to
  * be true.
  *
- * Usage example: @n
+ * Usage example:
+ * @code
  * if (Likely(someCondition)) { ... }
+ * @endcode
  */
 #define Likely(condition)           __builtin_expect(!!(condition), 1)
 /** Give a hint for the compiler that a given conditional statement is likely to
  * be false.
  *
- * Usage example: @n
+ * Usage example:
+ * @code
  * if (Unlikely(someCondition)) { ... }
+ * @endcode
  */
 #define Unlikely(condition)         __builtin_expect(!!(condition), 0)
 
 /** Macro for marking unused parameters.
  *
- * Usage example: @n
+ * Usage example:
+ * @code
  * int SomeFunction(int UNUSED someParam) { ... }
+ * @endcode
  */
 #define UNUSED                      __attribute__((unused))
 

@@ -89,7 +89,7 @@ Returns:
 
         InitializeGuid();
 
-        InitializeLibPlatform(ImageHandle,SystemTable);
+        InitializeLibPlatform(ImageHandle, SystemTable);
     }
 
     //

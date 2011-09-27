@@ -55,7 +55,7 @@ Returns:
     //
     Status = uefi_call_wrapper(BS->LocateDevicePath, 3, Protocol, &DevicePath, &Handle);
     if (!EFI_ERROR(Status)) {
-        DEBUG ((D_INIT, "Device Already Loaded for %a device\n", ErrorStr));
+        DBGPRINT ((D_INIT, "Device Already Loaded for %a device\n", ErrorStr));
         return EFI_LOAD_ERROR;
     }
 

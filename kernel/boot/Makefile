@@ -12,7 +12,8 @@ LOADER_BINARY = phoenix.efi
 COMPILE_DIR = build
 OBJ_DIR = $(COMPILE_DIR)/$(PHOENIX_TARGET)
 
-SUBDIRS = gnuefi lib lib/runtime lib/x86_64 loader
+SUBDIRS = gnuefi lib lib/runtime lib/x86_64 loader \
+	$(PHOENIX_ROOT)/lib/common $(PHOENIX_ROOT)/lib/elf
 
 EFI_IMAGE = $(OBJ_DIR)/$(LOADER_BINARY)
 EFI_DEBUG_IMAGE = $(OBJ_DIR)/debug.$(LOADER_BINARY)
@@ -27,11 +28,11 @@ OBJS = $(foreach src,$(SRCS), \
 
 CFLAGS = -std=gnu99 -Wno-pointer-sign
 
-CPP_FLAGS =
-	
+CPP_FLAGS = -fno-exceptions -fno-rtti
+
 COMMON_FLAGS = -fpic -Wall -Werror -fshort-wchar -fno-strict-aliasing \
 	-fno-merge-constants -DEFI_FUNCTION_WRAPPER -mno-red-zone -DCONFIG_x86_64 \
-	-DBOOT_LOADER
+	-DBOOT_LOADER -DEFI_APP
 
 SECTIONS = .text .sdata .data .dynamic .dynsym .rel .rela .reloc
 DEBUG_SECTIONS = .debug_info .debug_abbrev .debug_loc .debug_aranges \
@@ -40,19 +41,20 @@ DEBUG_SECTIONS = .debug_info .debug_abbrev .debug_loc .debug_aranges \
 ifeq ($(PHOENIX_TARGET),RELEASE)
 COMMON_FLAGS += -O2
 else ifeq ($(PHOENIX_TARGET),DEBUG)
-COMMON_FLAGS += -ggdb3 -DEFI_DEBUG=1 -O0
+COMMON_FLAGS += -ggdb3 -O0 -DDEBUG -DEFI_DEBUG=1
 else
 $(error Target not supported: $(PHOENIX_TARGET))
 endif
 
 INCLUDE_DIRS = inc inc/protocol inc/x86_64 lib \
-	$(PHOENIX_ROOT)/kernel/sys $(PHOENIX_ROOT)/kernel/sys/arch/$(PHOENIX_ARCH)
+	$(PHOENIX_ROOT)/kernel/sys $(PHOENIX_ROOT)/kernel/sys/arch/$(PHOENIX_ARCH) \
+	$(PHOENIX_ROOT)/include $(PHOENIX_ROOT)/lib/elf
 
 IFLAGS = $(foreach incdir,$(INCLUDE_DIRS),-I$(incdir))
 
 LD_SCRIPT = gnuefi/elf_x86_64_efi.lds
 
-LDFLAGS = -nostdlib -T $(LD_SCRIPT) -shared -Bsymbolic
+LDFLAGS = -nostdlib -T $(LD_SCRIPT) -shared -Bsymbolic --unresolved-symbols=report-all
 
 .PHONY: all clean
 
@@ -66,13 +68,13 @@ $(EFI_DEBUG_IMAGE): $(ELF_IMAGE)
 
 $(ELF_IMAGE): $(OBJ_DIR) $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) -o $@
-	
+
 $(OBJ_DIR)/%.o: %.S
 	$(CC) -DCONFIG_x86_64 -c -o $@ $<
 	
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(IFLAGS) $(COMMON_FLAGS) $(CFLAGS) -c -o $@ $<
-	
+
 $(OBJ_DIR)/%.o: %.cpp
 	$(CC) $(IFLAGS) $(COMMON_FLAGS) $(CPP_FLAGS) -c -o $@ $<
 

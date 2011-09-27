@@ -7,6 +7,11 @@
 
 include $(PHOENIX_ROOT)/make/makevar.mak
 
+ifdef KERNROOT
+# Compile the component as a part of the kernel
+include ${KERNROOT}/make/make.mak
+else
+
 ifndef LOAD_ADDRESS
 LOAD_ADDRESS = $(DEF_LOAD_ADDRESS)
 endif
@@ -232,4 +237,7 @@ install: $(INSTALLED_BINARY) $(SUBDIRS_TARGET)
 endif
 else
 install: $(SUBDIRS_TARGET)
+endif
+
+# KERNROOT
 endif

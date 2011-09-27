@@ -69,7 +69,7 @@ DevicePathInstance (
             //
             // BugBug: Debug code to catch bogus device paths
             //
-            DEBUG((D_ERROR, "DevicePathInstance: DevicePath %x Size %d", *DevicePath, ((UINT8 *) DevPath) - ((UINT8 *) Start) ));
+            DBGPRINT((D_ERROR, "DevicePathInstance: DevicePath %x Size %d", *DevicePath, ((UINT8 *) DevPath) - ((UINT8 *) Start) ));
             DumpHex (0, 0, ((UINT8 *) DevPath) - ((UINT8 *) Start), Start);
             break;
         }

@@ -18,9 +18,6 @@ LINK_FLAGS = -static -nodefaultlibs -nostartfiles -nostdinc -nostdinc++
 LINK_SCRIPT = $(KERNROOT)/make/link.lds
 AR_FLAGS = rcs
 
-INCLUDE_DIRS = $(KERNROOT) $(KERNROOT)/sys $(KERNROOT)/sys/arch/$(PHOENIX_ARCH)
-INCLUDE_FLAGS = $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
-
 #PHOENIX_TARGET variable must be either DEBUG or RELEASE
 ifndef PHOENIX_TARGET
 TARGET = RELEASE

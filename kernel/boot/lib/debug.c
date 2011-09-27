@@ -40,4 +40,3 @@ DbgAssert (
     BREAKPOINT();
     return 0;
 }
-

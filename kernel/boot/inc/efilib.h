@@ -754,9 +754,13 @@ ReadSimpleReadFile (
     OUT VOID                *Buffer
     );
 
-
 VOID
 CloseSimpleReadFile (
+    IN SIMPLE_READ_FILE     SimpleReadHandle
+    );
+
+EFI_FILE_HANDLE
+GetSimpleReadFileHandle (
     IN SIMPLE_READ_FILE     SimpleReadHandle
     );
 

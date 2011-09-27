@@ -256,7 +256,7 @@ Returns:
     // Nothing else to try
     //
 
-    DEBUG ((D_LOAD|D_WARN, "OpenSimpleReadFile: Device did not support a known load protocol\n"));
+    DBGPRINT ((D_LOAD|D_WARN, "OpenSimpleReadFile: Device did not support a known load protocol\n"));
     Status = EFI_UNSUPPORTED;
 
 Done:
@@ -357,4 +357,15 @@ CloseSimpleReadFile (
     //
 
     FreePool (FHand);
+}
+
+EFI_FILE_HANDLE
+GetSimpleReadFileHandle (
+    IN SIMPLE_READ_FILE     UserHandle
+    )
+{
+    SIMPLE_READ_HANDLE      *FHand;
+
+    FHand = UserHandle;
+    return FHand->FileHandle;
 }

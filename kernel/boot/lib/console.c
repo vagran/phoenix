@@ -70,7 +70,7 @@ IInput (
 
         Status = uefi_call_wrapper(ConIn->ReadKeyStroke, 2, ConIn, &Key);
         if (EFI_ERROR(Status)) {
-            DEBUG((D_ERROR, "Input: error return from ReadKey %x\n", Status));
+            DBGPRINT((D_ERROR, "Input: error return from ReadKey %x\n", Status));
             break;
         }
 

@@ -169,7 +169,7 @@ typedef struct
 
 #define EM_PARISC   15      /* HPPA */
 #define EM_VPP500   17      /* Fujitsu VPP500 */
-#define EM_SPARC32PLUS  18      /* Sun's "v8plus" */
+#define EM_SPARC32PLUS 18   /* Sun's "v8plus" */
 #define EM_960      19      /* Intel 80960 */
 #define EM_PPC      20      /* PowerPC */
 #define EM_PPC64    21      /* PowerPC 64-bit */
@@ -180,7 +180,7 @@ typedef struct
 #define EM_RH32     38      /* TRW RH-32 */
 #define EM_RCE      39      /* Motorola RCE */
 #define EM_ARM      40      /* ARM */
-#define EM_FAKE_ALPHA   41      /* Digital Alpha */
+#define EM_FAKE_ALPHA 41    /* Digital Alpha */
 #define EM_SH       42      /* Hitachi SH */
 #define EM_SPARCV9  43      /* SPARC v9 64-bit */
 #define EM_TRICORE  44      /* Siemens Tricore */
@@ -520,26 +520,26 @@ typedef struct
 
 typedef struct
 {
-  Elf32_Word    p_type;         /* Segment type */
-  Elf32_Off p_offset;       /* Segment file offset */
-  Elf32_Addr    p_vaddr;        /* Segment virtual address */
-  Elf32_Addr    p_paddr;        /* Segment physical address */
-  Elf32_Word    p_filesz;       /* Segment size in file */
-  Elf32_Word    p_memsz;        /* Segment size in memory */
-  Elf32_Word    p_flags;        /* Segment flags */
-  Elf32_Word    p_align;        /* Segment alignment */
+    Elf32_Word    p_type;         /* Segment type */
+    Elf32_Off     p_offset;       /* Segment file offset */
+    Elf32_Addr    p_vaddr;        /* Segment virtual address */
+    Elf32_Addr    p_paddr;        /* Segment physical address */
+    Elf32_Word    p_filesz;       /* Segment size in file */
+    Elf32_Word    p_memsz;        /* Segment size in memory */
+    Elf32_Word    p_flags;        /* Segment flags */
+    Elf32_Word    p_align;        /* Segment alignment */
 } Elf32_Phdr;
 
 typedef struct
 {
-  Elf64_Word    p_type;         /* Segment type */
-  Elf64_Word    p_flags;        /* Segment flags */
-  Elf64_Off p_offset;       /* Segment file offset */
-  Elf64_Addr    p_vaddr;        /* Segment virtual address */
-  Elf64_Addr    p_paddr;        /* Segment physical address */
-  Elf64_Xword   p_filesz;       /* Segment size in file */
-  Elf64_Xword   p_memsz;        /* Segment size in memory */
-  Elf64_Xword   p_align;        /* Segment alignment */
+    Elf64_Word    p_type;         /* Segment type */
+    Elf64_Word    p_flags;        /* Segment flags */
+    Elf64_Off     p_offset;       /* Segment file offset */
+    Elf64_Addr    p_vaddr;        /* Segment virtual address */
+    Elf64_Addr    p_paddr;        /* Segment physical address */
+    Elf64_Xword   p_filesz;       /* Segment size in file */
+    Elf64_Xword   p_memsz;        /* Segment size in memory */
+    Elf64_Xword   p_align;        /* Segment alignment */
 } Elf64_Phdr;
 
 /* Special value for e_phnum.  This indicates that the real number of
@@ -1701,13 +1701,13 @@ typedef struct
 
 /* Legal values for l_flags.  */
 
-#define LL_NONE       0
-#define LL_EXACT_MATCH    (1 << 0)  /* Require exact match */
-#define LL_IGNORE_INT_VER (1 << 1)  /* Ignore interface version */
-#define LL_REQUIRE_MINOR  (1 << 2)
-#define LL_EXPORTS    (1 << 3)
-#define LL_DELAY_LOAD     (1 << 4)
-#define LL_DELTA      (1 << 5)
+#define LL_NONE             0
+#define LL_EXACT_MATCH      (1 << 0)  /* Require exact match */
+#define LL_IGNORE_INT_VER   (1 << 1)  /* Ignore interface version */
+#define LL_REQUIRE_MINOR    (1 << 2)
+#define LL_EXPORTS          (1 << 3)
+#define LL_DELAY_LOAD       (1 << 4)
+#define LL_DELTA            (1 << 5)
 
 /* Entries found in sections of type SHT_MIPS_CONFLICT.  */
 
@@ -1735,7 +1735,7 @@ typedef Elf32_Addr Elf32_Conflict;
 
 /* Additional section indeces.  */
 
-#define SHN_PARISC_ANSI_COMMON  0xff00     /* Section for tenatively declared
+#define SHN_PARISC_ANSI_COMMON  0xff00     /* Section for tentatively declared
                           symbols in ANSI C.  */
 #define SHN_PARISC_HUGE_COMMON  0xff01     /* Common blocks in huge model.  */
 
@@ -1756,7 +1756,7 @@ typedef Elf32_Addr Elf32_Conflict;
 #define STT_PARISC_MILLICODE    13  /* Millicode function entry point.  */
 
 #define STT_HP_OPAQUE       (STT_LOOS + 0x1)
-#define STT_HP_STUB     (STT_LOOS + 0x2)
+#define STT_HP_STUB         (STT_LOOS + 0x2)
 
 /* HPPA relocs.  */
 
@@ -1899,10 +1899,10 @@ typedef Elf32_Addr Elf32_Conflict;
 #define PF_HP_PAGE_SIZE     0x00100000
 #define PF_HP_FAR_SHARED    0x00200000
 #define PF_HP_NEAR_SHARED   0x00400000
-#define PF_HP_CODE      0x01000000
+#define PF_HP_CODE          0x01000000
 #define PF_HP_MODIFY        0x02000000
 #define PF_HP_LAZYSWAP      0x04000000
-#define PF_HP_SBP       0x08000000
+#define PF_HP_SBP           0x08000000
 
 
 /* Alpha specific definitions.  */

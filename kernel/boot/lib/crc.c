@@ -176,7 +176,7 @@ Returns:
         return FALSE;
     }
     if (MaxSize && Size > MaxSize) {
-        DEBUG((D_ERROR, "CheckCrc32: Size > MaxSize\n"));
+        DBGPRINT((D_ERROR, "CheckCrc32: Size > MaxSize\n"));
         return FALSE;
     }
 
@@ -191,7 +191,7 @@ Returns:
     // return status
     f = OrgCrc == (UINT32) Crc;
     if (!f) {
-        DEBUG((D_ERROR, "CheckCrc32: Crc check failed\n"));
+        DBGPRINT((D_ERROR, "CheckCrc32: Crc check failed\n"));
     }
 
     return f;

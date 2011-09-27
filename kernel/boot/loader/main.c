@@ -7,8 +7,14 @@
  * See COPYING file for copyright details.
  */
 
+#include <types.h>
+#include <compat_types.h>
+
 #include <efi.h>
 #include <efilib.h>
+
+
+#include <libelf.h>
 
 /* Kernel command line converted to ASCII */
 char *kernelCmdLine;
@@ -85,7 +91,8 @@ WaitDebugger()
 
 /*
  * Process command line options.
- * optionsSize: length of options string in characters.
+ * optionsSize: length of options string in characters. Actual string length
+ *      may be shorter.
  */
 static EFI_STATUS
 ProcessOptions(CHAR16 *optionsStr, UINT32 optionsSize)
@@ -109,7 +116,7 @@ ProcessOptions(CHAR16 *optionsStr, UINT32 optionsSize)
     optionsStr = SkipWord(optionsStr, &optionsSize);
 
     do {
-        int optIdx;
+        size_t optIdx;
         opt = 0;
         optionsStr = SkipSpaces(optionsStr, &optionsSize);
 
@@ -149,6 +156,172 @@ ProcessOptions(CHAR16 *optionsStr, UINT32 optionsSize)
         kernelCmdLine[i] = (char)optionsStr[i];
     }
     kernelCmdLine[optionsSize] = 0;
+
+    return EFI_SUCCESS;
+}
+
+static void *
+_elf_malloc(size_t size)
+{
+    return AllocatePool(size);
+}
+
+static void
+_elf_mfree(void *ptr)
+{
+    FreePool(ptr);
+}
+
+static void *
+_elf_mrealloc(void *ptr, size_t size)
+{
+    FreePool(ptr);
+    return AllocatePool(size);
+}
+
+typedef struct {
+    UINTN size;
+    INTN cur_offset;
+    SIMPLE_READ_FILE file;
+    EFI_FILE_HANDLE hFile;
+} ImageFile;
+
+static void
+CloseImageFile(Elf_File *file)
+{
+    if (file->f_priv) {
+        FreePool(file->f_priv);
+    }
+    FreePool(file);
+}
+
+static size_t
+SeekImageFile(Elf_File *file, size_t offset, Elf_Seek_Whence whence)
+{
+    ImageFile *img = (ImageFile *)file->f_priv;
+    switch (whence) {
+    case ELF_SEEK_SET:
+        img->cur_offset = offset;
+        break;
+    case ELF_SEEK_CUR:
+        img->cur_offset += offset;
+        break;
+    case ELF_SEEK_END:
+        img->cur_offset = img->size + offset;
+        break;
+    }
+    if (img->cur_offset < 0) {
+        img->cur_offset = 0;
+    } else if (img->cur_offset > img->size) {
+        img->cur_offset = img->size;
+    }
+    return img->cur_offset;
+}
+
+static size_t
+ReadImageFile(Elf_File *file, char *buffer, size_t len)
+{
+    ImageFile *img = (ImageFile *)file->f_priv;
+    UINTN read_len;
+    if (read_len > img->size - img->cur_offset) {
+        read_len = img->size - img->cur_offset;
+    } else {
+        read_len = len;
+    }
+    if (read_len && EFI_ERROR(ReadSimpleReadFile(img->file, img->cur_offset,
+                                                 &read_len, buffer))) {
+
+        return -1;
+    }
+    img->cur_offset += read_len;
+    return read_len;
+}
+
+static Elf_File *
+OpenImageFile(SIMPLE_READ_FILE file)
+{
+    Elf_File *ef = (Elf_File *)AllocatePool(sizeof(*ef));
+    if (!ef) {
+        DbgPrint(D_INFO, "Memory allocation failed\n");
+        return NULL;
+    }
+
+    RtZeroMem(ef, sizeof(*ef));
+    ef->f_priv = AllocatePool(sizeof(ImageFile));
+    if (!ef->f_priv) {
+        DbgPrint(D_INFO, "Memory allocation failed\n");
+        CloseImageFile(ef);
+        return NULL;
+    }
+    ef->Close = CloseImageFile;
+    ef->Seek = SeekImageFile;
+    ef->Read = ReadImageFile;
+
+    ImageFile *img = (ImageFile *)ef->f_priv;
+    RtZeroMem(img, sizeof(*img));
+    img->file = file;
+    img->hFile = GetSimpleReadFileHandle(img->file);
+
+    /* Get file size */
+    EFI_FILE_INFO *info = LibFileInfo(img->hFile);
+    if (!info) {
+        DbgPrint(D_INFO, "Failed to get file info\n");
+        CloseImageFile(ef);
+        return NULL;
+    }
+    img->size = info->FileSize;
+    FreePool(info);
+
+    return ef;
+}
+
+static EFI_STATUS
+LoadImage(SIMPLE_READ_FILE file)
+{
+    elf_malloc = _elf_malloc;
+    elf_mfree = _elf_mfree;
+    elf_mrealloc = _elf_mrealloc;
+
+    Elf_File *ef = OpenImageFile(file);
+    if (!ef) {
+        Print(L"Failed to open image file\n");
+        return EFI_LOAD_ERROR;
+    }
+
+    if (elf_version(EV_CURRENT) == EV_NONE) {
+        CloseImageFile(ef);
+        Print(L"ELF library initialization failed: %a", elf_errmsg(-1));
+        return EFI_LOAD_ERROR;
+    }
+
+    Elf *elf = elf_begin(ef, ELF_C_READ, NULL);
+    if (!elf) {
+        CloseImageFile(ef);
+        Print(L"Failed to open ELF file: %a\n", elf_errmsg(-1));
+        return EFI_LOAD_ERROR;
+    }
+
+    if (elf_kind(elf) != ELF_K_ELF) {
+        Print(L"Invalid type of ELF binary: %d\n", elf_kind(elf));
+        elf_end(elf);
+        return EFI_LOAD_ERROR;
+    }
+
+    Elf64_Ehdr *ehdr = elf64_getehdr(elf);
+    if (!ehdr) {
+        Print(L"Failed to get ELF execution header: %a\n", elf_errmsg(-1));
+        elf_end(elf);
+        return EFI_LOAD_ERROR;
+    }
+
+    Elf64_Phdr *phdr = elf64_getphdr(elf);
+    Elf64_Half segmentIdx;
+    for (segmentIdx = 0; segmentIdx < ehdr->e_phnum; segmentIdx++) {
+        Print(L"Segment: vaddr=%x, paddr=%x, size=%x\n", phdr->p_vaddr, phdr->p_paddr, phdr->p_memsz);
+        phdr = (Elf64_Phdr *)((char *)phdr + ehdr->e_phentsize);
+    }
+
+    elf_end(elf);
 
     return EFI_SUCCESS;
 }
@@ -194,7 +367,7 @@ LoadKernel()
     }
 
     if (!EFI_ERROR(rc)) {
-        //load kernel
+        rc = LoadImage(readHandle);
     }
 
     if (readHandle) {

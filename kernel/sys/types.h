@@ -13,7 +13,7 @@
 /** @file types.h
  * Common system types.
  *
- * This files contains definitions for most of commonly used system types. It
+ * This file contains definitions for most of commonly used system types. It
  * relies on machine-dependent types defined in file md_types.h.
  */
 
@@ -66,6 +66,10 @@ typedef u64                 uint64_t;
 #define QUAD_MIN    LONG_MIN
 
 #define VSIZE_MAX   TYPE_UINT_MAX(vsize_t)
+
+#ifndef __SIZE_TYPE__
+#define __SIZE_TYPE__ vsize_t
+#endif
 
 typedef __SIZE_TYPE__ size_t;
 

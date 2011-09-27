@@ -22,6 +22,9 @@
 
 #ifndef ASSEMBLER
 #include <types.h>
+#include <compat_types.h>
+#include <gcc.h>
+#include <stdlib.h>
 
 /*
  * The condition in assert is not evaluated in non-DEBUG versions, so
