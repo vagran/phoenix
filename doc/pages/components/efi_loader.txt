@@ -6,6 +6,8 @@ Different variants of kernel loading with different command line arguments shoul
 
 The boot-loader is built using approach which is implemented in [[https://sourceforge.net/projects/gnu-efi/|GNU EFI project]] -- PE+ executable is built by GCC with speculative linking and further converting to PE+ image using "objcopy" utility.
 
+The EFI application binary must not have unresolved symbols (Qemu EFI implementation stalls on such binary execution). So "--unresolved-symbols=report-all" option is used for the linker.
+
 ===== References =====
 
   * [[http://www.uefi.org/specs/|UEFI specification]]

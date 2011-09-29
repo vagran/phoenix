@@ -20,12 +20,17 @@
  */
 
 #include <sys.h>
+#include <boot.h>
 
-extern "C" int start();
+int a, b = 237;
+
+extern "C" int start(BootParam *bootParam);
 
 int
-start()
+start(BootParam *bootParam UNUSED)
 {
-
+    while (true) {
+        pause();
+    }
     return 0;
 }

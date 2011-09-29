@@ -18,6 +18,7 @@ SECTIONS
     .text :
     {
         *(.text)
+        *(.text.*)
     }
     
     .reloc :

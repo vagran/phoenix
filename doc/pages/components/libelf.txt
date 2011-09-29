@@ -1,0 +1,9 @@
+====== libelf library ======
+
+Libelf library was ported to Phoenix for unifying ELF files accessing interface. It is widely used in the system -- by [[athena:product:phoenix:components:efi_loader|EFI boot loader]] to load the kernel ELF image, by the kernel to load containers represented by ELF files, by run-time linker to link containers executable images against shared libraries, etc.
+
+The library has been modified to fit into Phoenix environment:
+  * File and memory interfaces were made portable. This is required to make the code operational in any environment -- as EFI application, part of the kernel or in user space code.
+  * Code cleaned up and made compilable. All the library files are compiled as C++ files with strict validation rules (e.g. types checking). This required some code clean up, such as additional types casting to met the compiler validity requirements.
+  * Some components and functionality which are not required for Phoenix were removed from the library (e.g. nlist POSIX compatible function).
+  * C++ wrappers created for C++ code which uses the library. The wrappers include new classes for all objects manipulated by the library.

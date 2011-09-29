@@ -16,11 +16,10 @@ ifndef LOAD_ADDRESS
 LOAD_ADDRESS = $(DEF_LOAD_ADDRESS)
 endif
 
-COMPILE_FLAGS += -pipe -Werror -Wall -fno-stack-protector  -fno-builtin \
+COMPILE_FLAGS += -pipe -Werror -Wall -Wextra -fno-stack-protector -fno-builtin \
 	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
 
-COMPILE_FLAGS_CXX += -fno-exceptions -fno-rtti -Wno-invalid-offsetof \
-	-fno-default-inline
+COMPILE_FLAGS_CXX += -fno-exceptions -fno-rtti
 COMPILE_FLAGS_C +=
 COMPILE_FLAGS_ASM += -DASSEMBLER
 LINK_FLAGS += -nodefaultlibs -nostartfiles -nostdinc -nostdinc++ \

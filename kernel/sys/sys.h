@@ -25,6 +25,7 @@
 #include <compat_types.h>
 #include <gcc.h>
 #include <stdlib.h>
+#include <vm.h>
 
 /*
  * The condition in assert is not evaluated in non-DEBUG versions, so
@@ -34,14 +35,14 @@
 //#define ASSERT(x)   { if (unlikely(!(x))) __assert(__FILE__, __LINE__, __STR(x)); }
 #define ASSERT(x)
 #ifdef DEBUG
-#define assert(x)   ASSERT(x)
+#define Assert(x)       ASSERT(x)
 #else /* DEBUG */
-#define assert(x)
+#define Assert(x)
 #endif /* DEBUG */
-#define ensure(x)   ASSERT(x)
-extern void __assert(const char *file, u32 line, const char *cond);
-#define NotReached()    panic("Unreachable code reached")
-#define USED(x)     (void)(x)
+#define Ensure(x)       ASSERT(x)
+extern void __Assert(const char *file, u32 line, const char *cond);
+#define NotReached()    Panic("Unreachable code reached")
+#define USED(x)         (void)(x)
 
 #include <cpu_instr.h>
 #include <bitops.h>

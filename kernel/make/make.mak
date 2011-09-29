@@ -7,7 +7,7 @@
 
 include $(PHOENIX_ROOT)/make/makevar.mak
 
-COMPILE_FLAGS = -pipe -Werror -Wall -Wno-invalid-offsetof \
+COMPILE_FLAGS = -pipe -Werror -Wall -Wextra
 	-DKERNEL -fno-stack-protector -fno-default-inline -fno-builtin \
 	-DLOAD_ADDRESS=$(KERNEL_LOAD_ADDRESS) \
 	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)

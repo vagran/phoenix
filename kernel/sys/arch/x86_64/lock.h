@@ -39,7 +39,7 @@ public:
      */
     inline SpinLock(bool isLocked = 0) { _flag = isLocked ? 1 : 0; }
 
-    inline ~SpinLock() { assert(!_flag); }
+    inline ~SpinLock() { Assert(!_flag); }
 
     /** Acquire lock. */
     inline void Lock() {

@@ -24,7 +24,7 @@ extern "C" Cxa::CallbackList _CTOR_LIST, _DTOR_LIST;
  * DSO unloading.
  */
 ASMCALL int
-__cxa_atexit(void (*func)(void *), void * arg, void *dso_handle)
+__cxa_atexit(void (*func)(void *) UNUSED, void *arg UNUSED, void *dso_handle UNUSED)
 {
 #if !defined(KERNEL) && defined (__PIC)
     static RTLinker *linker;
@@ -52,7 +52,7 @@ __cxa_pure_virtual()
 
 /** This ABI function is called on DSO unloading. */
 ASMCALL void
-__cxa_finalize(void *f)
+__cxa_finalize(void *f UNUSED)
 {
 
 }

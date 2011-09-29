@@ -391,6 +391,12 @@ Print (
     );
 
 UINTN
+VPrint (
+    IN CHAR16   *fmt,
+    va_list     args
+    );
+
+UINTN
 SPrint (
     OUT CHAR16  *Str,
     IN UINTN    StrSize,

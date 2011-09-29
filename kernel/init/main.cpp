@@ -13,6 +13,8 @@
 
 #include <sys.h>
 
+int c, d = 237;
+
 int
 Main(void)
 {

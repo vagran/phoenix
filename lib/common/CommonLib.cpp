@@ -20,7 +20,7 @@
  * @ref construct macro.
  */
 void *
-operator new(size_t size, void *location)
+operator new(size_t size UNUSED, void *location)
 {
     return location;
 }

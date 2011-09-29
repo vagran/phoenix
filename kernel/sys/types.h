@@ -14,7 +14,8 @@
  * Common system types.
  *
  * This file contains definitions for most of commonly used system types. It
- * relies on machine-dependent types defined in file md_types.h.
+ * relies on machine-dependent types defined in file md_types.h. Should be
+ * compilable both in C and C++.
  */
 
 #include <md_types.h>
@@ -83,5 +84,39 @@ typedef __builtin_va_list       va_list;
 #define va_arg(ap, type)        __builtin_va_arg((ap), type)
 #define va_copy(dest, src)      __builtin_va_copy((dest), (src))
 #define va_end(ap)              __builtin_va_end(ap)
+
+#ifdef __cplusplus
+
+/** Class representing virtual address type. */
+class Vaddr {
+public:
+    /** Construct virtual address from @ref vaddr_t integer type. */
+    Vaddr(vaddr_t va = 0) { this->_va.va = va; }
+    /** Construct virtual address from pointer type. */
+    Vaddr(void *ptr) { this->_va.ptr = ptr; }
+    /** Assign @ref vaddr_t value to virtual address. */
+    Vaddr &operator=(vaddr_t va) { this->_va.va = va; return *this; }
+    /** Assign pointer value to virtual address. */
+    Vaddr &operator=(void *ptr) { this->_va.ptr = ptr; return *this; }
+    /** Add another virtual address to the current one. */
+    Vaddr &operator+=(const Vaddr &va) { this->_va.va += va._va.va; return *this; }
+    /** Subtract another virtual address from the current one. */
+    Vaddr &operator-=(const Vaddr &va) { this->_va.va -= va._va.va; return *this; }
+    /** Compare virtual addresses. */
+    bool operator==(const Vaddr &va) { return this->_va.va == va._va.va; }
+    /** Compare virtual addresses. */
+    bool operator!=(const Vaddr &va) { return this->_va.va != va._va.va; }
+    /** Cast virtual address value to @ref vaddr_t type. */
+    operator vaddr_t() { return this->_va.va; }
+    /** Cast virtual address value to pointer. */
+    operator void *() { return this->_va.ptr; }
+private:
+    union {
+        vaddr_t va;
+        void *ptr;
+    } _va;
+};
+
+#endif /* __cplusplus */
 
 #endif /* TYPES_H_ */

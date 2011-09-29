@@ -13,8 +13,9 @@
 #include <efi.h>
 #include <efilib.h>
 
-
 #include <libelf.h>
+
+#include "loader.h"
 
 /* Kernel command line converted to ASCII */
 char *kernelCmdLine;
@@ -219,20 +220,28 @@ SeekImageFile(Elf_File *file, size_t offset, Elf_Seek_Whence whence)
 }
 
 static size_t
-ReadImageFile(Elf_File *file, char *buffer, size_t len)
+ReadImageFileOff(Elf_File *file, u64 offset, char *buffer, size_t len)
 {
     ImageFile *img = (ImageFile *)file->f_priv;
     UINTN read_len;
-    if (read_len > img->size - img->cur_offset) {
-        read_len = img->size - img->cur_offset;
+    if (len > img->size - offset) {
+        read_len = img->size - offset;
     } else {
         read_len = len;
     }
-    if (read_len && EFI_ERROR(ReadSimpleReadFile(img->file, img->cur_offset,
+    if (read_len && EFI_ERROR(ReadSimpleReadFile(img->file, offset,
                                                  &read_len, buffer))) {
 
-        return -1;
+        return 0;
     }
+    return read_len;
+}
+
+static size_t
+ReadImageFile(Elf_File *file, char *buffer, size_t len)
+{
+    ImageFile *img = (ImageFile *)file->f_priv;
+    size_t read_len = ReadImageFileOff(file, img->cur_offset, buffer, len);
     img->cur_offset += read_len;
     return read_len;
 }
@@ -275,6 +284,51 @@ OpenImageFile(SIMPLE_READ_FILE file)
     return ef;
 }
 
+void
+LoaderPrint(const WCHAR_T *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    VPrint((WCHAR_T *)fmt, args);
+    va_end(args);
+}
+
+int
+LoaderGetMemory(vaddr_t address, u64 pages)
+{
+    EFI_STATUS rc;
+
+    rc = uefi_call_wrapper(BS->AllocatePages, 4,
+                           AllocateAddress,
+                           EfiRuntimeServicesCode,
+                           pages,
+                           &address);
+    return EFI_ERROR(rc) ? -1 : 0;
+}
+
+int
+LoaderReadFile(Elf_File *file, u64 offset, u64 size, void *mem)
+{
+    while (size) {
+        size_t num_read = ReadImageFileOff(file, offset, mem, size);
+        if (!num_read) {
+            return -1;
+        }
+        ASSERT(size >= num_read);
+        size -= num_read;
+        offset += num_read;
+    }
+    return 0;
+}
+
+static EFI_STATUS
+StartKernel(vaddr_t entry_addr)
+{
+
+    return EFI_LOAD_ERROR;
+}
+
 static EFI_STATUS
 LoadImage(SIMPLE_READ_FILE file)
 {
@@ -301,29 +355,14 @@ LoadImage(SIMPLE_READ_FILE file)
         return EFI_LOAD_ERROR;
     }
 
-    if (elf_kind(elf) != ELF_K_ELF) {
-        Print(L"Invalid type of ELF binary: %d\n", elf_kind(elf));
-        elf_end(elf);
-        return EFI_LOAD_ERROR;
-    }
-
-    Elf64_Ehdr *ehdr = elf64_getehdr(elf);
-    if (!ehdr) {
-        Print(L"Failed to get ELF execution header: %a\n", elf_errmsg(-1));
-        elf_end(elf);
-        return EFI_LOAD_ERROR;
-    }
-
-    Elf64_Phdr *phdr = elf64_getphdr(elf);
-    Elf64_Half segmentIdx;
-    for (segmentIdx = 0; segmentIdx < ehdr->e_phnum; segmentIdx++) {
-        Print(L"Segment: vaddr=%x, paddr=%x, size=%x\n", phdr->p_vaddr, phdr->p_paddr, phdr->p_memsz);
-        phdr = (Elf64_Phdr *)((char *)phdr + ehdr->e_phentsize);
-    }
-
+    vaddr_t entry_addr;
+    EFI_STATUS rc = LoadElfImage(ef, elf, &entry_addr) ? EFI_LOAD_ERROR : EFI_SUCCESS;
     elf_end(elf);
 
-    return EFI_SUCCESS;
+    if (!EFI_ERROR(rc)) {
+        rc = StartKernel(entry_addr);
+    }
+    return rc;
 }
 
 static EFI_STATUS

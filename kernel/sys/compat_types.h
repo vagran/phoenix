@@ -15,7 +15,8 @@
  * Compatibility types definitions.
  *
  * This file defines compatibility types (e.g. POSIX types) required for
- * 3rd parties components ported to the Phoenix environment.
+ * 3rd parties components ported to the Phoenix environment. Should be
+ * compilable both in C and C++.
  */
 
 /** Timestamp compatibility type */

@@ -10,14 +10,15 @@
 /** @file defs.h
  * Common system definitions.
  *
- * Here are defined common macros used across whole the system.
+ * Here are defined common macros used across whole the system. Should be
+ * compilable both in C and C++.
  */
 
 #ifndef DEFS_H_
 #define DEFS_H_
 
 /** Get offset of member @a member in structure or class @a type. */
-#define offsetof(type, member)      __builtin_offsetof (type, member)
+#define OFFSETOF(type, member)      __builtin_offsetof(type, member)
 
 #define __CONCAT2(x, y)             x##y
 /** Macro for concatenating identifiers. */
@@ -95,7 +96,7 @@
  *
  * Usage example:
  * @code
- * int SomeFunction(int UNUSED someParam) { ... }
+ * int SomeFunction(int someParam UNUSED) { ... }
  * @endcode
  */
 #define UNUSED                      __attribute__((unused))
