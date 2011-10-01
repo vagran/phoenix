@@ -24,13 +24,12 @@
 
 int a, b = 237;
 
-extern "C" int start(BootParam *bootParam);
+extern "C" void start(BootParam *bootParam);
 
-int
+void
 start(BootParam *bootParam UNUSED)
 {
     while (true) {
         pause();
     }
-    return 0;
 }

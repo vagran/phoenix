@@ -180,12 +180,12 @@ Returns:
         return FALSE;
     }
 
-    // clear old crc from header
+    // clear old CRC from header
     OrgCrc = Hdr->CRC32;
     Hdr->CRC32 = 0;
     Crc = CalculateCrc((UINT8 *)Hdr, Size);
 
-    // set restults
+    // set results
     Hdr->CRC32 = OrgCrc;
 
     // return status
@@ -206,7 +206,7 @@ CalculateCrc (
 {
     UINTN Crc;
 
-    // compute crc
+    // compute CRC
     Crc = 0xffffffff;
     while (Size) {
         Crc = (Crc >> 8) ^ CRCTable[(UINT8) Crc ^ *pt];

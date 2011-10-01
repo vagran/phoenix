@@ -9,6 +9,7 @@
 
 #include <types.h>
 #include <compat_types.h>
+#include <boot.h>
 
 #include <efi.h>
 #include <efilib.h>
@@ -18,9 +19,11 @@
 #include "loader.h"
 
 /* Kernel command line converted to ASCII */
-char *kernelCmdLine;
+static char *kernelCmdLine;
 /* Kernel file name */
-CHAR16 *kernelImage;
+static CHAR16 *kernelImage;
+/* Boot parameters block passed to the kernel entry point. */
+static BootParam bootParam;
 
 /* Boot loader options */
 
@@ -33,6 +36,7 @@ static struct Option {
     { L"--debugger", &optDebugger }
 };
 
+static EFI_HANDLE imageHandle;
 static EFI_LOADED_IMAGE *loadedImage;
 
 static inline int
@@ -146,7 +150,7 @@ ProcessOptions(CHAR16 *optionsStr, UINT32 optionsSize)
     RtCopyMem(kernelImage, optionsStr, (nextPtr - optionsStr) * sizeof(CHAR16));
     kernelImage[nextPtr - optionsStr] = 0;
 
-    /* Convert kernel command line to ACII */
+    /* Convert kernel command line to ASCII */
     kernelCmdLine = (char *)AllocatePool(optionsSize / sizeof(CHAR16) + 1);
     if (!kernelCmdLine) {
         FreePool(kernelImage);
@@ -322,11 +326,58 @@ LoaderReadFile(Elf_File *file, u64 offset, u64 size, void *mem)
     return 0;
 }
 
+typedef void (*KernelEntry)(BootParam *bootParam);
+
 static EFI_STATUS
 StartKernel(vaddr_t entry_addr)
 {
+    /* Prepare boot parameters */
 
-    return EFI_LOAD_ERROR;
+    /* Kernel command line */
+    bootParam.cmdLine = kernelCmdLine;
+    for (bootParam.cmdLineSize = 0;
+         bootParam.cmdLine[bootParam.cmdLineSize];
+         bootParam.cmdLineSize++);
+    bootParam.cmdLineSize++;
+
+    /* Get memory map */
+    UINTN mapKey, mapDescSize, numEntries;
+    UINT32 mapDescVersion;
+    EFI_MEMORY_DESCRIPTOR *map = LibMemoryMap(&numEntries, &mapKey,
+                                              &mapDescSize, &mapDescVersion);
+    if (!map) {
+        Print(L"Failed to get memory map\n");
+        return EFI_LOAD_ERROR;
+    }
+    bootParam.memMap = map;
+    bootParam.memMapNumDesc = numEntries;
+    bootParam.memMapDescSize = mapDescSize;
+    bootParam.memMapDescVersion = mapDescVersion;
+
+    /* Take control over the system */
+    EFI_STATUS rc = uefi_call_wrapper(BS->ExitBootServices, 2,
+                                      imageHandle, mapKey);
+    if (EFI_ERROR(rc)) {
+        Print(L"Failed to exit boot services (%r)\n", rc);
+        return rc;
+    }
+    /* The system is ours */
+    ST->ConsoleInHandle = NULL;
+    ST->ConIn = NULL;
+    ST->ConsoleOutHandle = NULL;
+    ST->ConOut = NULL;
+    ST->StandardErrorHandle = NULL;
+    ST->StdErr = NULL;
+    ST->BootServices = NULL;
+    SetCrc(&ST->Hdr);
+    bootParam.efiSystemTable = ST;
+
+    /* Pass control to the kernel */
+    KernelEntry ke = (KernelEntry)entry_addr;
+    ke(&bootParam);
+
+    /* NOT REACHED */
+    return EFI_SUCCESS;
 }
 
 static EFI_STATUS
@@ -426,6 +477,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
     EFI_STATUS status, rc;
 
     InitializeLib(image, systab);
+    imageHandle = image;
 
     status = uefi_call_wrapper(BS->OpenProtocol,
                                6,

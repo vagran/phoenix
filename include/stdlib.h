@@ -17,6 +17,8 @@
  * Phoenix. Used mainly by C code and low-level C++ support code.
  */
 
+#include <crc.h>
+
 /** Initialize object at predefined location.
  *
  * Can be used for code which is running without C++ run-time support startup

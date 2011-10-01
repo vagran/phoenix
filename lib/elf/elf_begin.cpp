@@ -389,7 +389,7 @@ elf_memory(char *image, size_t size)
         seterr(ERROR_VERSION_UNSET);
         return NULL;
     } else if (size == 0 || image == NULL) {
-        /* TODO: set error code? */
+        seterr(ERROR_INTERNAL);
         return NULL;
     }
 

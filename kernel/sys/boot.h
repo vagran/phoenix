@@ -17,13 +17,14 @@
  */
 
 /** The kernel gets a pointer to this structure as its entry point argument. */
-struct BootParam {
-    size_t size; /**< This structure full size. */
+typedef struct {
     void *efiSystemTable; /**< Pointer to the EFI system table. */ //XXX should not be void *
-    /** NULL terminated string with the kernel arguments.
-     * This member is a variable length array of characters.
-     */
-    char cmdLine[1];
-};
+    u32 cmdLineSize; /**< Size of @a cmdLine in bytes. */
+    char *cmdLine; /**< NULL terminated string with the kernel arguments. */
+    void *memMap; /**< Memory map. Describes all available memory. */
+    u32 memMapNumDesc; /**< Number of descriptors in @a memMap. */
+    u32 memMapDescSize; /**< One descriptor size in @a memMap. */
+    u32 memMapDescVersion; /**< Descriptor version in @a memMap. */
+} BootParam;
 
 #endif /* BOOT_H_ */

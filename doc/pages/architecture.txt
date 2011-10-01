@@ -4,7 +4,7 @@ Here is a brief overview of the Phoenix system architecture.
 
 ===== Hardware =====
 
-Phoenix is designed to run on 64-bits CPUs compatible with Intel(r) 64 architecture. Overall platform HW architecture should be standard legacy-free PC architecture. Generally, it is a common approach in Phoenix to support only the modern and even not yet fully standardized (but which obviously will become new standards in the future) architecture specifications. This applies to a platform hardware as well as to its software and firmware (e.g. BIOS).
+Phoenix is designed to run on 64-bits CPUs (the first supported architecture is Intel(r) 64). Overall platform HW architecture should be standard legacy-free PC architecture. Generally, it is a common approach in Phoenix to support only the modern and even not yet fully standardized (but which obviously will become new standards in the future) architecture specifications. This applies to a platform hardware as well as to its software and firmware (e.g. BIOS).
 
 ACPI((Advanced Configuration and Power Interface)) is the main source of hardware configuration information. APM((Advanced Power Management)), the MP((MultiProcessor)) Specification and the PnP((Plug and Play)) BIOS Specification are claimed legacy, completely replaced by ACPI and not supported.
 
@@ -15,7 +15,7 @@ Only [[http://en.wikipedia.org/wiki/Extensible_Firmware_Interface|EFI]]((Extensi
 
 ===== Disks =====
 
-Disks with GUID partitions table are used. Phoenix system partition type GUID is **57c427d2-4f46-45dd-9e15-237a36f4a1ec**.
+Disks with GUID partitions table are used. Phoenix system partition type GUID is **57c427d2-4f46-45dd-9e15-237a36f4a1ec**. Legacy MBR partition tables are not supported.
 
 ===== Virtual memory =====
 
@@ -50,7 +50,7 @@ The kernel is aware of multiprocessing but it does not initialize APs. Instead i
 
 ==== Interrupts processing ====
 
-As by concept the kernel does not manage devices. Interrupts controllers also have separate driver for them. The driver initializes interrupts controllers and provides interface for other drivers for registering their interrupts handlers. The kernel creates entry points for all possible IRQs (256) and allows user space code to subscribe on IRQs invocation. When IRQ entry point is invoked the kernel propagates the request to the Threads Manager (before switching to the user space, CCE for system call invocation is removed and TM is invoked in the context of current thread) which checks which threads are waiting for this event. New CCE is appended for them to invoke required container entry and the threads are activated (if were sleeping). Return address points to special kernel entry which will switch to the previous CCE. CPU exceptions in kernel mode are fatal except page fault which can be handled by a corresponding pager.
+As by concept the kernel does not manage devices. Interrupts controllers also have separate driver for them. The driver initializes interrupts controllers and provides interface for other drivers for registering their interrupts handlers. The kernel creates entry points for all possible IRQs (256) and allows user space code to subscribe on IRQs invocation. When IRQ entry point is invoked the kernel propagates the request to the Threads Manager (before switching to the user space, CCE for system call invocation is removed and TM is invoked in the context of the current thread) which checks which threads are waiting for this event. New CCE is appended for them to invoke the required container entry and the threads are activated (if were sleeping). Return address points to a special kernel entry which will switch to the previous CCE. CPU exceptions in kernel mode are fatal except the page fault which can be handled by a corresponding pager.
 
 ===== System bootstrap =====
 

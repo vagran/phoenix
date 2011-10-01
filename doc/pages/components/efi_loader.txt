@@ -1,12 +1,80 @@
 ====== EFI boot-loader ======
 
-The Phoenix kernel is loaded by EFI boot-loader and this is the only option for its loading. The boot-loader is a simple EFI application which task is to load the kernel ELF image in the memory (libelf is used for that) and pass control to it providing EFI handler, EFI system tables pointer and optional command line arguments which were provided to the boot-loader itself.
+The Phoenix kernel is loaded by EFI boot-loader and this is the only option for its loading. The boot-loader is a simple EFI application which task is to load the kernel ELF image in the memory (libelf is used for that) and pass control to it providing EFI system table pointer and optional command line arguments which were provided to the boot-loader itself.
 
 Different variants of kernel loading with different command line arguments should be configured using EFI built-in boot manager. The first argument to the boot-loader is treated as kernel image file name. Whole the provided command line is propagated to the kernel unchanged.
 
 The boot-loader is built using approach which is implemented in [[https://sourceforge.net/projects/gnu-efi/|GNU EFI project]] -- PE+ executable is built by GCC with speculative linking and further converting to PE+ image using "objcopy" utility.
 
 The EFI application binary must not have unresolved symbols (Qemu EFI implementation stalls on such binary execution). So "--unresolved-symbols=report-all" option is used for the linker.
+
+===== Kernel boot parameters =====
+
+Pointer to the following block is passed to the kernel as the argument to its entry point:
+
+<code cpp>
+/** The kernel gets a pointer to this structure as its entry point argument. */
+typedef struct {
+    void *efiSystemTable; /**< Pointer to the EFI system table. */ //XXX should not be void *
+    u32 cmdLineSize; /**< Size of @a cmdLine in bytes. */
+    char *cmdLine; /**< NULL terminated string with the kernel arguments. */
+    void *memMap; /**< Memory map. Describes all available memory. */
+    u32 memMapNumDesc; /**< Number of descriptors in @a memMap. */
+    u32 memMapDescSize; /**< One descriptor size in @a memMap. */
+    u32 memMapDescVersion; /**< Descriptor version in @a memMap. */
+} BootParam;
+</code>
+
+===== Debugging EFI loader =====
+
+Launch GDB. You need to specify some file to use as the target binary - you can specify EFI binary with debug symbols but it will have no sense for debugging because the image will be relocated to different address. Note that in the example code above the actual image base address is output. It is required to properly load file with symbols. Let's say after you have launched your application it provided this output: 
+<code>
+Image base: 0x2EE09000
+</code>
+
+So now you need to start GDB, connect to local TCP port 1234 where Qemu is waiting for GDB connection and load image with symbols to relocated address. We need to specify relocated addresses for .text and .data sections. Their addresses in non-relocated binary should be added to image base which is provided in the output above: 
+<code>
+# gdb phoenix.efi 
+GNU gdb (GDB) 7.3
+Copyright (C) 2011 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-unknown-linux-gnu".
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>...
+Reading symbols from /home/John/myOS/source/kernel/boot/build/DEBUG/phoenix.efi...(no debugging symbols found)...done.
+(gdb) info files 
+Symbols from "/home/vagran/projects/phoenix/source/phoenix/kernel/boot/build/DEBUG/phoenix.efi".
+Local exec file:
+	`/home/vagran/projects/phoenix/source/phoenix/kernel/boot/build/DEBUG/phoenix.efi', file type pei-x86-64.
+	Entry point: 0x6000
+	0x0000000000006000 - 0x000000000002dc60 is .text
+	0x000000000002dc60 - 0x000000000002dc6a is .reloc
+	0x000000000002e000 - 0x0000000000033d48 is .data
+	0x0000000000034000 - 0x00000000000340f0 is .dynamic
+	0x0000000000035000 - 0x0000000000037550 is .rela
+	0x0000000000038000 - 0x000000000003a8f8 is .dynsym
+(gdb) file
+No executable file now.
+No symbol file now.
+(gdb) add-symbol-file debug.phoenix.efi 0x2ee0f000 -s .data 0x2ee37000
+add symbol table from file "debug.phoenix.efi" at
+	.text_addr = 0x2ee0f000
+	.data_addr = 0x2ee37000
+(y or n) y
+Reading symbols from /home/vagran/projects/phoenix/source/phoenix/kernel/boot/build/DEBUG/debug.phoenix.efi...done.
+(gdb) set architecture i386:x86-64:intel
+The target architecture is assumed to be i386:x86-64:intel
+(gdb) target remote :1234
+Remote debugging using :1234
+WaitDebugger () at loader/main.c:80
+80	    while (wait) {
+(gdb) set variable wait = 0
+</code>
+
+We need to unload executable binary by "file" command after sections layout is displayed because otherwise its symbols will override debug symbols loaded by "add-symbol-file" command (at least for data section). You do not need to load it each time because sections addresses will change only after next recompilation. Alternatively "objdump" utility can be used to dump sections.
 
 ===== References =====
 

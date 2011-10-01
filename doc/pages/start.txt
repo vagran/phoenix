@@ -1,5 +1,7 @@
 ====== Phoenix OS ======
 
+{{:athena:product:phoenix:phoenix256.png? |}}
+
 Phoenix OS -- object-oriented orthogonally persistent operating system. It is completely written in C++. Main features and ideas:
   * PC platform is the main hardware set for which PhobOS is designed. Only 64-bits systems are supported. Full SMP support is implemented.
   * Phoenix design is focused on nowadays and future technologies. So it has very limited or almost none support of legacy devices and interfaces.

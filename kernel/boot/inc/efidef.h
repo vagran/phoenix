@@ -125,11 +125,11 @@ typedef enum {
     MaxAllocateType
 } EFI_ALLOCATE_TYPE;
 
-//Preseve the attr on any range supplied.
-//ConventialMemory must have WB,SR,SW when supplied.
-//When allocating from ConventialMemory always make it WB,SR,SW
-//When returning to ConventialMemory always make it WB,SR,SW
-//When getting the memory map, or on RT for runtime types
+// Preserve the attributes on any range supplied.
+// ConventialMemory must have WB,SR,SW when supplied.
+// When allocating from ConventialMemory always make it WB,SR,SW
+// When returning to ConventialMemory always make it WB,SR,SW
+// When getting the memory map, or on RT for runtime types
 
 
 typedef enum {

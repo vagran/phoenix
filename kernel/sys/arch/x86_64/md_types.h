@@ -26,15 +26,19 @@ typedef unsigned short      u16; /**< Unsigned 16 bits integer */
 typedef unsigned int        u32; /**< Unsigned 32 bits integer */
 typedef unsigned long       u64; /**< Unsigned 64 bits integer */
 
-#if (__SIZEOF_POINTER__ == 8)
-/** Integer type which safely can store pointer */
+#ifndef __SIZEOF_POINTER__
+#define __SIZEOF_POINTER__ sizeof(void *)
+#endif
+
+#if __SIZEOF_POINTER__ == 8
+/** Integer type which can safely store a pointer */
 typedef i64                 intptr_t;
-/** Unsigned integer type which safely can store pointer */
+/** Unsigned integer type which can safely store a pointer */
 typedef u64                 uintptr_t;
 #else
-/** Integer type which safely can store pointer */
+/** Integer type which can safely store a pointer */
 typedef i32                 intptr_t;
-/** Unsigned integer type which safely can store pointer */
+/** Unsigned integer type which can safely store a pointer */
 typedef u32                 uintptr_t;
 #endif
 

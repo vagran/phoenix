@@ -14,8 +14,6 @@
 #ifndef GCC_H_
 #define GCC_H_
 
-#include <sys.h>
-
 #ifdef __cplusplus
 
 /** C++ ABI support class. */

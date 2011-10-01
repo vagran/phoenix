@@ -65,7 +65,6 @@ LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr)
         }
 
         if (LoaderReadFile(file, start_off, file_size, start_pa)) {
-
             LoaderPrint(L"Failed to load segment %d bytes at %x\n",
                         file_size, start_off);
             return -1;

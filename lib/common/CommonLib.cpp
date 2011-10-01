@@ -1808,16 +1808,17 @@ __sccl(char *tab, const u8 *fmt)
     if (c == '^') {
         v = 1;      /* default => accept */
         c = *fmt++; /* get new first char */
-    } else
+    } else {
         v = 0;      /* default => reject */
-
-    /* XXX: Will not work if sizeof(tab*) > sizeof(char) */
-    for (n = 0; n < 256; n++) {
-        tab[n] = v;    /* memset(tab, v, 256) */
     }
 
-    if (c == 0)
-        return fmt - 1;/* format ended before closing ] */
+    for (n = 0; n < 256; n++) {
+        tab[n] = v;
+    }
+
+    if (c == 0) {
+        return fmt - 1; /* format ended before closing ] */
+    }
 
     /*
      * Now set the entries corresponding to the actual scanset

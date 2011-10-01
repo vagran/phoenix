@@ -91,25 +91,25 @@ typedef __builtin_va_list       va_list;
 class Vaddr {
 public:
     /** Construct virtual address from @ref vaddr_t integer type. */
-    Vaddr(vaddr_t va = 0) { this->_va.va = va; }
+    Vaddr(vaddr_t va = 0) { _va.va = va; }
     /** Construct virtual address from pointer type. */
-    Vaddr(void *ptr) { this->_va.ptr = ptr; }
+    Vaddr(void *ptr) { _va.ptr = ptr; }
     /** Assign @ref vaddr_t value to virtual address. */
-    Vaddr &operator=(vaddr_t va) { this->_va.va = va; return *this; }
+    Vaddr &operator=(vaddr_t va) { _va.va = va; return *this; }
     /** Assign pointer value to virtual address. */
-    Vaddr &operator=(void *ptr) { this->_va.ptr = ptr; return *this; }
+    Vaddr &operator=(void *ptr) { _va.ptr = ptr; return *this; }
     /** Add another virtual address to the current one. */
-    Vaddr &operator+=(const Vaddr &va) { this->_va.va += va._va.va; return *this; }
+    Vaddr &operator+=(const Vaddr &va) { _va.va += va._va.va; return *this; }
     /** Subtract another virtual address from the current one. */
-    Vaddr &operator-=(const Vaddr &va) { this->_va.va -= va._va.va; return *this; }
+    Vaddr &operator-=(const Vaddr &va) { _va.va -= va._va.va; return *this; }
     /** Compare virtual addresses. */
-    bool operator==(const Vaddr &va) { return this->_va.va == va._va.va; }
+    bool operator==(const Vaddr &va) { return _va.va == va._va.va; }
     /** Compare virtual addresses. */
-    bool operator!=(const Vaddr &va) { return this->_va.va != va._va.va; }
+    bool operator!=(const Vaddr &va) { return _va.va != va._va.va; }
     /** Cast virtual address value to @ref vaddr_t type. */
-    operator vaddr_t() { return this->_va.va; }
+    operator vaddr_t() { return _va.va; }
     /** Cast virtual address value to pointer. */
-    operator void *() { return this->_va.ptr; }
+    operator void *() { return _va.ptr; }
 private:
     union {
         vaddr_t va;
