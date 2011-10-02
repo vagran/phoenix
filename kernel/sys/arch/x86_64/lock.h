@@ -44,13 +44,13 @@ public:
     /** Acquire lock. */
     inline void Lock() {
         ASM (
-            "1: lock btsl $0, %0\n"
+            "1: lock btsl $0, %[flag]\n"
             "jnc 2f\n"
             "pause\n"
             "jmp 1b\n"
             "2:\n"
             :
-            : "m"(_flag)
+            : [flag]"m"(_flag)
             : "cc"
             );
     }
@@ -58,9 +58,9 @@ public:
     /** Release lock. */
     inline void Unlock() {
         ASM (
-            "lock btcl $0, %0"
+            "lock btcl $0, %[flag]"
             :
-            : "m"(_flag)
+            : [flag]"m"(_flag)
             : "cc"
             );
     }
@@ -75,12 +75,12 @@ public:
         register int rc;
         ASM (
             "xorl %%eax, %%eax\n"
-            "lock btsl  $0, %1\n"
+            "lock btsl  $0, %[flag]\n"
             "jnc 1f\n"
             "movl $-1, %%eax\n"
             "1:\n"
             : "=&a"(rc)
-            : "m"(_flag)
+            : [flag]"m"(_flag)
             : "cc"
             );
         return rc;

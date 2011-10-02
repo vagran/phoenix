@@ -19,7 +19,7 @@ endif
 COMPILE_FLAGS += -pipe -Werror -Wall -Wextra -fno-stack-protector -fno-builtin \
 	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
 
-COMPILE_FLAGS_CXX += -fno-exceptions -fno-rtti
+COMPILE_FLAGS_CXX += -fno-exceptions -fno-rtti $(CXX_RESTRICTIONS)
 COMPILE_FLAGS_C +=
 COMPILE_FLAGS_ASM += -DASSEMBLER
 LINK_FLAGS += -nodefaultlibs -nostartfiles -nostdinc -nostdinc++ \

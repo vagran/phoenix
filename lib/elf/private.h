@@ -22,7 +22,9 @@
 #ifndef _PRIVATE_H
 #define _PRIVATE_H
 
-#include <sys.h>
+#include <defs.h>
+#include <types.h>
+#include <compat_types.h>
 
 #ifdef DEBUG
 #define ENABLE_DEBUG 1
@@ -351,14 +353,19 @@ extern const size_t _elf_fmsize[2][EV_CURRENT - EV_NONE][ELF_T_NUM][2];
 /*
  * Error codes
  */
-enum{
-    #define __err__(a,b)    a,
-    #include "errors.h"     /* include constants from errors.h */
+enum {
+    #define __err__(a, b)   a,
+    #include "elf_errors.h"     /* include constants from errors.h */
     #undef __err__
     ERROR_NUM
 };
 
 #define seterr(err) (_elf_errno = (err))
+
+#define elf_memset          __builtin_memset
+#define elf_memcpy          __builtin_memcpy
+#define elf_memcmp          __builtin_memcmp
+#define elf_memmove         __builtin_memmove
 
 /*
  * Sizes of data types (external representation)

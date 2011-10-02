@@ -33,7 +33,7 @@ _elf_newehdr(Elf *elf, unsigned cls)
         size = _msize(cls, _elf_version, ELF_T_EHDR);
         elf_assert(size);
         if ((elf->e_ehdr = (char*)elf_malloc(size))) {
-            memset(elf->e_ehdr, 0, size);
+            elf_memset(elf->e_ehdr, 0, size);
             elf->e_ehdr_flags |= ELF_F_DIRTY;
             elf->e_kind = ELF_K_ELF;
             elf->e_class = cls;

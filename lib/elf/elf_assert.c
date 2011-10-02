@@ -20,7 +20,7 @@
 #include "private.h"
 
 #ifdef EFI_APP
-extern "C" i64 DbgAssert (const char *file, i64 lineno, const char *string);
+i64 DbgAssert (const char *file, i64 lineno, const char *string);
 #endif /* EFI_APP */
 
 void __elf_assert(const char *file, unsigned line, const char *cond)

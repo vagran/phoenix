@@ -48,8 +48,8 @@ ASMCALL int tolower(int c);
 ASMCALL char *strncpy(char *dst, const char *src, size_t len);
 ASMCALL int strcmp(const char *s1, const char *s2);
 ASMCALL int strncmp(const char *s1, const char *s2, size_t len);
-ASMCALL char *strchr(const char *str, int c);
-ASMCALL char *strstr(const char *s, const char *find);
+ASMCALL const char *strchr(const char *str, int c);
+ASMCALL const char *strstr(const char *s, const char *find);
 
 ASMCALL bool isalnum(int c);
 ASMCALL bool isalpha(int c);
@@ -66,13 +66,13 @@ ASMCALL int tolower(int c);
 ASMCALL int toupper(int c);
 ASMCALL bool isascii(int c);
 
-ASMCALL long strtol(const char *nptr, char **endptr, int base);
-ASMCALL unsigned long strtoul(const char *nptr, char **endptr, int base);
-ASMCALL i64 strtoq(const char *nptr, char **endptr, int base);
-ASMCALL u64 strtouq(const char *nptr, char **endptr, int base);
+ASMCALL long strtol(const char *nptr, const char **endptr, unsigned base);
+ASMCALL unsigned long strtoul(const char *nptr, const char **endptr, unsigned base);
+ASMCALL i64 strtoq(const char *nptr, const char **endptr, unsigned base);
+ASMCALL u64 strtouq(const char *nptr, const char **endptr, unsigned base);
 
 u32 gethash32(const char *s);
-u32 gethash32(const u8 *data, size_t size);
+u32 gethash32(const void *data, size_t size);
 
 /** Callback function type for @ref _vprintf function.
  *
@@ -83,13 +83,13 @@ typedef void (*PutcFunc)(int c, void *arg);
 size_t _vprintf(const char *fmt, PutcFunc func, void *arg, int radix,
                 va_list ap, int maxOut = -1) __format(printf, 1, 0);
 
-int sprintf(char *buf, const char *fmt, ...) __format(printf, 2, 3);
-int snprintf(char *buf, size_t bufSize, const char *fmt, ...) __format(printf, 3, 4);
-int vsprintf(char *buf, const char *fmt, va_list arg) __format(printf, 2, 0);
-int vsnprintf(char *buf, size_t bufSize, const char *fmt, va_list arg) __format(printf, 3, 0);
+size_t sprintf(char *buf, const char *fmt, ...) __format(printf, 2, 3);
+size_t snprintf(char *buf, size_t bufSize, const char *fmt, ...) __format(printf, 3, 4);
+size_t vsprintf(char *buf, const char *fmt, va_list arg) __format(printf, 2, 0);
+size_t vsnprintf(char *buf, size_t bufSize, const char *fmt, va_list arg) __format(printf, 3, 0);
 
-int sscanf(const char *buf, const char *fmt, ...) __format(scanf, 2, 3);
-int vsscanf(const char *buf, char const *fmt, va_list ap) __format(scanf, 2, 0);
+int sscanf(const char *str, const char *fmt, ...) __format(scanf, 2, 3);
+int vsscanf(const char *str, char const *fmt, va_list ap) __format(scanf, 2, 0);
 
 #ifdef ENABLE_TRACING
 #define trace(fmt, ...) printf(fmt, ## __VA_ARGS__)

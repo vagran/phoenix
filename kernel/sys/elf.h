@@ -508,13 +508,13 @@ typedef struct
 
 /* How to extract and insert information held in the r_info field.  */
 
-#define ELF32_R_SYM(val)        ((val) >> 8)
-#define ELF32_R_TYPE(val)       ((val) & 0xff)
+#define ELF32_R_SYM(val)            ((val) >> 8)
+#define ELF32_R_TYPE(val)           ((val) & 0xff)
 #define ELF32_R_INFO(sym, type)     (((sym) << 8) + ((type) & 0xff))
 
-#define ELF64_R_SYM(i)          ((i) >> 32)
-#define ELF64_R_TYPE(i)         ((i) & 0xffffffff)
-#define ELF64_R_INFO(sym,type)      ((((Elf64_Xword) (sym)) << 32) + (type))
+#define ELF64_R_SYM(i)              ((i) >> 32)
+#define ELF64_R_TYPE(i)             ((i) & 0xffffffff)
+#define ELF64_R_INFO(sym,type)      ((((Elf64_Xword)(sym)) << 32) + (type))
 
 /* Program segment header.  */
 

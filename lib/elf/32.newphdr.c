@@ -47,7 +47,7 @@ _elf_newphdr(Elf *elf, size_t count, unsigned cls)
                 seterr(ERROR_MEM_PHDR);
                 return NULL;
             }
-            memset(phdr, 0, count * size);
+            elf_memset(phdr, 0, count * size);
         }elf_assert(elf->e_ehdr);
         elf->e_phnum = count;
         if (count >= PN_XNUM) {

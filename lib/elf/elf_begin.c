@@ -63,7 +63,7 @@ static void _elf_init_ar(Elf *elf)
     offset = SARMAG;
     while (!elf->e_strtab && offset + sizeof(*hdr) <= elf->e_size) {
         hdr = (struct ar_hdr*) (elf->e_data + offset);
-        if (memcmp(hdr->ar_fmag, fmag, sizeof(fmag) - 1)) {
+        if (elf_memcmp(hdr->ar_fmag, fmag, sizeof(fmag) - 1)) {
             break;
         }
         if (hdr->ar_name[0] != '/') {
@@ -120,7 +120,7 @@ _elf_arhdr(Elf *arf)
         return NULL;
     }elf_assert(arf->e_data != NULL);
     hdr = (struct ar_hdr*) (arf->e_data + arf->e_off);
-    if (memcmp(hdr->ar_fmag, fmag, sizeof(fmag) - 1)) {
+    if (elf_memcmp(hdr->ar_fmag, fmag, sizeof(fmag) - 1)) {
         seterr(ERROR_ARFMAG);
         return NULL;
     }
@@ -194,12 +194,12 @@ _elf_arhdr(Elf *arf)
         return NULL;
     }
 
-    memcpy(arhdr->ar_rawname, hdr->ar_name, sizeof(hdr->ar_name));
+    elf_memcpy(arhdr->ar_rawname, hdr->ar_name, sizeof(hdr->ar_name));
     arhdr->ar_rawname[sizeof(hdr->ar_name)] = '\0';
 
     if (namelen) {
         arhdr->ar_name = arhdr->ar_rawname + sizeof(hdr->ar_name) + 1;
-        memcpy(arhdr->ar_name, name, namelen);
+        elf_memcpy(arhdr->ar_name, name, namelen);
         arhdr->ar_name[namelen] = '\0';
     }
 
@@ -209,13 +209,13 @@ _elf_arhdr(Elf *arf)
 static void _elf_check_type(Elf *elf, size_t size)
 {
     elf->e_idlen = size;
-    if (size >= EI_NIDENT && !memcmp(elf->e_data, ELFMAG, SELFMAG)) {
+    if (size >= EI_NIDENT && !elf_memcmp(elf->e_data, ELFMAG, SELFMAG)) {
         elf->e_kind = ELF_K_ELF;
         elf->e_idlen = EI_NIDENT;
         elf->e_class = elf->e_data[EI_CLASS];
         elf->e_encoding = elf->e_data[EI_DATA];
         elf->e_version = elf->e_data[EI_VERSION];
-    } else if (size >= SARMAG && !memcmp(elf->e_data, ARMAG, SARMAG)) {
+    } else if (size >= SARMAG && !elf_memcmp(elf->e_data, ARMAG, SARMAG)) {
         _elf_init_ar(elf);
     }
 }

@@ -41,7 +41,7 @@
 #define NBBY                        8
 
 /** Minimal value of a given signed type. */
-#define TYPE_INT_MIN(type)          ((type)1 << (sizeof(type) * NBBY - 1))
+#define TYPE_INT_MIN(type)          (static_cast<type>(1) << (sizeof(type) * NBBY - 1))
 /** Maximal value of a given signed type. */
 #define TYPE_INT_MAX(type)          (~TYPE_INT_MIN(type))
 /** Maximal value of a given unsigned type. */

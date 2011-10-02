@@ -30,83 +30,83 @@ bsf(u64 string)
 __inline u8
 inb(u16 port)
 {
-    u8 _v;
+    u8 value;
 
-    ASM ("inb %w1, %0" : "=a"(_v) : "Nd"(port));
-    return _v;
+    ASM ("inb %w[port], %[value]" : [value]"=a"(value) : [port]"Nd"(port));
+    return value;
 }
 
 __inline u16
 inw(u16 port)
 {
-    u16 _v;
+    u16 value;
 
-    ASM ("inw %w1, %0" : "=a"(_v) : "Nd"(port));
-    return _v;
+    ASM ("inw %w[port], %[value]" : [value]"=a"(value) : [port]"Nd"(port));
+    return value;
 }
 
 __inline u32
 inl(u16 port)
 {
-    u32 _v;
+    u32 value;
 
-    ASM ("inl %w1, %0" : "=a"(_v) : "Nd"(port));
-    return _v;
+    ASM ("inl %w[port], %[value]" : [value]"=a"(value) : [port]"Nd"(port));
+    return value;
 }
 
 __inline void
 outb(u16 port, u8 value)
 {
-    ASM ("outb %b0, %w1" : : "a"(value), "Nd"(port));
+    ASM ("outb %b[value], %w[port]" : : [value]"a"(value), [port]"Nd"(port));
 }
 
 __inline void
 outw(u16 port, u16 value)
 {
-    ASM ("outw %w0, %w1": :"a"(value), "Nd"(port));
+    ASM ("outw %w[value], %w[port]": : [value]"a"(value), [port]"Nd"(port));
 
 }
 
 __inline void
 outl(u16 port, u32 value)
 {
-    ASM ("outl %0, %w1" : : "a"(value), "Nd" (port));
+    ASM ("outl %[value], %w[port]" : : [value]"a"(value), [port]"Nd"(port));
 }
 
 __inline void
-invlpg(vaddr_t va)
+invlpg(Vaddr va)
 {
-    ASM ("invlpg %0" : : "m"(*(u8 *)va));
+    ASM ("invlpg %[va]" : : [va]"m"(*static_cast<u8 *>(static_cast<void *>(va))));
 }
 
-__inline u32
+__inline u64
 rcr0()
 {
     register u64 r;
 
-    ASM ("mov %%cr0, %0" : "=r"(r));
+    ASM ("mov %%cr0, %[r]" : [r]"=r"(r));
     return r;
 }
 
 __inline void
 wcr0(u64 x)
 {
-    ASM ("mov %0, %%cr0" : : "r"(x));
+    ASM ("mov %[x], %%cr0" : : [x]"r"(x));
 }
 
-__inline u32
+__inline u64
 rcr2()
 {
     register u64 r;
 
-    ASM ("mov %%cr2, %0" : "=r"(r));
+    ASM ("mov %%cr2, %[r]" : [r]"=r"(r));
     return r;
 }
 
 __inline void
-wcr2(u32 x)
+wcr2(u64 x)
 {
-    ASM ("mov %0, %%cr2" : : "r"(x));
+    ASM ("mov %[x], %%cr2" : : [x]"r"(x));
 }
 
 __inline u64
@@ -114,29 +114,29 @@ rcr3()
 {
     register u64 r;
 
-    ASM ("mov %%cr3, %0" : "=r"(r));
+    ASM ("mov %%cr3, %[r]" : [r]"=r"(r));
     return r;
 }
 
 __inline void
 wcr3(u64 x)
 {
-    ASM ("mov %0, %%cr3" : : "r"(x));
+    ASM ("mov %[x], %%cr3" : : [x]"r"(x));
 }
 
-__inline u32
+__inline u64
 rcr4()
 {
     register u64 r;
 
-    ASM ("mov %%cr4, %0" : "=r"(r));
+    ASM ("mov %%cr4, %[r]" : [r]"=r"(r));
     return r;
 }
 
 __inline void
 wcr4(u64 x)
 {
-    ASM ("mov %0, %%cr4" : : "r"(x));
+    ASM ("mov %[x], %%cr4" : : [x]"r"(x));
 }
 
 __inline void
@@ -193,9 +193,9 @@ __inline void
 lgdt(void *p)
 {
     ASM (
-        "lgdt   %0"
+        "lgdt   %[gdt]"
         :
-        : "m"(*(u8 *)p)
+        : [gdt]"m"(*static_cast<u8 *>(p))
         );
 }
 
@@ -203,9 +203,9 @@ __inline void
 lidt(void *p)
 {
     ASM (
-        "lidt   %0"
+        "lidt   %[idt]"
         :
-        : "m"(*(u8 *)p)
+        : [idt]"m"(*static_cast<u8 *>(p))
         );
 }
 
@@ -213,9 +213,9 @@ __inline void
 lldt(u16 sel)
 {
     ASM (
-        "lldt   %0"
+        "lldt   %[ldt]"
         :
-        : "r"(sel)
+        : [ldt]"r"(sel)
         );
 }
 
@@ -223,8 +223,8 @@ __inline void
 sgdt(void *p)
 {
     ASM (
-        "sgdt   %0"
-        : "=m"(*(u8 *)p)
+        "sgdt   %[gdt]"
+        : [gdt]"=m"(*static_cast<u8 *>(p))
     );
 }
 
@@ -232,8 +232,8 @@ __inline void
 sidt(void *p)
 {
     ASM (
-        "sidt   %0"
-        : "=m"(*(u8 *)p)
+        "sidt   %[idt]"
+        : [idt]"=m"(*static_cast<u8 *>(p))
     );
 }
 
@@ -242,8 +242,8 @@ sldt()
 {
     u16 sel;
     ASM (
-        "sldt   %0"
-        : "=r"(sel)
+        "sldt   %[ldt]"
+        : [ldt]"=r"(sel)
     );
     return sel;
 }
@@ -252,9 +252,9 @@ __inline void
 ltr(u16 sel)
 {
     ASM (
-        "ltr    %0"
+        "ltr    %[sel]"
         :
-        : "r"(sel)
+        : [sel]"r"(sel)
     );
 }
 
@@ -263,8 +263,8 @@ str()
 {
     u16 sel;
     ASM (
-        "str    %0"
-        : "=&r"(sel)
+        "str    %[sel]"
+        : [sel]"=&r"(sel)
     );
     return sel;
 }
@@ -314,8 +314,8 @@ GetFlags()
     u64 rc;
     ASM (
         "pushfq\n"
-        "popq %0\n"
-        : "=r"(rc)
+        "popq %[flags]\n"
+        : [flags]"=r"(rc)
     );
     return rc;
 }
@@ -324,10 +324,10 @@ __inline void
 SetFlags(u64 value)
 {
     ASM (
-        "pushq %0\n"
+        "pushq %[flags]\n"
         "popfq\n"
         :
-        : "r"(value)
+        : [flags]"r"(value)
     );
 }
 

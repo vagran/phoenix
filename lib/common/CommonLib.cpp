@@ -230,13 +230,13 @@ tolower(int c)
 #ifdef strlen
 #undef strlen
 #endif /* strlen */
-ASMCALL u32
+ASMCALL size_t
 strlen(const char *str)
 {
     register const char *s;
 
     for (s = str; *s; ++s);
-    return(s - str);
+    return s - str;
 }
 
 #ifdef strcpy
@@ -304,19 +304,19 @@ strncmp(const char *s1, const char *s2, size_t len)
     return *s2 - *s1;
 }
 
-ASMCALL char *
+ASMCALL const char *
 strchr(const char *str, int c)
 {
     while (*str) {
         if (*str == c) {
-            return (char *)str;
+            return str;
         }
         str++;
     }
     return 0;
 }
 
-ASMCALL char *
+ASMCALL const char *
 strstr(const char *s, const char *find)
 {
     char c, sc;
@@ -333,22 +333,22 @@ strstr(const char *s, const char *find)
         } while (strncmp(s, find, len));
         s--;
     }
-    return const_cast<char *>(s);
+    return s;
 }
 
-int
+size_t
 sprintf(char *buf, const char *fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
-    int len = _vprintf(fmt, 0, buf, 10, va);
+    size_t len = _vprintf(fmt, 0, buf, 10, va);
     if (buf) {
         buf[len] = 0;
     }
     return len;
 }
 
-int
+size_t
 snprintf(char *buf, size_t bufSize, const char *fmt, ...)
 {
     va_list va;
@@ -360,17 +360,17 @@ snprintf(char *buf, size_t bufSize, const char *fmt, ...)
     return len;
 }
 
-int
+size_t
 vsprintf(char *buf, const char *fmt, va_list arg)
 {
-    int len = _vprintf(fmt, 0, buf, 10, arg);
+    size_t len = _vprintf(fmt, 0, buf, 10, arg);
     if (buf) {
         buf[len] = 0;
     }
     return len;
 }
 
-int
+size_t
 vsnprintf(char *buf, size_t bufSize, const char *fmt, va_list arg)
 {
     size_t len = _vprintf(fmt, 0, buf, 10, arg, bufSize);
@@ -456,7 +456,7 @@ _vprintf(const char *fmt, PutcFunc func, void *arg, int radix, va_list ap,
 
     num = 0;
     if (!func) {
-        d = (char *)arg;
+        d = static_cast<char *>(arg);
     } else {
         d = 0;
     }
@@ -472,7 +472,7 @@ _vprintf(const char *fmt, PutcFunc func, void *arg, int radix, va_list ap,
     for (;;) {
         padc = ' ';
         width = 0;
-        while ((ch = (u8)*fmt++) != '%' || stop) {
+        while ((ch = static_cast<u8>(*fmt++)) != '%' || stop) {
             if (ch == '\0') {
                 return (retval);
             }
@@ -494,7 +494,7 @@ _vprintf(const char *fmt, PutcFunc func, void *arg, int radix, va_list ap,
         tflag = false;
         zflag = false;
 reswitch:
-        switch (ch = (u8)*fmt++) {
+        switch (ch = static_cast<u8>(*fmt++)) {
         case '.':
             dot = true;
             goto reswitch;
@@ -550,7 +550,7 @@ reswitch:
             }
             goto reswitch;
         case 'b':
-            num = (u32)va_arg(ap, int);
+            num = va_arg(ap, int);
             p = va_arg(ap, char *);
             for (q = _sprintn(nbuf, num, *p++, 0, 0); *q;) {
                 PCHAR(*q--);
@@ -636,7 +636,7 @@ reswitch:
             base = 16;
             sharpflag = (width == 0);
             sign = false;
-            num = (u64)va_arg(ap, void *);
+            num = va_arg(ap, uintptr_t);
             goto number;
         case 'q':
             qflag = true;
@@ -653,7 +653,7 @@ reswitch:
                 p = "(null)";
             }
             if (!dot) {
-                n = strlen((char *)p);
+                n = strlen(p);
             } else {
                 for (n = 0; n < dwidth && p[n]; n++) {
                     continue;
@@ -702,8 +702,8 @@ handle_nosign:
             else if (tflag) num = va_arg(ap, i32);
             else if (lflag) num = va_arg(ap, u32);
             else if (zflag) num = va_arg(ap, u32);
-            else if (hflag) num = (u16)va_arg(ap, int);
-            else if (cflag) num = (u8)va_arg(ap, int);
+            else if (hflag) num = static_cast<u16>(va_arg(ap, int));
+            else if (cflag) num = static_cast<u8>(va_arg(ap, int));
             else num = va_arg(ap, u32);
             goto number;
 handle_sign:
@@ -712,13 +712,13 @@ handle_sign:
             else if (tflag) num = va_arg(ap, i32);
             else if (lflag) num = va_arg(ap, long);
             else if (zflag) num = va_arg(ap, i32);
-            else if (hflag) num = (short)va_arg(ap, int);
-            else if (cflag) num = (char)va_arg(ap, int);
+            else if (hflag) num = static_cast<i16>(va_arg(ap, int));
+            else if (cflag) num = static_cast<i8>(va_arg(ap, int));
             else num = va_arg(ap, int);
 number:
-            if (sign && (i64)num < 0) {
+            if (sign && static_cast<i64>(num) < 0) {
                 neg = true;
-                num = -(i64)num;
+                num = -static_cast<i64>(num);
             }
             p = _sprintn(nbuf, num, base, &tmp, upper);
             if (sharpflag && num != 0) {
@@ -848,7 +848,7 @@ u32
 gethash32(const char *s)
 {
     size_t len = strlen(s);
-    return gethash32((const u8 *)s, len);
+    return gethash32(s, len);
 }
 
 /** Get 32 bits hash value from data buffer.
@@ -860,23 +860,23 @@ gethash32(const char *s)
  * @return 32 bits hash value.
  */
 u32
-gethash32(const u8 *data, size_t size)
+gethash32(const void *data, size_t size)
 {
     u32 hash = 0x5a5aa5a5;
 
     while (size) {
         u32 c;
         if (size >= 4) {
-            c = *(u32 *)data;
+            c = *static_cast<const u32 *>(data);
             size -= 4;
         } else {
             if (size == 1) {
-                c = *data;
+                c = *static_cast<const u8 *>(data);
             } else if (size == 2) {
-                c = *(u16 *)data;
+                c = *static_cast<const u16 *>(data);
             } else {
-                c = *(u16 *)data;
-                c |= data[2] << 16;
+                c = *static_cast<const u16 *>(data);
+                c |= static_cast<const u8 *>(data)[2] << 16;
             }
             c ^= hashtable[(c ^ hash) & 0xff];
             size = 0;
@@ -884,7 +884,7 @@ gethash32(const u8 *data, size_t size)
         u32 idx = c + (c >> 16);
         idx += idx >> 8;
         hash ^= hashtable[(idx ^ hash) & 0xff] + c;
-        data += 4;
+        data = static_cast<const u8 *>(data) + 4;
     }
     if (!hash) {
         return 1;
@@ -968,7 +968,7 @@ ASMCALL bool
 isspace(int c)
 {
     return c == ' ' || c == '\t' || c == '\r' || c == '\n' ||
-        c == '\v' || c == '\f';
+           c == '\v' || c == '\f';
 }
 
 /** Check if ASCII character is upper case alphabetical character. */
@@ -1002,7 +1002,7 @@ isascii(int c)
 }
 
 ASMCALL long
-strtol(const char *nptr, char **endptr, int base)
+strtol(const char *nptr, const char **endptr, unsigned base)
 {
     const char *s = nptr;
     unsigned long acc;
@@ -1052,23 +1052,26 @@ strtol(const char *nptr, char **endptr, int base)
      * Set any if any `digits' consumed; make it negative to indicate
      * overflow.
      */
-    cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
-    cutlim = cutoff % (unsigned long)base;
-    cutoff /= (unsigned long)base;
+    cutoff = neg ? -(LONG_MIN + 1) : LONG_MAX;
+    cutlim = cutoff % base;
+    cutoff /= base;
     for (acc = 0, any = 0;; c = *s++) {
-        if (!isascii(c))
+        if (!isascii(c)) {
             break;
-        if (isdigit(c))
+        }
+        if (isdigit(c)) {
             c -= '0';
-        else if (isalpha(c))
+        } else if (isalpha(c)) {
             c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-        else
+        } else {
             break;
-        if (c >= base)
+        }
+        if (c >= base) {
             break;
-        if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+        }
+        if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim)) {
             any = -1;
-        else {
+        } else {
             any = 1;
             acc *= base;
             acc += c;
@@ -1076,10 +1079,12 @@ strtol(const char *nptr, char **endptr, int base)
     }
     if (any < 0) {
         acc = neg ? LONG_MIN : LONG_MAX;
-    } else if (neg)
+    } else if (neg) {
         acc = -acc;
-    if (endptr != 0)
-        *((const char **)endptr) = any ? s - 1 : nptr;
+    }
+    if (endptr) {
+        *endptr = any ? s - 1 : nptr;
+    }
     return (acc);
 }
 
@@ -1087,7 +1092,7 @@ strtol(const char *nptr, char **endptr, int base)
  * Convert a string to an unsigned long integer.
  */
 ASMCALL unsigned long
-strtoul(const char *nptr, char **endptr, int base)
+strtoul(const char *nptr, const char **endptr, unsigned base)
 {
     const char *s = nptr;
     unsigned long acc;
@@ -1153,7 +1158,7 @@ strtoul(const char *nptr, char **endptr, int base)
 }
 
 ASMCALL i64
-strtoq(const char *nptr, char **endptr, int base)
+strtoq(const char *nptr, const char **endptr, unsigned base)
 {
     const char *s;
     u64 acc;
@@ -1207,7 +1212,7 @@ strtoq(const char *nptr, char **endptr, int base)
      * Set any if any `digits' consumed; make it negative to indicate
      * overflow.
      */
-    qbase = (u64)base;
+    qbase = base;
     if (neg) {
         cutoff = -(QUAD_MIN + QUAD_MAX);
         cutoff += QUAD_MAX;
@@ -1217,19 +1222,22 @@ strtoq(const char *nptr, char **endptr, int base)
     cutlim = cutoff % qbase;
     cutoff /= qbase;
     for (acc = 0, any = 0;; c = *s++) {
-        if (!isascii(c))
+        if (!isascii(c)) {
             break;
-        if (isdigit(c))
+        }
+        if (isdigit(c)) {
             c -= '0';
-        else if (isalpha(c))
+        } else if (isalpha(c)) {
             c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-        else
+        } else {
             break;
-        if (c >= base)
+        }
+        if (c >= base) {
             break;
-        if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+        }
+        if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim)) {
             any = -1;
-        else {
+        } else {
             any = 1;
             acc *= qbase;
             acc += c;
@@ -1237,15 +1245,17 @@ strtoq(const char *nptr, char **endptr, int base)
     }
     if (any < 0) {
         acc = neg ? QUAD_MIN : QUAD_MAX;
-    } else if (neg)
+    } else if (neg) {
         acc = -acc;
-    if (endptr != 0)
+    }
+    if (endptr != 0) {
         *((const char **)endptr) = any ? s - 1 : nptr;
+    }
     return (acc);
 }
 
 ASMCALL u64
-strtouq(const char *nptr, char **endptr, int base)
+strtouq(const char *nptr, const char **endptr, unsigned base)
 {
     const char *s = nptr;
     u64 acc;
@@ -1265,8 +1275,9 @@ strtouq(const char *nptr, char **endptr, int base)
         c = *s++;
     } else {
         neg = false;
-        if (c == '+')
+        if (c == '+') {
             c = *s++;
+        }
     }
     if ((base == 0 || base == 16) &&
         c == '0' && (*s == 'x' || *s == 'X')) {
@@ -1274,25 +1285,29 @@ strtouq(const char *nptr, char **endptr, int base)
         s += 2;
         base = 16;
     }
-    if (base == 0)
+    if (base == 0) {
         base = c == '0' ? 8 : 10;
-    qbase = (unsigned)base;
-    cutoff = (u64)UQUAD_MAX / qbase;
-    cutlim = (u64)UQUAD_MAX % qbase;
+    }
+    qbase = base;
+    cutoff = UQUAD_MAX / qbase;
+    cutlim = UQUAD_MAX % qbase;
     for (acc = 0, any = 0;; c = *s++) {
-        if (!isascii(c))
+        if (!isascii(c)) {
             break;
-        if (isdigit(c))
+        }
+        if (isdigit(c)) {
             c -= '0';
-        else if (isalpha(c))
+        } else if (isalpha(c)) {
             c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-        else
+        } else {
             break;
-        if (c >= base)
+        }
+        if (c >= base) {
             break;
-        if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+        }
+        if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim)) {
             any = -1;
-        else {
+        } else {
             any = 1;
             acc *= qbase;
             acc += c;
@@ -1300,10 +1315,12 @@ strtouq(const char *nptr, char **endptr, int base)
     }
     if (any < 0) {
         acc = UQUAD_MAX;
-    } else if (neg)
+    } else if (neg) {
         acc = -acc;
-    if (endptr != 0)
-        *((const char **)endptr) = any ? s - 1 : nptr;
+    }
+    if (endptr != 0) {
+        *endptr = any ? s - 1 : nptr;
+    }
     return (acc);
 }
 
@@ -1341,37 +1358,53 @@ strtouq(const char *nptr, char **endptr, int base)
 #define CT_CCL      1   /* %[...] conversion */
 #define CT_STRING   2   /* %s conversion */
 #define CT_INT      3   /* integer, i.e., strtoq or strtouq */
-typedef u64 (*ccfntype)(const char *, char **, int);
 
-static const u8 *__sccl(char *, const u8 *);
+static const char *__sccl(char *, const char *);
 
+/** Parse string into provided variables.
+ *
+ * @param str Null terminated input string.
+ * @param fmt Format specifier for input string parsing.
+ * @return Number of variables assigned.
+ */
 int
-sscanf(const char *buf, const char *fmt, ...)
+sscanf(const char *str, const char *fmt, ...)
 {
     va_list ap;
     int ret;
 
     va_start(ap, fmt);
-    ret = vsscanf(buf, fmt, ap);
+    ret = vsscanf(str, fmt, ap);
     va_end(ap);
     return ret;
 }
 
+/** Parse string into provided variables.
+ *
+ * @param str Null terminated input string.
+ * @param fmt Format specifier for input string parsing.
+ * @param ap Arguments list with pointer to variables to assign values to.
+ * @return Number of variables assigned.
+ */
 int
-vsscanf(const char *inp, char const *fmt0, va_list ap)
+vsscanf(const char *str, char const *fmt, va_list ap)
 {
-    int inr;
-    const u8 *fmt = (const u8 *)fmt0;
+    size_t inr;
     int c;          /* character from format, or conversion */
     size_t width;       /* field width, or 0 */
     char *p;        /* points into all kinds of strings */
-    int n;          /* handy integer */
+    size_t n;          /* handy integer */
     int flags;      /* flags as defined above */
     char *p0;       /* saves original value of p when necessary */
     int nassigned;      /* number of fields assigned */
     int nconversions;   /* number of conversions */
     int nread;      /* number of characters consumed from fp */
     int base;       /* base argument to strtoq/strtouq */
+    enum ccfntype {
+        ccfn_none,
+        ccfn_strtoq,
+        ccfn_strtouq
+    };
     ccfntype ccfn;      /* conversion function (strtoq/strtouq) */
     char ccltab[256];   /* character class table for %[...] */
     char buf[BUF];      /* buffer for numeric conversions */
@@ -1380,39 +1413,44 @@ vsscanf(const char *inp, char const *fmt0, va_list ap)
     static short basefix[17] =
         { 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
-    inr = strlen(inp);
+    inr = strlen(str);
 
     nassigned = 0;
     nconversions = 0;
     nread = 0;
     base = 0;
-    ccfn = 0;
+    ccfn = ccfn_none;
     for (;;) {
         c = *fmt++;
-        if (c == 0)
-            return (nassigned);
+        if (c == 0) {
+            return nassigned;
+        }
         if (isspace(c)) {
-            while (inr > 0 && isspace(*inp))
-                nread++, inr--, inp++;
+            while (inr > 0 && isspace(*str)) {
+                nread++, inr--, str++;
+            }
             continue;
         }
-        if (c != '%')
+        if (c != '%') {
             goto literal;
+        }
         width = 0;
         flags = 0;
         /*
          * switch on the format.  continue if done;
          * break once format type is derived.
          */
-again:      c = *fmt++;
+again:  c = *fmt++;
         switch (c) {
         case '%':
 literal:
-            if (inr <= 0)
+            if (inr <= 0) {
                 goto input_failure;
-            if (*inp != c)
+            }
+            if (*str != c) {
                 goto match_failure;
-            inr--, inp++;
+            }
+            inr--, str++;
             nread++;
             continue;
 
@@ -1440,32 +1478,32 @@ literal:
          */
         case 'd':
             c = CT_INT;
-            ccfn = (ccfntype)strtoq;
+            ccfn = ccfn_strtoq;
             base = 10;
             break;
 
         case 'i':
             c = CT_INT;
-            ccfn = (ccfntype)strtoq;
+            ccfn = ccfn_strtoq;
             base = 0;
             break;
 
         case 'o':
             c = CT_INT;
-            ccfn = strtouq;
+            ccfn = ccfn_strtouq;
             base = 8;
             break;
 
         case 'u':
             c = CT_INT;
-            ccfn = strtouq;
+            ccfn = ccfn_strtouq;
             base = 10;
             break;
 
         case 'x':
             flags |= PFXOK; /* enable 0x prefixing */
             c = CT_INT;
-            ccfn = strtouq;
+            ccfn = ccfn_strtouq;
             base = 16;
             break;
 
@@ -1487,42 +1525,46 @@ literal:
         case 'p':   /* pointer format is like hex */
             flags |= POINTER | PFXOK;
             c = CT_INT;
-            ccfn = strtouq;
+            ccfn = ccfn_strtouq;
             base = 16;
             break;
 
         case 'n':
             nconversions++;
-            if (flags & SUPPRESS)   /* ??? */
+            if (flags & SUPPRESS) {  /* ??? */
                 continue;
-            if (flags & SHORT)
+            }
+            if (flags & SHORT) {
                 *va_arg(ap, short *) = nread;
-            else if (flags & LONG)
+            } else if (flags & LONG) {
                 *va_arg(ap, long *) = nread;
-            else if (flags & QUAD)
+            } else if (flags & QUAD) {
                 *va_arg(ap, i64 *) = nread;
-            else
+            } else {
                 *va_arg(ap, int *) = nread;
+            }
             continue;
         }
 
         /*
          * We have a conversion that requires input.
          */
-        if (inr <= 0)
+        if (inr <= 0) {
             goto input_failure;
+        }
 
         /*
          * Consume leading white space, except for formats
          * that suppress this.
          */
         if ((flags & NOSKIP) == 0) {
-            while (isspace(*inp)) {
+            while (isspace(*str)) {
                 nread++;
-                if (--inr > 0)
-                    inp++;
-                else
+                if (--inr > 0) {
+                    str++;
+                } else {
                     goto input_failure;
+                }
             }
             /*
              * Note that there is at least one character in
@@ -1538,30 +1580,32 @@ literal:
 
         case CT_CHAR:
             /* scan arbitrary characters (sets NOSKIP) */
-            if (width == 0)
+            if (width == 0) {
                 width = 1;
+            }
             if (flags & SUPPRESS) {
                 size_t sum = 0;
                 for (;;) {
-                    if ((n = inr) < (int)width) {
+                    if ((n = inr) < width) {
                         sum += n;
                         width -= n;
-                        inp += n;
-                        if (sum == 0)
+                        str += n;
+                        if (sum == 0) {
                             goto input_failure;
+                        }
                         break;
                     } else {
                         sum += width;
                         inr -= width;
-                        inp += width;
+                        str += width;
                         break;
                     }
                 }
                 nread += sum;
             } else {
-                memcpy(va_arg(ap, char *), inp, width);
+                memcpy(va_arg(ap, char *), str, width);
                 inr -= width;
-                inp += width;
+                str += width;
                 nread += width;
                 nassigned++;
             }
@@ -1570,18 +1614,21 @@ literal:
 
         case CT_CCL:
             /* scan a (nonempty) character class (sets NOSKIP) */
-            if (width == 0)
-                width = (size_t)~0; /* `infinity' */
+            if (width == 0) {
+                width = ~0; /* `infinity' */
+            }
             /* take only those things in the class */
             if (flags & SUPPRESS) {
                 n = 0;
-                while (ccltab[(unsigned char)*inp]) {
-                    n++, inr--, inp++;
-                    if (--width == 0)
+                while (ccltab[static_cast<u8>(*str)]) {
+                    n++, inr--, str++;
+                    if (--width == 0) {
                         break;
+                    }
                     if (inr <= 0) {
-                        if (n == 0)
+                        if (n == 0) {
                             goto input_failure;
+                        }
                         break;
                     }
                 }
@@ -1589,20 +1636,23 @@ literal:
                     goto match_failure;
             } else {
                 p0 = p = va_arg(ap, char *);
-                while (ccltab[(unsigned char)*inp]) {
+                while (ccltab[static_cast<u8>(*str)]) {
                     inr--;
-                    *p++ = *inp++;
-                    if (--width == 0)
+                    *p++ = *str++;
+                    if (--width == 0) {
                         break;
+                    }
                     if (inr <= 0) {
-                        if (p == p0)
+                        if (p == p0) {
                             goto input_failure;
+                        }
                         break;
                     }
                 }
                 n = p - p0;
-                if (n == 0)
+                if (n == 0) {
                     goto match_failure;
+                }
                 *p = 0;
                 nassigned++;
             }
@@ -1613,22 +1663,24 @@ literal:
         case CT_STRING:
             /* like CCL, but zero-length string OK, & no NOSKIP */
             if (width == 0)
-                width = (size_t)~0;
+                width = ~0;
             if (flags & SUPPRESS) {
                 n = 0;
-                while (!isspace(*inp)) {
-                    n++, inr--, inp++;
-                    if (--width == 0)
+                while (!isspace(*str)) {
+                    n++, inr--, str++;
+                    if (--width == 0) {
                         break;
-                    if (inr <= 0)
+                    }
+                    if (inr <= 0) {
                         break;
+                    }
                 }
                 nread += n;
             } else {
                 p0 = p = va_arg(ap, char *);
-                while (!isspace(*inp)) {
+                while (!isspace(*str)) {
                     inr--;
-                    *p++ = *inp++;
+                    *p++ = *str++;
                     if (--width == 0)
                         break;
                     if (inr <= 0)
@@ -1654,7 +1706,7 @@ literal:
 #endif
             flags |= SIGNOK | NDIGITS | NZDIGITS;
             for (p = buf; width; width--) {
-                c = *inp;
+                c = *str;
                 /*
                  * Switch on the character; `goto ok'
                  * if we accept it as a part of number.
@@ -1738,10 +1790,11 @@ literal:
                  * c is legal: store it and look at the next.
                  */
                 *p++ = c;
-                if (--inr > 0)
-                    inp++;
-                else
+                if (--inr > 0) {
+                    str++;
+                } else {
                     break;      /* end of input */
+                }
             }
             /*
              * If we had only a sign, it is no good; push
@@ -1751,39 +1804,44 @@ literal:
              */
             if (flags & NDIGITS) {
                 if (p > buf) {
-                    inp--;
+                    str--;
                     inr++;
                 }
                 goto match_failure;
             }
-            c = ((u8 *)p)[-1];
+            c = p[-1];
             if (c == 'x' || c == 'X') {
                 --p;
-                inp--;
+                str--;
                 inr++;
             }
             if ((flags & SUPPRESS) == 0) {
                 u64 res;
 
                 *p = 0;
-                res = (*ccfn)(buf, (char **)0, base);
-                if (flags & POINTER)
-                    *va_arg(ap, void **) =
-                        (void *)(uintptr_t)res;
-                else if (flags & SHORT)
+                Assert(ccfn != ccfn_none);
+                if (ccfn == ccfn_strtoq) {
+                    res = strtoq(buf, 0, base);
+                } else {
+                    res = strtouq(buf, 0, base);
+                }
+                if (flags & POINTER) {
+                    Vaddr va(res);
+                    *va_arg(ap, void **) = va;
+                } else if (flags & SHORT) {
                     *va_arg(ap, short *) = res;
-                else if (flags & LONG)
+                } else if (flags & LONG) {
                     *va_arg(ap, long *) = res;
-                else if (flags & QUAD)
+                } else if (flags & QUAD) {
                     *va_arg(ap, i64 *) = res;
-                else
+                } else {
                     *va_arg(ap, int *) = res;
+                }
                 nassigned++;
             }
             nread += p - buf;
             nconversions++;
             break;
-
         }
     }
 input_failure:
@@ -1798,8 +1856,8 @@ match_failure:
  * closing `]'.  The table has a 1 wherever characters should be
  * considered part of the scanset.
  */
-static const u8 *
-__sccl(char *tab, const u8 *fmt)
+static const char *
+__sccl(char *tab, const char *fmt)
 {
     int c, n, v;
 

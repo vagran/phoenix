@@ -1,5 +1,5 @@
 /*
- * errors.h - exhaustive list of all error codes and messages for libelf.
+ * elf_errors.h - exhaustive list of all error codes and messages for libelf.
  * Copyright (C) 1995 - 2003, 2006 Michael Riepe
  * 
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 /* dummy for xgettext */
 #define _(str) str
 
-__err__(ERROR_OK,       _("no error"))
+__err__(ERROR_OK,           _("no error"))
 __err__(ERROR_UNKNOWN,      _("unknown error"))
 __err__(ERROR_INTERNAL,     _("Internal error: unknown reason"))
 __err__(ERROR_UNIMPLEMENTED,    _("Internal error: not implemented"))

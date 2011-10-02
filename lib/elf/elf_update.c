@@ -530,7 +530,7 @@ static int _elf_update_pointers(Elf *elf, char *outbuf, size_t len)
     }
     if (elf->e_rawdata == elf->e_data) {
         /* update frozen raw image */
-        memcpy(data, outbuf, len);
+        elf_memcpy(data, outbuf, len);
         elf->e_data = elf->e_rawdata = data;
         /* cooked data is stored outside the raw image */
         return 0;
@@ -541,7 +541,7 @@ static int _elf_update_pointers(Elf *elf, char *outbuf, size_t len)
             seterr(ERROR_IO_2BIG);
             return -1;
         }
-        memcpy(rawdata, outbuf, len);
+        elf_memcpy(rawdata, outbuf, len);
         elf->e_rawdata = rawdata;
     }
     if (data == elf->e_data) {
@@ -590,7 +590,7 @@ static int _elf_update_pointers(Elf *elf, char *outbuf, size_t len)
                     seterr(ERROR_IO_2BIG);
                     return -1;
                 }
-                memcpy(rawdata, outbuf + off, len);
+                elf_memcpy(rawdata, outbuf + off, len);
                 if (sd->sd_data.d_buf == sd->sd_memdata) {
                     sd->sd_data.d_buf = rawdata;
                 }
@@ -909,7 +909,7 @@ static off_t _elf_output(Elf *elf, Elf_File *fd, size_t len,
         buf = (void*)mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (buf != (char*)-1) {
             if ((char)_elf_fill && !(elf->e_elf_flags & ELF_F_LAYOUT)) {
-                memset(buf, _elf_fill, len);
+                elf_memset(buf, _elf_fill, len);
             }
             err = _elf_write(elf, buf, len);
             munmap(buf, len);
@@ -920,7 +920,7 @@ static off_t _elf_output(Elf *elf, Elf_File *fd, size_t len,
         seterr(ERROR_MEM_OUTBUF);
         return -1;
     }
-    memset(buf, _elf_fill, len);
+    elf_memset(buf, _elf_fill, len);
     err = _elf_write(elf, buf, len);
     if (err != -1 && (size_t) err == len) {
         if (fd->Seek(fd, 0, ELF_SEEK_SET)) {

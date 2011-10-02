@@ -28,7 +28,7 @@ OBJS = $(foreach src,$(SRCS), \
 
 CFLAGS = -std=gnu99 -Wno-pointer-sign
 
-CPP_FLAGS = -fno-exceptions -fno-rtti
+CPP_FLAGS = -fno-exceptions -fno-rtti $(CXX_RESTRICTIONS)
 
 COMMON_FLAGS = -fpic -Wall -Werror -fshort-wchar -fno-strict-aliasing \
 	-fno-merge-constants -DEFI_FUNCTION_WRAPPER -mno-red-zone -DCONFIG_x86_64 \

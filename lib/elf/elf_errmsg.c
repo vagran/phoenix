@@ -41,7 +41,7 @@ static const char *_messages[] = {
 static const char * const _messages[] = {
 #endif /* __PIC */
 #define __err__(a,b)    b,
-#include "errors.h"     /* include string tables from errors.h */
+#include "elf_errors.h"     /* include string tables from elf_errors.h */
 #undef __err__
 };
 

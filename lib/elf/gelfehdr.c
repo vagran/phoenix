@@ -53,7 +53,7 @@ gelf_getehdr(Elf *elf, GElf_Ehdr *dst) {
     else if (elf->e_class == ELFCLASS32) {
     Elf32_Ehdr *src = (Elf32_Ehdr*)tmp;
 
-    memcpy(dst->e_ident, src->e_ident, EI_NIDENT);
+    elf_memcpy(dst->e_ident, src->e_ident, EI_NIDENT);
     check_and_copy(GElf_Half, dst, src, e_type,      NULL);
     check_and_copy(GElf_Half, dst, src, e_machine,   NULL);
     check_and_copy(GElf_Word, dst, src, e_version,   NULL);
@@ -106,7 +106,7 @@ gelf_update_ehdr(Elf *elf, GElf_Ehdr *src) {
     else if (elf->e_class == ELFCLASS32) {
     Elf32_Ehdr *dst = (Elf32_Ehdr*)tmp;
 
-    memcpy(dst->e_ident, src->e_ident, EI_NIDENT);
+    elf_memcpy(dst->e_ident, src->e_ident, EI_NIDENT);
     check_and_copy(Elf32_Half, dst, src, e_type,      0);
     check_and_copy(Elf32_Half, dst, src, e_machine,   0);
     check_and_copy(Elf32_Word, dst, src, e_version,   0);

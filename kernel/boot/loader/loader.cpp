@@ -69,8 +69,9 @@ LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr)
                         file_size, start_off);
             return -1;
         }
-
-        phdr = (Elf64_Phdr *)((char *)phdr + ehdr->e_phentsize);
+        Vaddr phdr_addr(phdr);
+        phdr_addr += ehdr->e_phentsize;
+        phdr = phdr_addr;
     }
 
     if (entry_addr) {

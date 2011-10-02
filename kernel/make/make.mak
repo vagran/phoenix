@@ -11,7 +11,7 @@ COMPILE_FLAGS = -pipe -Werror -Wall -Wextra
 	-DKERNEL -fno-stack-protector -fno-default-inline -fno-builtin \
 	-DLOAD_ADDRESS=$(KERNEL_LOAD_ADDRESS) \
 	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
-COMPILE_FLAGS_CXX = -fno-exceptions -fno-rtti
+COMPILE_FLAGS_CXX = -fno-exceptions -fno-rtti $(CXX_RESTRICTIONS)
 COMPILE_FLAGS_C =
 COMPILE_FLAGS_ASM = -DASSEMBLER
 LINK_FLAGS = -static -nodefaultlibs -nostartfiles -nostdinc -nostdinc++
