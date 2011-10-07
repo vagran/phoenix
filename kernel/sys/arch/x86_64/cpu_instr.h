@@ -74,7 +74,7 @@ outl(u16 port, u32 value)
 }
 
 __inline void
-invlpg(Vaddr va)
+invlpg(vm::Vaddr va)
 {
     ASM ("invlpg %[va]" : : [va]"m"(*static_cast<u8 *>(static_cast<void *>(va))));
 }

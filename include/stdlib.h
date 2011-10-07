@@ -19,6 +19,57 @@
 
 #include <crc.h>
 
+namespace {
+
+/** Minimal value. */
+template <typename T>
+inline T
+Min(T x, T y) { return MIN(x, y); }
+
+/** Maximal value. */
+template <typename T>
+inline T
+Max(T x, T y) { return MAX(x, y); }
+
+/** Round up the value with specified alignment. */
+template <typename T>
+inline T
+RoundUp(T size, T align) { return ROUND_UP(size, align); }
+
+/** Round down the value with specified alignment. */
+template <typename T>
+inline T
+RoundDown(T size, T align) { return ROUND_DOWN(size, align); }
+
+/** Check if specified value is an integer power of two. */
+template <typename T>
+inline bool
+IsPowerOf2(T value) { return IS_POWER_OF_2(value); }
+
+/** Round up the value with specified alignment. Alignment must be an integer
+ * power of two.
+ */
+template <typename T>
+inline T
+RoundUp2(T size, T align)
+{
+    ASSERT(IsPowerOf2(align));
+    return ROUND_UP2(size, align);
+}
+
+/** Round down the value with specified alignment. Alignment must be an integer
+ * power of two.
+ */
+template <typename T>
+inline T
+RoundDown2(T size, T align)
+{
+    ASSERT(IsPowerOf2(align));
+    return ROUND_DOWN2(size, align);
+}
+
+} /* Anonymous namespace */
+
 /** Initialize object at predefined location.
  *
  * Can be used for code which is running without C++ run-time support startup
@@ -81,15 +132,15 @@ u32 gethash32(const void *data, size_t size);
  */
 typedef void (*PutcFunc)(int c, void *arg);
 size_t _vprintf(const char *fmt, PutcFunc func, void *arg, int radix,
-                va_list ap, int maxOut = -1) __format(printf, 1, 0);
+                va_list ap, int maxOut = -1) __FORMAT(printf, 1, 0);
 
-size_t sprintf(char *buf, const char *fmt, ...) __format(printf, 2, 3);
-size_t snprintf(char *buf, size_t bufSize, const char *fmt, ...) __format(printf, 3, 4);
-size_t vsprintf(char *buf, const char *fmt, va_list arg) __format(printf, 2, 0);
-size_t vsnprintf(char *buf, size_t bufSize, const char *fmt, va_list arg) __format(printf, 3, 0);
+size_t sprintf(char *buf, const char *fmt, ...) __FORMAT(printf, 2, 3);
+size_t snprintf(char *buf, size_t bufSize, const char *fmt, ...) __FORMAT(printf, 3, 4);
+size_t vsprintf(char *buf, const char *fmt, va_list arg) __FORMAT(printf, 2, 0);
+size_t vsnprintf(char *buf, size_t bufSize, const char *fmt, va_list arg) __FORMAT(printf, 3, 0);
 
-int sscanf(const char *str, const char *fmt, ...) __format(scanf, 2, 3);
-int vsscanf(const char *str, char const *fmt, va_list ap) __format(scanf, 2, 0);
+int sscanf(const char *str, const char *fmt, ...) __FORMAT(scanf, 2, 3);
+int vsscanf(const char *str, char const *fmt, va_list ap) __FORMAT(scanf, 2, 0);
 
 #ifdef ENABLE_TRACING
 #define trace(fmt, ...) printf(fmt, ## __VA_ARGS__)

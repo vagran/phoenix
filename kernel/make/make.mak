@@ -7,12 +7,14 @@
 
 include $(PHOENIX_ROOT)/make/makevar.mak
 
-COMPILE_FLAGS = -pipe -Werror -Wall -Wextra
+# Common compile flags (all languages)
+COMPILE_FLAGS = $(GLOBAL_FLAGS) -pipe -Werror -Wall -Wextra
 	-DKERNEL -fno-stack-protector -fno-default-inline -fno-builtin \
 	-DLOAD_ADDRESS=$(KERNEL_LOAD_ADDRESS) \
 	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
-COMPILE_FLAGS_CXX = -fno-exceptions -fno-rtti $(CXX_RESTRICTIONS)
-COMPILE_FLAGS_C =
+COMPILE_FLAGS_C = $(GLOBAL_C_FLAGS) $(C_STANDARD)
+COMPILE_FLAGS_CXX = $(GLOBAL_CXX_FLAGS) $(CXX_STANDARD) $(CXX_RESTRICTIONS) \
+	-fno-exceptions -fno-rtti
 COMPILE_FLAGS_ASM = -DASSEMBLER
 LINK_FLAGS = -static -nodefaultlibs -nostartfiles -nostdinc -nostdinc++
 LINK_SCRIPT = $(KERNROOT)/make/link.lds
@@ -56,11 +58,15 @@ else
 SRCS = $(wildcard *.S *.c *.cpp)
 OBJS_LOCAL = $(subst .S,.o,$(subst .c,.o,$(subst .cpp,.o,$(SRCS))))
 OBJS = $(foreach obj,$(OBJS_LOCAL),$(OBJ_DIR)/$(obj))
+DEPS = $(OBJS:.o=.d)
 endif
 
 .PHONY: all clean FORCE $(SUBDIRS_TARGET)
 
 all: $(OBJ_DIR) $(OBJS) $(IMAGE) $(SUBDIRS_TARGET) $(LIB_FILE)
+
+# include dependencies if exist
+-include $(DEPS)
 
 ifeq ($(MAKEIMAGE),1)
 $(IMAGE): $(OBJ_DIR) $(SUBDIRS_TARGET) $(LINK_SCRIPT) $(LINK_FILES)
@@ -86,9 +92,13 @@ $(OBJ_DIR): $(COMPILE_DIR)
 
 $(OBJ_DIR)/%.o: %.c
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_C) -o $@ $<
+	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) \
+		$(COMPILE_FLAGS_C) -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.o: %.cpp
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_CXX) -o $@ $<
+	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) \
+		$(COMPILE_FLAGS_CXX) -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.o: %.S
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_ASM) -o $@ $<

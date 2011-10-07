@@ -16,11 +16,12 @@ ifndef LOAD_ADDRESS
 LOAD_ADDRESS = $(DEF_LOAD_ADDRESS)
 endif
 
-COMPILE_FLAGS += -pipe -Werror -Wall -Wextra -fno-stack-protector -fno-builtin \
-	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
-
-COMPILE_FLAGS_CXX += -fno-exceptions -fno-rtti $(CXX_RESTRICTIONS)
-COMPILE_FLAGS_C +=
+# Common compile flags (all languages)
+COMPILE_FLAGS += $(GLOBAL_FLAGS) -pipe -Werror -Wall -Wextra 
+	-fno-stack-protector -fno-builtin -DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
+COMPILE_FLAGS_C +=  $(GLOBAL_C_FLAGS) $(C_STANDARD)
+COMPILE_FLAGS_CXX +=  $(GLOBAL_CXX_FLAGS) -fno-exceptions -fno-rtti \
+	$(CXX_STANDARD) $(CXX_RESTRICTIONS)
 COMPILE_FLAGS_ASM += -DASSEMBLER
 LINK_FLAGS += -nodefaultlibs -nostartfiles -nostdinc -nostdinc++ \
 	--no-omagic -z common-page-size=0x1000 --defsym LOAD_ADDRESS=$(LOAD_ADDRESS)
@@ -56,11 +57,11 @@ LINK_FILES += $(APP_RUNTIME_LIB)
 
 ifeq ($(STATIC),1)
 LINK_FLAGS += -Bstatic
-LINK_FILES += $(COMMON_LIB) $(USER_LIB)
+LINK_FILES += $(COMMON_LIB)
 LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(PHOENIX_TARGET)/lib$(lib).a)
 else
 LINK_FLAGS += -Bdynamic
-LINK_FILES += $(subst .a,.sl,$(COMMON_LIB) $(USER_LIB))
+LINK_FILES += $(subst .a,.sl,$(COMMON_LIB)
 LINK_FILES += $(foreach lib,$(LIBS),$(PHOENIX_ROOT)/lib/$(lib)/build/$(PHOENIX_TARGET)/lib$(lib).sl)
 endif
 
@@ -137,7 +138,8 @@ endif
 SRCS += $(wildcard *.S *.c *.cpp)
 OBJS_LOCAL = $(subst .S,.o,$(subst .c,.o,$(subst .cpp,.o,$(SRCS))))
 OBJS = $(foreach obj,$(OBJS_LOCAL),$(OBJ_DIR)/$(obj))
-OBJS_SO = $(subst .o,.so,$(OBJS))
+OBJS_SO = $(OBJS:.o=.so)
+DEPS = $(OBJS:.o=.d)
 
 SUBDIRS_TARGET = $(foreach item,$(SUBDIRS),$(item).dir)
 
@@ -152,6 +154,9 @@ endif
 .PHONY: all clean install FORCE $(SUBDIRS_TARGET) $(BINARY_NAME)
 
 all: $(BINARY) $(SUBDIRS_TARGET)
+
+# include dependencies if exist
+-include $(DEPS)
 
 ifdef BINARY
 # Phony file name targets depends on absolute paths of the files
@@ -192,9 +197,13 @@ $(filter %.a %.sl %.o %.so, $(LINK_FILES)):
 # Relocatable objects
 $(OBJ_DIR)/%.o: %.c
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_C) -o $@ $<
+	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) \
+		$(COMPILE_FLAGS_C) -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.o: %.cpp
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_CXX) -o $@ $<
+	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) \
+		$(COMPILE_FLAGS_CXX) -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.o: %.S
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_ASM) -o $@ $<
@@ -204,9 +213,13 @@ PIC_FLAGS += -fpic -D__PIC=1
 # Position-independent objects
 $(OBJ_DIR)/%.so: %.c
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_C) $(PIC_FLAGS) -o $@ $<
+	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) \
+		$(COMPILE_FLAGS_C) $(PIC_FLAGS) -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.so: %.cpp
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_CXX) $(PIC_FLAGS) -o $@ $<
+	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) \
+		$(COMPILE_FLAGS_CXX) $(PIC_FLAGS) -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.so: %.S
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_ASM) $(PIC_FLAGS) -o $@ $<

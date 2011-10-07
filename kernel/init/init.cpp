@@ -22,13 +22,20 @@
 #include <sys.h>
 #include <boot.h>
 
-int a, b = 237;
+namespace {
 
-extern "C" void start(BootParam *bootParam);
+/* Temporal stack used for the first booting phase. */
+//u8 bootStack[boot::BOOT_STACK_SIZE];
+
+}
+
+/** The kernel entry point. Called directly by EFI boot loader. */
+extern "C" void start(boot::BootParam *bootParam);
 
 void
-start(BootParam *bootParam UNUSED)
+start(boot::BootParam *bootParam UNUSED)
 {
+    cli();
     while (true) {
         pause();
     }

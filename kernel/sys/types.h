@@ -20,20 +20,6 @@
 
 #include <md_types.h>
 
-/* These types defined for compatibility with 3rd parties components */
-typedef i8                  int8_t;
-typedef i16                 int16_t;
-typedef i32                 int32_t;
-typedef i64                 int64_t;
-typedef u8                  u_int8_t;
-typedef u8                  uint8_t;
-typedef u16                 u_int16_t;
-typedef u16                 uint16_t;
-typedef u32                 u_int32_t;
-typedef u32                 uint32_t;
-typedef u64                 u_int64_t;
-typedef u64                 uint64_t;
-
 #define U8_MAX      TYPE_UINT_MAX(u8)
 #define I8_MAX      TYPE_INT_MAX(i8)
 #define I8_MIN      TYPE_INT_MIN(i8)
@@ -66,15 +52,13 @@ typedef u64                 uint64_t;
 #define QUAD_MAX    LONG_MAX
 #define QUAD_MIN    LONG_MIN
 
-#define VSIZE_MAX   TYPE_UINT_MAX(vsize_t)
-
 #ifndef __SIZE_TYPE__
 #define __SIZE_TYPE__ vsize_t
 #endif
 
 typedef __SIZE_TYPE__ size_t;
 
-typedef void *Handle;
+#define VSIZE_MAX   TYPE_UINT_MAX(vsize_t)
 
 /* Variable arguments */
 
@@ -84,56 +68,5 @@ typedef __builtin_va_list       va_list;
 #define va_arg(ap, type)        __builtin_va_arg((ap), type)
 #define va_copy(dest, src)      __builtin_va_copy((dest), (src))
 #define va_end(ap)              __builtin_va_end(ap)
-
-#ifdef __cplusplus
-
-/** Class representing virtual address type. */
-class Vaddr {
-public:
-    /** Construct virtual address from @ref vaddr_t integer type. */
-    Vaddr(vaddr_t va = 0) { _va.va = va; }
-    /** Construct virtual address from integer type. */
-    Vaddr(int va) { _va.va = va; }
-    /** Construct virtual address from pointer type. */
-    Vaddr(void *ptr) { _va.ptr = ptr; }
-    /** Assign @ref vaddr_t value to virtual address. */
-    Vaddr &operator=(vaddr_t va) { _va.va = va; return *this; }
-    /** Assign pointer value to virtual address. */
-    Vaddr &operator=(void *ptr) { _va.ptr = ptr; return *this; }
-    /** Add another virtual address to the current one. */
-    Vaddr &operator+=(const Vaddr &va) { _va.va += va._va.va; return *this; }
-    /** Subtract another virtual address from the current one. */
-    Vaddr &operator-=(const Vaddr &va) { _va.va -= va._va.va; return *this; }
-    /** Compare virtual addresses. */
-    bool operator==(const Vaddr &va) { return _va.va == va._va.va; }
-    /** Compare virtual addresses. */
-    bool operator==(void *ptr) { return _va.ptr == ptr; }
-    /** Compare virtual addresses. */
-    bool operator==(vaddr_t va) { return _va.va == va; }
-    /** Compare virtual addresses. */
-    bool operator==(int va) { return _va.va == static_cast<vaddr_t>(va); }
-    /** Compare virtual addresses. */
-    bool operator!=(const Vaddr &va) { return _va.va != va._va.va; }
-    /** Compare virtual addresses. */
-    bool operator!=(void *ptr) { return _va.ptr != ptr; }
-    /** Compare virtual addresses. */
-    bool operator!=(vaddr_t va) { return _va.va != va; }
-    /** Compare virtual addresses. */
-    bool operator!=(int va) { return _va.va != static_cast<vaddr_t>(va); }
-    /** Cast virtual address value to @ref vaddr_t type. */
-    operator vaddr_t() { return _va.va; }
-    /** Cast virtual address value to a generic pointer. */
-    operator void *() { return _va.ptr; }
-    /** Cast virtual address value to a pointer of specified type */
-    template<typename T>
-    operator T *() { return static_cast<T *>(_va.ptr); }
-private:
-    union {
-        vaddr_t va;
-        void *ptr;
-    } _va;
-};
-
-#endif /* __cplusplus */
 
 #endif /* TYPES_H_ */

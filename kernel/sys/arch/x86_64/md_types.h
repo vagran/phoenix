@@ -13,7 +13,8 @@
 /** @file md_types.h
  * Machine-dependent system types.
  *
- * This files contains definitions for basic machine-dependent system types.
+ * This files contains definitions for basic machine-dependent system types -
+ * different sizes integers, virtual and physical addresses, etc.
  */
 
 /* These types should be used in all the Phoenix code */
@@ -27,7 +28,7 @@ typedef unsigned int        u32; /**< Unsigned 32 bits integer */
 typedef unsigned long       u64; /**< Unsigned 64 bits integer */
 
 #ifndef __SIZEOF_POINTER__
-#define __SIZEOF_POINTER__ sizeof(void *)
+#define __SIZEOF_POINTER__  sizeof(void *)
 #endif
 
 #if __SIZEOF_POINTER__ == 8

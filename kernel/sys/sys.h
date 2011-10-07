@@ -19,6 +19,7 @@
  */
 
 #include <defs.h>
+#include <debug.h>
 
 #ifndef ASSEMBLER
 #include <types.h>
@@ -26,25 +27,8 @@
 #include <gcc.h>
 #include <stdlib.h>
 #include <vm.h>
-
-/*
- * The condition in assert is not evaluated in non-DEBUG versions, so
- * be careful when using functions results in conditions.
- */
-//XXX
-//#define ASSERT(x)   { if (unlikely(!(x))) __assert(__FILE__, __LINE__, __STR(x)); }
-#define ASSERT(x)
-#ifdef DEBUG
-#define Assert(x)       ASSERT(x)
-#else /* DEBUG */
-#define Assert(x)
-#endif /* DEBUG */
-#define Ensure(x)       ASSERT(x)
-extern void __Assert(const char *file, u32 line, const char *cond);
-#define NotReached()    Panic("Unreachable code reached")
-#define USED(x)         (void)(x)
-
 #include <cpu_instr.h>
+#include <md_stack.h>
 #include <bitops.h>
 #include <lock.h>
 

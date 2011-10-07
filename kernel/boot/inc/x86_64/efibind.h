@@ -20,6 +20,7 @@ Abstract:
 // Basic integer types of various widths
 //
 #include <types.h>
+#include <compat_types.h>
 
 //
 // Basic EFI types of various widths

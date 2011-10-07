@@ -36,10 +36,10 @@ LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr)
         }
 
         u64 start_off = phdr->p_offset;
-        /* Identity mapping is active so virtual address type can be used. */
-        Vaddr start_pa(phdr->p_paddr);
+
+        vm::Paddr start_pa(phdr->p_paddr);
         u64 file_size = phdr->p_filesz;
-        vsize_t mem_size = phdr->p_memsz;
+        vm::Vaddr mem_size(phdr->p_memsz);
 
         if (phdr->p_align != 0 && phdr->p_align != 1 &&
             IsPowerOf2(phdr->p_align)) {
@@ -47,18 +47,18 @@ LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr)
             u64 pad = start_off - RoundDown2(start_off, phdr->p_align);
             file_size += pad;
             start_off -= pad;
-            pad = start_pa - RoundDown2(start_pa, phdr->p_align);
+            pad = start_pa - RoundDown2<paddr_t>(start_pa, phdr->p_align);
             mem_size += pad;
             start_pa -= pad;
         }
 
-        if (start_pa & (PAGE_SIZE - 1)) {
+        if (start_pa & (vm::PAGE_SIZE - 1)) {
             LoaderPrint(L"Unaligned executable binary segments loading "
                         "is not supported\n");
             return -1;
         }
 
-        if (LoaderGetMemory(start_pa, Atop(RoundUp2(mem_size, PAGE_SIZE)))) {
+        if (LoaderGetMemory(start_pa, mem_size.RoundUp().GetPageIdx())) {
             LoaderPrint(L"Failed to get memory for a segment: %d bytes at %x\n",
                         mem_size, start_pa);
             return -1;
@@ -69,7 +69,7 @@ LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr)
                         file_size, start_off);
             return -1;
         }
-        Vaddr phdr_addr(phdr);
+        vm::Vaddr phdr_addr(phdr);
         phdr_addr += ehdr->e_phentsize;
         phdr = phdr_addr;
     }

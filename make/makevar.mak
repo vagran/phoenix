@@ -40,10 +40,6 @@ export COMMON_LIB_DIR = $(PHOENIX_ROOT)/lib/common
 export COMMON_LIB_NAME = common
 export COMMON_LIB = $(COMMON_LIB_DIR)/build/$(PHOENIX_TARGET)/lib$(COMMON_LIB_NAME).a
 
-export USER_LIB_DIR = $(PHOENIX_ROOT)/lib/user
-export USER_LIB_NAME = user
-export USER_LIB = $(USER_LIB_DIR)/build/$(PHOENIX_TARGET)/lib$(USER_LIB_NAME).a
-
 export RT_LINKER_DIR = /bin
 export RT_LINKER_NAME = rt_linker
 
@@ -60,6 +56,13 @@ INCLUDE_FLAGS += $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
 NAT_INCLUDE_DIRS = /usr/include
 NAT_INCLUDE_FLAGS = $(foreach dir,$(NAT_INCLUDE_DIRS),-I$(dir))
+
+GLOBAL_FLAGS = -DARCH_$(PHOENIX_ARCH)
+GLOBAL_C_FLAGS =
+GLOBAL_CXX_FLAGS =
+
+C_STANDARD = -std=c99
+CXX_STANDARD = -std=c++0x
 
 CXX_RESTRICTIONS = -Wold-style-cast -Woverloaded-virtual
 

@@ -20,6 +20,8 @@
 /** Get offset of member @a member in structure or class @a type. */
 #define OFFSETOF(type, member)      __builtin_offsetof(type, member)
 
+#define SIZEOF_ARRAY(array)         (sizeof(array) / sizeof((array)[0]))
+
 #define __CONCAT2(x, y)             x##y
 /** Macro for concatenating identifiers. */
 #define __CONCAT(x, y)              __CONCAT2(x, y)
@@ -30,6 +32,35 @@
 
 /** Generate file-scope unique identifier with a given prefix. */
 #define __UID(str)                  __CONCAT(str, __COUNTER__)
+
+/* Branching hints for the compiler */
+/** Give a hint for the compiler that a given conditional statement is likely to
+ * be true.
+ *
+ * Usage example:
+ * @code
+ * if (LIKELY(someCondition)) { ... }
+ * @endcode
+ */
+#define LIKELY(condition)           __builtin_expect(!!(condition), 1)
+/** Give a hint for the compiler that a given conditional statement is likely to
+ * be false.
+ *
+ * Usage example:
+ * @code
+ * if (UNLIKELY(someCondition)) { ... }
+ * @endcode
+ */
+#define UNLIKELY(condition)         __builtin_expect(!!(condition), 0)
+
+/** Macro for marking unused parameters.
+ *
+ * Usage example:
+ * @code
+ * int SomeFunction(int someParam UNUSED) { ... }
+ * @endcode
+ */
+#define UNUSED                      __attribute__((unused))
 
 /** Provide binary constants in the code. */
 #define BIN(x) ((x & 0x1) | ((x & 0x10) ? 0x2 : 0) | \
@@ -57,48 +88,29 @@
 #define ASM_NAME(name)              __asm__(__STR2(name))
 
 /* Shortcuts for various compiler attributes */
-#define __packed                    __attribute__((packed))
-#define __format(type, fmtIdx, argIdx)  __attribute__ ((format(type, fmtIdx, argIdx)))
-#define __noreturn                  __attribute__ ((noreturn))
-#define __noinline                  __attribute__ ((noinline))
+#define __PACKED                    __attribute__((packed))
+#define __FORMAT(type, fmtIdx, argIdx)  __attribute__ ((format(type, fmtIdx, argIdx)))
+#define __NORETURN                  __attribute__ ((noreturn))
+#define __NOINLINE                  __attribute__ ((noinline))
 
-#define Min(x, y)                   ((x) < (y) ? (x) : (y))
-#define Max(x, y)                   ((x) > (y) ? (x) : (y))
+/** Minimal value. */
+#define MIN(x, y)                   ((x) < (y) ? (x) : (y))
+/** Maximal value. */
+#define MAX(x, y)                   ((x) > (y) ? (x) : (y))
 
-#define RoundUp(size, balign)       (((size) + (balign) - 1) / (balign) * (balign))
-#define RoundDown(size, balign)     ((size) / (balign) * (balign))
-#define IsPowerOf2(balign)          ((((balign) - 1) & (balign)) == 0)
+/** Round up the value with specified alignment. */
+#define ROUND_UP(size, align)      (((size) + (align) - 1) / (align) * (align))
+/** Round down the value with specified alignment. */
+#define ROUND_DOWN(size, align)    ((size) / (align) * (align))
+#define IS_POWER_OF_2(value)       ((((value) - 1) & (value)) == 0)
 
-#define RoundUp2(size, balign)      (((size) + (balign) - 1) & (~((balign) - 1)))
-#define RoundDown2(size, balign)    ((size) & (~((balign) - 1)))
-
-/* Branching hints for the compiler */
-/** Give a hint for the compiler that a given conditional statement is likely to
- * be true.
- *
- * Usage example:
- * @code
- * if (Likely(someCondition)) { ... }
- * @endcode
+/** Round up the value with specified alignment. Alignment must be an integer
+ * power of two.
  */
-#define Likely(condition)           __builtin_expect(!!(condition), 1)
-/** Give a hint for the compiler that a given conditional statement is likely to
- * be false.
- *
- * Usage example:
- * @code
- * if (Unlikely(someCondition)) { ... }
- * @endcode
+#define ROUND_UP2(size, align)     (((size) + (align) - 1) & (~((align) - 1)))
+/** Round down the value with specified alignment. Alignment must be an integer
+ * power of two.
  */
-#define Unlikely(condition)         __builtin_expect(!!(condition), 0)
-
-/** Macro for marking unused parameters.
- *
- * Usage example:
- * @code
- * int SomeFunction(int someParam UNUSED) { ... }
- * @endcode
- */
-#define UNUSED                      __attribute__((unused))
+#define ROUND_DOWN2(size, align)   ((size) & (~((align) - 1)))
 
 #endif /* DEFS_H_ */

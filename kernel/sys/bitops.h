@@ -16,14 +16,15 @@
  * Common operations for manipulating bits strings are defined in this file.
  */
 
+/* XXX must be rewritten to inline functions without C casts! */
 /** Set specified bit in a string */
-#define BitSet(a, i)        (((u8 *)(a))[(i) / NBBY] |= 1 << ((i) % NBBY))
+#define BIT_SET(a, i)       (((u8 *)/* XXX */(a))[(i) / NBBY] |= 1 << ((i) % NBBY))
 /** Clear specified bit in a string */
-#define BitClear(a, i)      (((u8 *)(a))[(i) / NBBY] &= ~(1 << ((i) % NBBY)))
+#define BIT_CLEAR(a, i)     (((u8 *)/* XXX */(a))[(i) / NBBY] &= ~(1 << ((i) % NBBY)))
 /** Check if specified bit is set in a string */
-#define BitIsSet(a, i)      (((const u8 *)(a))[(i) / NBBY] & (1 << ((i) % NBBY)))
+#define BIT_IS_SET(a, i)    (((const u8 *)/* XXX */(a))[(i) / NBBY] & (1 << ((i) % NBBY)))
 /** Check if specified bit is cleared in a string */
-#define BitIsClear(a, i)     (!BitIsSet(a, i))
+#define BIT_IS_CLEAR(a, i)  (!BIT_IS_SET(a, i))
 
 namespace {
 
@@ -39,7 +40,7 @@ namespace {
 inline int
 BitFirstSet(void *a, size_t numBits)
 {
-    Assert(numBits % (sizeof(uintptr_t) * NBBY) == 0);
+    ASSERT(numBits % (sizeof(uintptr_t) * NBBY) == 0);
 
     size_t numWords = (numBits + sizeof(uintptr_t) * NBBY - 1) /
                       (sizeof(uintptr_t) * NBBY);
@@ -70,7 +71,7 @@ BitFirstSet(void *a, size_t numBits)
 inline int
 BitFirstClear(void *a, u32 numBits)
 {
-    Assert(numBits % (sizeof(uintptr_t) * NBBY) == 0);
+    ASSERT(numBits % (sizeof(uintptr_t) * NBBY) == 0);
 
     u32 numWords = (numBits + sizeof(uintptr_t) * NBBY - 1) /
                    (sizeof(uintptr_t) * NBBY) ;

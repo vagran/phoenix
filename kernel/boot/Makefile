@@ -25,14 +25,16 @@ $(foreach dir,$(SUBDIRS),$(eval vpath %.S $(dir)) $(eval vpath %.c $(dir)) $(eva
 
 OBJS = $(foreach src,$(SRCS), \
 	$(OBJ_DIR)/$(patsubst %.cpp,%.o,$(patsubst %.c,%.o,$(patsubst %.S,%.o,$(notdir $(src))))))
+DEPS = $(OBJS:.o=.d)
 
-CFLAGS = -std=gnu99 -Wno-pointer-sign
+CFLAGS = $(GLOBAL_C_FLAGS) $(C_STANDARD) -Wno-pointer-sign
 
-CPP_FLAGS = -fno-exceptions -fno-rtti $(CXX_RESTRICTIONS)
+CPP_FLAGS = $(GLOBAL_CXX_FLAGS) $(CXX_STANDARD) $(CXX_RESTRICTIONS) \
+	-fno-exceptions -fno-rtti
 
-COMMON_FLAGS = -fpic -Wall -Werror -fshort-wchar -fno-strict-aliasing \
-	-fno-merge-constants -DEFI_FUNCTION_WRAPPER -mno-red-zone -DCONFIG_x86_64 \
-	-DBOOT_LOADER -DEFI_APP
+COMMON_FLAGS = $(GLOBAL_FLAGS) -fpic -Wall -Werror -fshort-wchar \
+	-fno-strict-aliasing -fno-merge-constants -DEFI_FUNCTION_WRAPPER \
+	-mno-red-zone -DCONFIG_x86_64 -DBOOT_LOADER -DEFI_APP
 
 SECTIONS = .text .sdata .data .dynamic .dynsym .rel .rela .reloc
 DEBUG_SECTIONS = .debug_info .debug_abbrev .debug_loc .debug_aranges \
@@ -60,6 +62,9 @@ LDFLAGS = -nostdlib -T $(LD_SCRIPT) -shared -Bsymbolic --unresolved-symbols=repo
 
 all: $(EFI_IMAGE) $(EFI_DEBUG_IMAGE)
 
+# include dependencies if exist
+-include $(DEPS)
+
 $(EFI_IMAGE): $(ELF_IMAGE)
 	$(OBJCOPY) $(foreach sec,$(SECTIONS),-j $(sec)) --target=efi-app-x86_64 $< $@
 	
@@ -74,9 +79,11 @@ $(OBJ_DIR)/%.o: %.S
 	
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(IFLAGS) $(COMMON_FLAGS) $(CFLAGS) -c -o $@ $<
+	$(CC) -MM -MT '$@' $(IFLAGS) $(COMMON_FLAGS) $(CFLAGS) -c -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.o: %.cpp
 	$(CC) $(IFLAGS) $(COMMON_FLAGS) $(CPP_FLAGS) -c -o $@ $<
+	$(CC) -MM -MT '$@' $(IFLAGS) $(COMMON_FLAGS) $(CPP_FLAGS) -c -o $(@:.o=.d) $<
 
 $(COMPILE_DIR):
 	if [ ! -d $@ ]; then mkdir $@; fi

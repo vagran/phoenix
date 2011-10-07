@@ -1819,14 +1819,14 @@ literal:
                 u64 res;
 
                 *p = 0;
-                Assert(ccfn != ccfn_none);
+                ASSERT(ccfn != ccfn_none);
                 if (ccfn == ccfn_strtoq) {
                     res = strtoq(buf, 0, base);
                 } else {
                     res = strtouq(buf, 0, base);
                 }
                 if (flags & POINTER) {
-                    Vaddr va(res);
+                    vm::Vaddr va(res);
                     *va_arg(ap, void **) = va;
                 } else if (flags & SHORT) {
                     *va_arg(ap, short *) = res;

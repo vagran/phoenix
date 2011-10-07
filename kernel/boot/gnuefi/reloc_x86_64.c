@@ -36,6 +36,7 @@
 */
 
 #include <types.h>
+#include <compat_types.h>
 #include <elf.h>
 
 #include <efi.h>
