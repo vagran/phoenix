@@ -8,8 +8,8 @@
 include $(PHOENIX_ROOT)/make/makevar.mak
 
 # Common compile flags (all languages)
-COMPILE_FLAGS = $(GLOBAL_FLAGS) -pipe -Werror -Wall -Wextra
-	-DKERNEL -fno-stack-protector -fno-default-inline -fno-builtin \
+COMPILE_FLAGS = $(GLOBAL_FLAGS) -pipe -Werror -Wall -Wextra \
+	-DKERNEL -fno-stack-protector -fno-builtin \
 	-DLOAD_ADDRESS=$(KERNEL_LOAD_ADDRESS) \
 	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
 COMPILE_FLAGS_C = $(GLOBAL_C_FLAGS) $(C_STANDARD)
@@ -18,6 +18,7 @@ COMPILE_FLAGS_CXX = $(GLOBAL_CXX_FLAGS) $(CXX_STANDARD) $(CXX_RESTRICTIONS) \
 COMPILE_FLAGS_ASM = -DASSEMBLER
 LINK_FLAGS = -static -nodefaultlibs -nostartfiles -nostdinc -nostdinc++
 LINK_SCRIPT = $(KERNROOT)/make/link.lds
+LINK_MAP = $(OBJ_DIR)/kernel.map
 AR_FLAGS = rcs
 
 #PHOENIX_TARGET variable must be either DEBUG or RELEASE
@@ -61,6 +62,13 @@ OBJS = $(foreach obj,$(OBJS_LOCAL),$(OBJ_DIR)/$(obj))
 DEPS = $(OBJS:.o=.d)
 endif
 
+# Separate pre-linking for bootstrap objects
+BOOT_SRCS = init.cpp
+BOOT_OBJ_SRCS = $(foreach obj,$(BOOT_SRCS:.cpp=.o),$(OBJ_DIR)/$(obj))
+BOOT_OBJ = $(OBJ_DIR)/boot.o
+BOOT_LINK_SCRIPT = $(KERNROOT)/make/boot_link.lds
+BOOT_LINK_MAP = $(OBJ_DIR)/boot.map
+
 .PHONY: all clean FORCE $(SUBDIRS_TARGET)
 
 all: $(OBJ_DIR) $(OBJS) $(IMAGE) $(SUBDIRS_TARGET) $(LIB_FILE)
@@ -69,10 +77,15 @@ all: $(OBJ_DIR) $(OBJS) $(IMAGE) $(SUBDIRS_TARGET) $(LIB_FILE)
 -include $(DEPS)
 
 ifeq ($(MAKEIMAGE),1)
-$(IMAGE): $(OBJ_DIR) $(SUBDIRS_TARGET) $(LINK_SCRIPT) $(LINK_FILES)
+$(BOOT_OBJ): $(BOOT_OBJ_SRCS) $(BOOT_LINK_SCRIPT)
+	$(LD) $(LINK_FLAGS) -r -Map $(BOOT_LINK_MAP) -T $(BOOT_LINK_SCRIPT) -o $@ $^
+
+IMAGE_OBJS = $(filter-out $(BOOT_OBJ_SRCS), $(wildcard $(OBJ_DIR)/*.o))
+
+$(IMAGE): $(OBJ_DIR) $(SUBDIRS_TARGET) $(LINK_SCRIPT) $(LINK_FILES) $(BOOT_OBJ)
 	$(LD) $(LINK_FLAGS) --defsym LOAD_ADDRESS=$(KERNEL_LOAD_ADDRESS) \
-		--defsym KERNEL_ADDRESS=$(KERNEL_ADDRESS) \
-		-T $(LINK_SCRIPT) -o $@ $(wildcard $(OBJ_DIR)/*.o) $(LINK_FILES)
+		--defsym KERNEL_ADDRESS=$(KERNEL_ADDRESS) -Map $(LINK_MAP) \
+		-T $(LINK_SCRIPT) -o $@ $(IMAGE_OBJS) $(LINK_FILES)
 endif
 
 ifeq ($(DO_RAMDISK),1)
@@ -96,7 +109,9 @@ $(OBJ_DIR)/%.o: %.c
 		$(COMPILE_FLAGS_C) -o $(@:.o=.d) $<
 
 $(OBJ_DIR)/%.o: %.cpp
-	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_CXX) -o $@ $<
+	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_CXX) \
+		$(subst $<,-DAUTONOMOUS_LINKING,$(findstring $<, $(BOOT_SRCS))) \
+		-o $@ $<
 	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) \
 		$(COMPILE_FLAGS_CXX) -o $(@:.o=.d) $<
 

@@ -14,7 +14,11 @@
  * Virtual memory machine dependent definitions.
  */
 
-namespace vm {
+namespace
+#ifndef AUTONOMOUS_LINKING
+vm
+#endif /* AUTONOMOUS_LINKING */
+{
 
 enum {
     /** Number of bits to shift to get a memory page frame. */

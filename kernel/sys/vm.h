@@ -15,7 +15,11 @@
  */
 
 /** Namespace with virtual memory subsystem components. */
-namespace vm {
+namespace
+#ifndef AUTONOMOUS_LINKING
+vm
+#endif /* AUTONOMOUS_LINKING */
+{
 
 /** Machine-independent flags for each PAT table entry.
  * Underlying machine-dependent implementation translates them to real
@@ -57,7 +61,11 @@ enum PatEntryFlags {
 
 #include <md_vm.h>
 
-namespace vm {
+namespace
+#ifndef AUTONOMOUS_LINKING
+vm
+#endif /* AUTONOMOUS_LINKING */
+{
 
 enum {
     /** Memory page size in bytes. */
@@ -124,13 +132,8 @@ public:
      * rounding.
      * @return Reference to the same object.
      */
-    template <AddrType alignment = PAGE_SIZE>
-    inline Addr &RoundUp() {
-        if (::IsPowerOf2(alignment)) {
-            _addr.addr = ::RoundUp2(_addr.addr, alignment);
-        } else {
-            _addr.addr = ::RoundUp(_addr.addr, alignment);
-        }
+    inline Addr &RoundUp(AddrType alignment = PAGE_SIZE) {
+        _addr.addr = ::RoundUp2(_addr.addr, alignment);
         return *this;
     }
 
@@ -140,13 +143,8 @@ public:
      * rounding.
      * @return Reference to the same object.
      */
-    template <AddrType alignment = PAGE_SIZE>
-    inline Addr &RoundDown() {
-        if (::IsPowerOf2(alignment)) {
-            _addr.addr = ::RoundDown2(_addr.addr, alignment);
-        } else {
-            _addr.addr = ::RoundDown(_addr.addr, alignment);
-        }
+    inline Addr &RoundDown(AddrType alignment = PAGE_SIZE) {
+        _addr.addr = ::RoundDown2(_addr.addr, alignment);
         return *this;
     }
 
@@ -175,6 +173,8 @@ public:
     inline Vaddr(int addr) : Addr(addr) { }
     /** Construct virtual address from pointer type. */
     inline Vaddr(void *ptr) : Addr(ptr) { }
+    /** Construct virtual address from the base class. */
+    inline Vaddr(Addr<vaddr_t> addr) : Addr(addr) { }
 };
 
 /** Class representing physical address type. */
@@ -186,6 +186,8 @@ public:
     inline Paddr(int addr) : Addr(addr) { }
     /** Construct physical address from pointer type. */
     inline Paddr(void *ptr) : Addr(ptr) { }
+    /** Construct physical address from the base class. */
+    inline Paddr(Addr<paddr_t> addr) : Addr(addr) { }
 };
 
 } /* namespace vm */

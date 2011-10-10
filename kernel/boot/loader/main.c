@@ -7,6 +7,7 @@
  * See COPYING file for copyright details.
  */
 
+#include <defs.h>
 #include <types.h>
 #include <compat_types.h>
 #include <boot.h>

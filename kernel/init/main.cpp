@@ -27,8 +27,13 @@
  */
 
 #include <sys.h>
+#include <boot.h>
 
-int c, d = 237;
+namespace boot {
+
+BootParam *kernBootParam;
+
+}
 
 int
 Main(void)

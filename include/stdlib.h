@@ -32,14 +32,14 @@ inline T
 Max(T x, T y) { return MAX(x, y); }
 
 /** Round up the value with specified alignment. */
-template <typename T>
+template <typename T, typename Tal>
 inline T
-RoundUp(T size, T align) { return ROUND_UP(size, align); }
+RoundUp(T size, Tal align) { return ROUND_UP(size, align); }
 
 /** Round down the value with specified alignment. */
-template <typename T>
+template <typename T, typename Tal>
 inline T
-RoundDown(T size, T align) { return ROUND_DOWN(size, align); }
+RoundDown(T size, Tal align) { return ROUND_DOWN(size, align); }
 
 /** Check if specified value is an integer power of two. */
 template <typename T>
@@ -49,9 +49,9 @@ IsPowerOf2(T value) { return IS_POWER_OF_2(value); }
 /** Round up the value with specified alignment. Alignment must be an integer
  * power of two.
  */
-template <typename T>
+template <typename T, typename Tal>
 inline T
-RoundUp2(T size, T align)
+RoundUp2(T size, Tal align)
 {
     ASSERT(IsPowerOf2(align));
     return ROUND_UP2(size, align);
@@ -60,9 +60,9 @@ RoundUp2(T size, T align)
 /** Round down the value with specified alignment. Alignment must be an integer
  * power of two.
  */
-template <typename T>
+template <typename T, typename Tal>
 inline T
-RoundDown2(T size, T align)
+RoundDown2(T size, Tal align)
 {
     ASSERT(IsPowerOf2(align));
     return ROUND_DOWN2(size, align);

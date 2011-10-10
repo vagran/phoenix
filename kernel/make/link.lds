@@ -7,32 +7,33 @@
  * See COPYING file for copyright details.
  */
 
-ENTRY(start)
+ENTRY(Start)
 
-SECTIONS {    
+SECTIONS {
     . = LOAD_ADDRESS;
     .boot : AT (LOAD_ADDRESS) {
-        */init.o(.text .data .rodata*)
-        _bootbss = ABSOLUTE(.);
-        */init.o(.bss)
+        */boot.o(.boot)
+        kernBootBss = ABSOLUTE(.);
+        */boot.o(.bss)
     }
-    _eboot = ALIGN(0x1000);
+    kernBootEnd = ALIGN(0x1000);
     
-    . = KERNEL_ADDRESS + _eboot - LOAD_ADDRESS;
-    .text : AT(_eboot) {
-        _btext = ABSOLUTE(.);
+    . = KERNEL_ADDRESS + kernBootEnd - LOAD_ADDRESS;
+    .text : AT(kernBootEnd) {
+        kernText = ABSOLUTE(.);
         *(.text)
+        *(.text.*)
         *(.gnu.linkonce.t.*)
     }
     
     . = ALIGN(0x1000);
-    _etext = ABSOLUTE(.);
+    kernTextEnd = ABSOLUTE(.);
     
     /DISCARD/ : {
         */init.o(.ctors .dtors)
     }
     
-    .rodata : AT(_etext - _btext + _eboot) {
+    .rodata : AT(kernTextEnd - kernText + kernBootEnd) {
         *(.rodata*)
         *(.gnu.linkonce.r.*)
         
@@ -52,47 +53,47 @@ SECTIONS {
     }
 
     . = ALIGN(0x1000);
-    _erodata = ABSOLUTE(.);
+    kernRodataEnd = ABSOLUTE(.);
     
     /* Create RAM-disk from .ramdisk section of input object if exists */
-    _ramdisk = _erodata;
-    .ramdisk : AT(_erodata - _btext + _eboot) {
+    kernRamdisk = kernRodataEnd;
+    .ramdisk : AT(kernRodataEnd - kernText + kernBootEnd) {
         *(.ramdisk)
     }
     
     . = ALIGN(0x1000);
-    _eramdisk = ABSOLUTE(.);
+    kernRamdiskEnd = ABSOLUTE(.);
     
-    .data : AT(_eramdisk - _btext + _eboot) {
+    .data : AT(kernRamdiskEnd - kernText + kernBootEnd) {
         *(.data)
-        _ramdiskSize = ABSOLUTE(.);
+        kernRamdiskSize = ABSOLUTE(.);
         LONG(SIZEOF(.ramdisk))
     }
     
     . = ALIGN(0x1000);
-    _edata = ABSOLUTE(.);
+    kernDataEnd = ABSOLUTE(.);
     
-    .bss : AT(_edata - _btext + _eboot) {
+    .bss : AT(kernDataEnd - kernText + kernBootEnd) {
         *(.bss)
     }
     
     . = ALIGN(0x1000);
-    _end = ABSOLUTE(.);
+    kernEnd = ABSOLUTE(.);
     
-    .stab : AT(_end - _btext + _eboot) {
+    .stab : AT(kernEnd - kernText + kernBootEnd) {
         *(.stab)
     }
     
     . = ALIGN(0x1000);
-    _esym = ABSOLUTE(.);
+    kernSymEnd = ABSOLUTE(.);
     
-    .stabstr : AT(_esym - _btext + _eboot) {
+    .stabstr : AT(kernSymEnd - kernText + kernBootEnd) {
         *(.stabstr)
     }
     
     . = ALIGN(0x1000);
-    _estabstr = ABSOLUTE(.);
-    _kernImageEnd = _estabstr;
+    kernStrtabEnd = ABSOLUTE(.);
+    kernImageEnd = kernStrtabEnd;
     
     /DISCARD/ : {
         *(.comment)

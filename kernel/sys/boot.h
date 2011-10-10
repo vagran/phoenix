@@ -19,8 +19,12 @@
 
 #ifdef __cplusplus
 /** This namespace contains definitions related to the system boot loading. */
-namespace boot {
-#endif
+namespace
+#ifndef AUTONOMOUS_LINKING
+boot
+#endif /* AUTONOMOUS_LINKING */
+{
+#endif /* __cplusplus */
 
 enum {
     /** Size of the very initial stack region which is used on the first booting
@@ -33,15 +37,31 @@ enum {
 typedef struct {
     void *efiSystemTable; /**< Pointer to the EFI system table. */ //XXX should not be void *
     u32 cmdLineSize; /**< Size of @a cmdLine in bytes. */
-    char *cmdLine; /**< NULL terminated string with the kernel arguments. */
+    char *cmdLine; /**< Null terminated string with the kernel arguments. */
     void *memMap; /**< Memory map. Describes all available memory. */
     u32 memMapNumDesc; /**< Number of descriptors in @a memMap. */
     u32 memMapDescSize; /**< One descriptor size in @a memMap. */
     u32 memMapDescVersion; /**< Descriptor version in @a memMap. */
 } BootParam;
 
+extern BootParam *kernBootParam;
+
 #ifdef __cplusplus
 } /* namespace boot */
 #endif
+
+/* Symbols injected by linker script. */
+extern u8   kernBootBss, /**< Start of kernel boot region BSS section. */
+            kernBootEnd, /**< End of kernel boot region. */
+            kernText, /**< Start of kernel main text section. */
+            kernTextEnd, /**< End of kernel main text section. */
+            kernRodataEnd, /**< End of kernel read-only data section. */
+            kernRamdisk, /**< Start of kernel RAM disk section. */
+            kernRamdiskEnd, /**< End of kernel RAM disk section. */
+            kernDataEnd, /**< End of kernel data section. */
+            kernEnd; /**< End of kernel loadable sections. */
+
+/** Size of kernel RAM disk section. Emitted by linker script. */
+extern u32  kernRamdiskSize;
 
 #endif /* BOOT_H_ */
