@@ -14,6 +14,8 @@
 #ifndef MD_STACK_H_
 #define MD_STACK_H_
 
+namespace {
+
 /** Pointer to function used to switch the stack to new location. Used with
  * @ref SwitchStack function.
  *
@@ -33,6 +35,8 @@ typedef void (*StackEntryFunc)(void *arg) __NORETURN;
  *      It is not possible to return from this function.
  * @param arg Argument to pass to entry function @a entryFunc.
  */
+inline void SwitchStack(vaddr_t stackAddr, StackEntryFunc entryFunc, void *arg)
+    __NORETURN;
 inline void
 SwitchStack(vaddr_t stackAddr, StackEntryFunc entryFunc, void *arg = 0)
 {
@@ -43,6 +47,10 @@ SwitchStack(vaddr_t stackAddr, StackEntryFunc entryFunc, void *arg = 0)
         : [arg]"D"(arg), [entryFunc]"a"(entryFunc), [stackAddr]"S"(stackAddr)
         : "memory"
         );
+    NOT_REACHED();
+    while (true); /* xxx Make compiler happy */
 }
+
+} /* anonymous namespace */
 
 #endif /* MD_STACK_H_ */

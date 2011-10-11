@@ -80,12 +80,12 @@ ifeq ($(MAKEIMAGE),1)
 $(BOOT_OBJ): $(BOOT_OBJ_SRCS) $(BOOT_LINK_SCRIPT)
 	$(LD) $(LINK_FLAGS) -r -Map $(BOOT_LINK_MAP) -T $(BOOT_LINK_SCRIPT) -o $@ $^
 
-IMAGE_OBJS = $(filter-out $(BOOT_OBJ_SRCS), $(wildcard $(OBJ_DIR)/*.o))
-
 $(IMAGE): $(OBJ_DIR) $(SUBDIRS_TARGET) $(LINK_SCRIPT) $(LINK_FILES) $(BOOT_OBJ)
 	$(LD) $(LINK_FLAGS) --defsym LOAD_ADDRESS=$(KERNEL_LOAD_ADDRESS) \
 		--defsym KERNEL_ADDRESS=$(KERNEL_ADDRESS) -Map $(LINK_MAP) \
-		-T $(LINK_SCRIPT) -o $@ $(IMAGE_OBJS) $(LINK_FILES)
+		-T $(LINK_SCRIPT) -o $@ \
+		$(filter-out $(BOOT_OBJ_SRCS) $(BOOT_OBJ), $(wildcard $(OBJ_DIR)/*.o)) \
+		$(BOOT_OBJ) $(LINK_FILES)
 endif
 
 ifeq ($(DO_RAMDISK),1)
@@ -101,7 +101,8 @@ $(COMPILE_DIR):
 
 $(OBJ_DIR): $(COMPILE_DIR)
 	if [ ! -d $@ ]; then mkdir $@; fi
-
+	cp $(TOOLS_ROOT)/gdb/gdbinit $@/.gdbinit
+	cp $(TOOLS_ROOT)/gdb/phoenix_gdb.py $@/
 
 $(OBJ_DIR)/%.o: %.c
 	$(CC) -c $(INCLUDE_FLAGS) $(COMPILE_FLAGS) $(COMPILE_FLAGS_C) -o $@ $<

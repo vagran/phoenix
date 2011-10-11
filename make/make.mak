@@ -232,6 +232,8 @@ $(COMPILE_DIR):
 
 $(OBJ_DIR): $(COMPILE_DIR)
 	if [ ! -d $@ ]; then mkdir $@; fi
+	cp $(TOOLS_ROOT)/gdb/gdbinit $@/.gdbinit
+	cp $(TOOLS_ROOT)/gdb/phoenix_gdb.py $@/
 
 ifdef IS_PROFILE_ROOT
 clean: $(SUBDIRS_TARGET)

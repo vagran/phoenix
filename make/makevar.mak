@@ -47,6 +47,8 @@ export LIBS_INSTALL_DIR = /usr/lib
 
 export INSTALL_ROOT = $(PHOENIX_ROOT)/install
 
+export TOOLS_ROOT = $(PHOENIX_ROOT)/tools
+
 # Default load address for binary executables
 export DEF_LOAD_ADDRESS = 0x1000
 

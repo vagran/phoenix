@@ -30,7 +30,7 @@ enum {
     /** Size of the very initial stack region which is used on the first booting
      * phase.
      */
-    BOOT_STACK_SIZE
+    BOOT_STACK_SIZE =       0x4000
 };
 
 /** The kernel gets a pointer to this structure as its entry point argument. */

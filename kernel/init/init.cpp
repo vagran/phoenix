@@ -31,11 +31,13 @@ using namespace boot;
 namespace {
 
 /* Temporal stack used for the first booting phase. */
-//u8 bootStack[boot::BOOT_STACK_SIZE];
+u8 bsStack[BOOT_STACK_SIZE];
 
-vaddr_t bootHeap; /* Current heap pointer. */
+vaddr_t bsHeap; /* Current heap pointer. */
 
-BootParam *bootParam;
+BootParam *bsBootParam;
+
+//paddr_t bsPatRoot;
 
 }
 
@@ -55,9 +57,9 @@ BootAlloc(size_t size, vaddr_t align = 0)
     }
     ASSERT(IsPowerOf2(align));
 
-    Vaddr va(bootHeap);
+    Vaddr va(::bsHeap);
     va.RoundUp(align);
-    bootHeap = va + RoundUp2(size, sizeof(int));
+    ::bsHeap = va + RoundUp2(size, sizeof(int));
     return va;
 }
 
@@ -92,24 +94,59 @@ MappedToBoot(Vaddr va)
     return ret;
 }
 
+/* Map all pages starting from kernel virtual address till current heap pointer. */
+static void
+MapHeap()
+{
+
+}
+
+static void Boot(void *arg) __NORETURN;
+/* Continue booting on new temporal stack. */
+static void
+Boot(void *arg)
+{
+    BootParam *bootParam = Vaddr(arg);
+
+    /* Heap will follow the kernel image. */
+    ::bsHeap = MappedToBoot(Vaddr(&::kernEnd).RoundUp());
+
+    /* Allocate and copy boot parameters. Pointer to the EFI system table is
+     * unchanged - later it will be used as physical address.
+     */
+    ::bsBootParam = BootAlloc(sizeof(*bootParam));
+    BootMemcpy(::bsBootParam, bootParam, sizeof(*bootParam));
+    ::bsBootParam->cmdLine = BootAlloc(bootParam->cmdLineSize);
+    BootMemcpy(::bsBootParam->cmdLine, bootParam->cmdLine,
+               sizeof(bootParam->cmdLineSize));
+    ::bsBootParam->memMap = BootAlloc(bootParam->memMapDescSize *
+                                      bootParam->memMapNumDesc);
+    BootMemcpy(::bsBootParam->memMap, bootParam->memMap,
+               bootParam->memMapDescSize * bootParam->memMapNumDesc);
+
+    MapHeap();
+
+    while (true) {
+        pause();
+    }
+}
+
+/* The kernel entry point. Called directly by EFI boot loader. */
 void
 Start(BootParam *bootParam)
 {
     /* Disable all interrupts. */
     cli();
 
+    bool wait = true;
+    while (wait) {
+        pause();
+    }
+
     /* Zero bootstrap BSS section. */
-    for (u8 *p = &kernBootBss; p < &kernBootEnd; p++) {
+    for (u8 *p = &::kernBootBss; p < &::kernBootEnd; p++) {
         *p = 0;
     }
 
-    /* Heap will follow the kernel image. */
-    bootHeap = MappedToBoot(Vaddr(&kernEnd).RoundUp());
-
-    ::bootParam = BootAlloc(sizeof(*bootParam));
-    BootMemcpy(::bootParam, bootParam, sizeof(*bootParam));
-
-    while (true) {
-        pause();
-    }
+    SwitchStack(Vaddr(::bsStack + sizeof(::bsStack)), Boot, bootParam);
 }

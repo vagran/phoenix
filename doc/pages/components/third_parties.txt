@@ -1,8 +1,11 @@
 ====== Third parties software ======
 
-Phoenix project uses third parties open source software to avoid additional effort for existing solutions recreating. However general policy allows to use 3rd parties code only when absolutely necessary. The reason is that most of open source solutions are written in C and very not well-fit to Phoenix code base. For now the general approach is to mostly preserve original library code, make all its external interfaces portable (not dependent on POSIX or any other environment) and wrap it completely to C++ classes which can be used by the rest of the system code.
+Phoenix project uses third parties open source software to avoid additional effort for existing solutions recreating. However general policy allows to use 3rd parties code only when absolutely necessary. The reason is that most of open source solutions are written in C and not well-fit to Phoenix code base. For now the general approach is to mostly preserve original library code, make all its external interfaces portable (not dependent on POSIX or any other environment) and wrap it completely to C++ classes which can be used by the rest of the system code.
 
-Libelf was the exclusion of the general approach. It firstly was ported to PhobOS project, where all file were made C++. Increasing C++ restrictions level in Phoenix project (e.g. disabling C-style casts in C++ code) required deeper modifications in libelf source code. So it is now bad C-style C++ code. Such approach will never be used for other componentsin the future.
+There is a subset of header files which can be included by 3rd parties C code:
+  * defs.h - Common system definitions.
+  * types.h - Common system types.
+  * compat_types.h - Compatibility types created specially for 3rd parties software which requires some UNIX/POSIX types.
 
 ===== List =====
 
