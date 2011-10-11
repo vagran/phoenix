@@ -175,6 +175,9 @@ public:
     inline Vaddr(void *ptr) : Addr(ptr) { }
     /** Construct virtual address from the base class. */
     inline Vaddr(Addr<vaddr_t> addr) : Addr(addr) { }
+
+    /** Return physical address for identity mapping. */
+    inline paddr_t IdentityPaddr() { return static_cast<paddr_t>(_addr.addr); }
 };
 
 /** Class representing physical address type. */
@@ -188,6 +191,9 @@ public:
     inline Paddr(void *ptr) : Addr(ptr) { }
     /** Construct physical address from the base class. */
     inline Paddr(Addr<paddr_t> addr) : Addr(addr) { }
+
+    /** Return virtual address for identity mapping. */
+    inline vaddr_t IdentityVaddr() { return static_cast<vaddr_t>(_addr.addr); }
 };
 
 } /* namespace vm */

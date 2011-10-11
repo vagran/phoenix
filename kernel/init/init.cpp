@@ -76,6 +76,20 @@ BootMemcpy(Vaddr dst, Vaddr src, size_t size)
     return ret;
 }
 
+/* Memory filling function for bootstrapping stage. */
+static Vaddr
+BootMemset(Vaddr dst, u8 value, size_t size)
+{
+    Vaddr ret = dst;
+    u8 *p_dst = dst;
+    while (size) {
+        *p_dst = value;
+        dst += 1;
+        size--;
+    }
+    return ret;
+}
+
 /* Convert bootstrap identity mapped address to kernel virtual address. */
 static inline Vaddr
 BootToMapped(Vaddr va)
@@ -92,6 +106,42 @@ MappedToBoot(Vaddr va)
     return ret;
 }
 
+static paddr_t bsDefaultPatRoot;
+static vaddr_t bsLastMapped;
+static vaddr_t bsQuickMap;
+
+static void
+MapHeap()
+{
+    /* Map all addresses from last mapped till current heap pointer. */
+    if (!bsDefaultPatRoot) {
+        bsLastMapped = LOAD_ADDRESS;
+        bsDefaultPatRoot = BootAlloc(PAGE_SIZE).IdentityPaddr();
+        BootMemset(Paddr(bsDefaultPatRoot).IdentityVaddr(), 0, PAGE_SIZE);
+        bsQuickMap = BootAlloc(PAGE_SIZE);
+    }
+    while (bsLastMapped < bootHeap) {
+        u32 tableLvl = NUM_PAT_TABLES - 1;
+        void *table = Paddr(bsDefaultPatRoot);
+        do {
+            PatEntry e(bsLastMapped, table, tableLvl);
+            Paddr pa;
+            if (e.CheckFlag(PAT_EF_PRESENT)) {
+                pa = e.GetAddress();
+                tableLvl--;
+            }else if (tableLvl) {
+                pa = BootAlloc(PAGE_SIZE).IdentityPaddr();
+                e.SetAddress(pa);
+                e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
+                           PAT_EF_GLOBAL);
+                table = pa;
+                tableLvl--;
+            }
+        } while (tableLvl > 0);
+        bsLastMapped += PAGE_SIZE;
+    }
+}
+
 void
 Start(BootParam *bootParam)
 {
@@ -99,9 +149,7 @@ Start(BootParam *bootParam)
     cli();
 
     /* Zero bootstrap BSS section. */
-    for (u8 *p = &kernBootBss; p < &kernBootEnd; p++) {
-        *p = 0;
-    }
+    BootMemset(&kernBootBss, 0, &kernBootEnd - &kernBootBss);
 
     /* Heap will follow the kernel image. */
     bootHeap = MappedToBoot(Vaddr(&kernEnd).RoundUp());

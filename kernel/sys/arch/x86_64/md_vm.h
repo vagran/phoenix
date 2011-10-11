@@ -49,7 +49,7 @@ public:
      *      (e.g. page table, page directory, ...).
      * @return Number of entries in a specified table.
      */
-    inline u32 GetTableSize(u32 tableLvl) {
+    static inline u32 GetTableSize(u32 tableLvl) {
         ASSERT(tableLvl < NUM_PAT_TABLES);
         /* 512 entries in each PAT table. */
         return 512;
@@ -179,6 +179,41 @@ public:
         return curFlag;
     }
 
+    /** Check specified flag in PAT entry.
+     *
+     */
+    bool CheckFlag(PatEntryFlags flag) {
+        ASSERT(_tableLvl <= NUM_PAT_TABLES);
+        if (_tableLvl == NUM_PAT_TABLES) {
+            switch (flag) {
+            case PAT_EF_WRITE_THROUGH:
+                return _ptr.cr3->pwt;
+            case PAT_EF_CACHE_DISABLE:
+                return _ptr.cr3->pcd;
+            default:
+                return false;
+            }
+        }
+        switch (flag) {
+        case PAT_EF_PRESENT:
+            return _ptr.entryPage->present;
+        case PAT_EF_WRITE:
+            return _ptr.entryPage->write;
+        case PAT_EF_USER:
+            return _ptr.entryPage->user;
+        case PAT_EF_WRITE_THROUGH:
+            return _ptr.entryPage->writeThrough;
+        case PAT_EF_CACHE_DISABLE:
+            return _ptr.entryPage->cacheDisable;
+        case PAT_EF_EXECUTE:
+            return !_ptr.entryPage->executeDisable;
+        case PAT_EF_GLOBAL:
+            return _ptr.entryPage->global;
+        }
+        FAULT("Invalid flag specified: %d", flag);
+        return false; //XXX
+    }
+
     /** Set or clear specified flag in PAT entry.
      *
      * @param flag Flag to set or clear. Corresponding machine-dependent flag
@@ -266,6 +301,22 @@ public:
             }
         }
         return prev;
+    }
+
+    /** Get physical address pointed by the entry. */
+    paddr_t GetAddress() {
+        return _ptr.entryPage->pa << PAGE_SHIFT;
+    }
+
+    /** Set physical address pointed by the entry.
+     * @param pa Physical address to set.
+     * @return Previous value of physical address in the entry.
+     */
+    paddr_t SetAddress(paddr_t pa) {
+        ASSERT((pa & (PAGE_SIZE - 1)) == 0);
+        paddr_t prevPa = _ptr.entryPage->pa << PAGE_SHIFT;
+        _ptr.entryPage->pa = pa >> PAGE_SHIFT;
+        return prevPa;
     }
 
 private:
