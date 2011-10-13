@@ -49,7 +49,7 @@ public:
      *      (e.g. page table, page directory, ...).
      * @return Number of entries in a specified table.
      */
-    inline u32 GetTableSize(u32 tableLvl) {
+    static inline u32 GetTableSize(u32 tableLvl) {
         ASSERT(tableLvl < NUM_PAT_TABLES);
         /* 512 entries in each PAT table. */
         return 512;
@@ -140,7 +140,7 @@ public:
     /** Set or clear @a accessed flag for an entry.
      * @param flag Value to set in the flag.
      *
-     * @return previous value.
+     * @return Previous value.
      */
     inline bool SetAccessed(bool flag = true) {
         if (_tableLvl == NUM_PAT_TABLES) {
@@ -167,7 +167,7 @@ public:
     /** Set or clear @a dirty flag for an entry.
      * @param flag Value to set in the flag.
      *
-     * @return previous value.
+     * @return Previous value.
      */
     inline bool SetDirty(bool flag = true) {
         if (_tableLvl == NUM_PAT_TABLES) {
@@ -177,6 +177,42 @@ public:
         bool curFlag = _ptr.entryPage->dirty;
         _ptr.entryPage->dirty = flag;
         return curFlag;
+    }
+
+    /** Check specified flag in PAT entry.
+     * @param flag Flag to check.
+     * @return Specified flag value.
+     */
+    bool CheckFlag(PatEntryFlags flag) {
+        ASSERT(_tableLvl <= NUM_PAT_TABLES);
+        if (_tableLvl == NUM_PAT_TABLES) {
+            switch (flag) {
+            case PAT_EF_WRITE_THROUGH:
+                return _ptr.cr3->pwt;
+            case PAT_EF_CACHE_DISABLE:
+                return _ptr.cr3->pcd;
+            default:
+                return false;
+            }
+        }
+        switch (flag) {
+        case PAT_EF_PRESENT:
+            return _ptr.entryPage->present;
+        case PAT_EF_WRITE:
+            return _ptr.entryPage->write;
+        case PAT_EF_USER:
+            return _ptr.entryPage->user;
+        case PAT_EF_WRITE_THROUGH:
+            return _ptr.entryPage->writeThrough;
+        case PAT_EF_CACHE_DISABLE:
+            return _ptr.entryPage->cacheDisable;
+        case PAT_EF_EXECUTE:
+            return !_ptr.entryPage->executeDisable;
+        case PAT_EF_GLOBAL:
+            return _ptr.entryPage->global;
+        }
+        FAULT("Invalid flag specified: %d", flag);
+        return false; //XXX
     }
 
     /** Set or clear specified flag in PAT entry.
@@ -267,6 +303,39 @@ public:
         }
         return prev;
     }
+
+    /** Get physical address pointed by the entry. */
+    paddr_t GetAddress() {
+        return _ptr.entryPage->pa << PAGE_SHIFT;
+    }
+
+    /** Set physical address pointed by the entry.
+     * @param pa Physical address to set.
+     * @return Previous value of physical address in the entry.
+     */
+    paddr_t SetAddress(paddr_t pa) {
+        ASSERT((pa & ((1 << PAGE_SHIFT) - 1)) == 0);
+        paddr_t prevPa = _ptr.entryPage->pa << PAGE_SHIFT;
+        _ptr.entryPage->pa = pa >> PAGE_SHIFT;
+        return prevPa;
+    }
+
+    /** Cast entry to physical address. The same effect as from @ref GetAddress.
+     * @return Physical address pointed by the entry.
+     */
+    inline operator paddr_t() { return GetAddress(); }
+
+    /** Set physical address pointed by the entry. The same effect as from
+     * @ref SetAddress.
+     * @param pa Physical address to set.
+     * @return Reference to itself.
+     */
+    inline PatEntry &operator=(paddr_t pa) { SetAddress(pa); return *this; }
+
+    /** Cast entry to pointer.
+     * @return Pointer to the entry in a table.
+     */
+    inline operator void *() { return _ptr.ptr; }
 
 private:
 
@@ -362,6 +431,16 @@ private:
 
     u32 _tableLvl;
 };
+
+/** Invalidate virtual address mapping. Flushes TLB entry for this address if
+ * exists.
+ * @param va Virtual address to invalidate.
+ */
+inline void
+InvalidateVaddr(vaddr_t va)
+{
+    invlpg(va);
+}
 
 } /* namespace vm */
 

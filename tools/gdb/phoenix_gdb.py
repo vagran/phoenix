@@ -126,6 +126,16 @@ def str_flags(val, flags):
                 s += ' <BIT%d>' % bit_pos
     return s
 
+def str_bitfield_flags(val, flags):
+    '''Convert structure value with flags into string representation. 'flags'
+    parameter is a dictionary with all flags members defined.
+    '''
+    s = ''
+    for flag in flags.keys():
+        if int(val[flag]) != 0:
+            s += '%s ' % flags[flag]
+    return s;
+
 def hex_dump(address_str, size = 16):
     '''Output memory region in hex.'''
     
@@ -205,3 +215,102 @@ class c_vaddr_printer:
         return c_vaddr_printer(val)
     
 add_pretty_printer(c_vaddr_printer)
+
+class c_paddr_printer:
+    name = 'class Paddr'
+    
+    def __init__(self, val):
+        self.val = val
+        
+    def to_string(self):
+        return 'Paddr: 0x%016x' % self.val['_addr']['addr']
+    
+    def display_hint(self):
+        return c_paddr_printer.name
+    
+    @staticmethod
+    def lookup(val):
+        if val.type.code != gdb.TYPE_CODE_STRUCT or \
+            (val.type.tag != '(anonymous namespace)::Paddr' and val.type.tag != 'vm::Paddr'):
+            return None
+        return c_paddr_printer(val)
+    
+add_pretty_printer(c_paddr_printer)
+
+class t_vaddr_printer:
+    name = 'vaddr_t'
+    
+    def __init__(self, val):
+        self.val = val
+        
+    def to_string(self):
+        return 'vaddr_t: 0x%016x' % self.val
+    
+    def display_hint(self):
+        return t_vaddr_printer.name
+    
+    @staticmethod
+    def lookup(val):
+        if val.type.code != gdb.TYPE_CODE_TYPEDEF or \
+            (str(val.type) != 'vaddr_t' and str(val.type) != 'vm::vaddr_t'):
+            return None
+        return t_vaddr_printer(val)
+    
+add_pretty_printer(t_vaddr_printer)
+
+class t_paddr_printer:
+    name = 'paddr_t'
+    
+    def __init__(self, val):
+        self.val = val
+        
+    def to_string(self):
+        return 'paddr_t: 0x%016x' % self.val
+    
+    def display_hint(self):
+        return t_paddr_printer.name
+    
+    @staticmethod
+    def lookup(val):
+        if val.type.code != gdb.TYPE_CODE_TYPEDEF or \
+            (str(val.type) != 'paddr_t' and str(val.type) != 'vm::paddr_t'):
+            return None
+        return t_paddr_printer(val)
+    
+add_pretty_printer(t_paddr_printer)
+
+class c_PatEntry_printer:
+    name = 'class PatEntry'
+    flags = { 'present':    'PRESENT',
+              'write':      'WRITE',
+              'user':       'USER',
+              'writeThrough': 'WT',
+              'cacheDisable': 'CD',
+              'accessed':   'ACCESSED',
+              'dirty':      'DIRTY',
+              'pat':        'PS',
+              'global':     'GLOBAL',
+              'executeDisable': 'XD'
+    }
+    
+    def __init__(self, val):
+        self.val = val
+        
+    def to_string(self):
+        e = self.val['_ptr']['entryPage'].dereference();
+        s = 'vm::PatEntry: pa = 0x%016x; ' % (e['pa'] << 12)
+        s += str_bitfield_flags(e, c_PatEntry_printer.flags)
+        return s
+    
+    def display_hint(self):
+        return c_PatEntry_printer.name
+    
+    @staticmethod
+    def lookup(val):
+        if val.type.code != gdb.TYPE_CODE_STRUCT or \
+            (val.type.tag != '(anonymous namespace)::PatEntry' and \
+             val.type.tag != 'vm::PatEntry'):
+            return None
+        return c_PatEntry_printer(val)
+    
+add_pretty_printer(c_PatEntry_printer)

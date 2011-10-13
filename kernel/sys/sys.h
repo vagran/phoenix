@@ -24,10 +24,10 @@
 #ifndef ASSEMBLER
 #include <types.h>
 #include <compat_types.h>
+#include <cpu_instr.h>
 #include <gcc.h>
 #include <stdlib.h>
 #include <vm.h>
-#include <cpu_instr.h>
 #include <md_stack.h>
 #include <bitops.h>
 #include <lock.h>
