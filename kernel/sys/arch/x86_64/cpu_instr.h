@@ -169,10 +169,10 @@ cpuid(u32 op, u32 subop, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
 inline u64
 rdtsc()
 {
-    u64 x;
+    u64 rcL, rcH;
 
-    ASM ("rdtsc" : "=r"(x));
-    return x;
+    ASM ("rdtsc" : "=a"(rcL), "=d"(rcH));
+    return rcL | (rcH << 32);
 }
 
 inline void
@@ -276,28 +276,22 @@ str()
 inline u64
 rdmsr(u32 msr)
 {
-    u64 rc;
+    u64 rcL, rcH;
     ASM (
-        "rdmsr\n"
-        "shlq $32, %%rdx\n"
-        "orq %%rdx, %%rax\n"
-        : "=a"(rc)
+        "rdmsr"
+        : "=a"(rcL), "=d"(rcH)
         : "c"(msr)
-        : "rdx"
     );
-    return rc;
+    return rcL | (rcH << 32);
 }
 
 inline void
 wrmsr(u32 msr, u64 value)
 {
     ASM (
-        "movq %%rax, %%rdx\n"
-        "shrq $32, %%rdx\n"
-        "wrmsr\n"
+        "wrmsr"
         :
-        : "c"(msr), "a"(value)
-        : "rdx"
+        : "c"(msr), "a"(value & 0xffffffff), "d"(value >> 32)
     );
 }
 
