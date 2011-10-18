@@ -14,11 +14,7 @@
  * Virtual memory machine dependent definitions.
  */
 
-namespace
-#ifndef AUTONOMOUS_LINKING
-vm
-#endif /* AUTONOMOUS_LINKING */
-{
+namespace vm {
 
 enum {
     /** Number of bits to shift to get a memory page frame. */
@@ -33,6 +29,9 @@ typedef u64 PageIdx;
 
 /** Index of an entry in a physical address translation table. */
 typedef u32 PatEntryIdx;
+
+/** Process context identifier. */
+typedef u32 ProcCtxId;
 
 /** Helper class to extract components (PAT tables entries indices and offset
  * in a page) from a virtual address. Defines the layout of PAT tables
@@ -49,7 +48,7 @@ public:
      *      (e.g. page table, page directory, ...).
      * @return Number of entries in a specified table.
      */
-    static inline u32 GetTableSize(u32 tableLvl) {
+    static inline u32 GetTableSize(u32 UNUSED tableLvl) {
         ASSERT(tableLvl < NUM_PAT_TABLES);
         /* 512 entries in each PAT table. */
         return 512;
@@ -91,7 +90,7 @@ private:
                     :16;
     };
 
-    union {
+    volatile union {
         vaddr_t va;
         VaFields fields;
     } _va;
@@ -264,11 +263,15 @@ public:
             break;
         case PAT_EF_EXECUTE:
             prev = !_ptr.entryPage->executeDisable;
-            _ptr.entryPage->executeDisable = setIt ? 0 : 1;
+            if (vmCaps.IsValid() && vmCaps.nx) {
+                _ptr.entryPage->executeDisable = setIt ? 0 : 1;
+            }
             break;
         case PAT_EF_GLOBAL:
             prev = _ptr.entryPage->global;
-            _ptr.entryPage->global = setIt ? 1 : 0;
+            if (vmCaps.IsValid() && vmCaps.pge) {
+                //_ptr.entryPage->global = setIt ? 1 : 0;
+            }
             break;
         default:
             FAULT("Invalid flag specified: %d", flag);
@@ -296,7 +299,7 @@ public:
         };
         long prev;
 
-        for (auto flag : allFlags) {
+        for (auto flag: allFlags) {
             if (SetFlag(flag, flags & flag)) {
                 prev |= flag;
             }
@@ -336,6 +339,38 @@ public:
      * @return Pointer to the entry in a table.
      */
     inline operator void *() { return _ptr.ptr; }
+
+    /** Get process context identifier. Not all architectures support this
+     * parameter. Zero returned on unsupported architectures. The entry must
+     * be PAT tables root entry.
+     * @return Process context identifier associated with the given root entry.
+     */
+    ProcCtxId GetProcCtxId() {
+        ENSURE(_tableLvl == NUM_PAT_TABLES);
+        return _ptr.cr3->pcid;
+    }
+
+    /** Set process context identifier. Not all architectures support this
+     * parameter. The value is ignored on unsupported architectures. The entry
+     * must be PAT tables root entry.
+     * @return Process context identifier associated with the given root entry.
+     */
+    ProcCtxId SetProcCtxId(ProcCtxId pcid) {
+        ENSURE(_tableLvl == NUM_PAT_TABLES);
+        ProcCtxId oldPcid = _ptr.cr3->pcid;
+        if (vmCaps.IsValid() && vmCaps.pcid) {
+            _ptr.cr3->pcid = pcid;
+        }
+        return oldPcid;
+    }
+
+    /** Switches current address space to the specified root. Entry must be
+     * new address space root entry.
+     */
+    void Activate() {
+        ENSURE(_tableLvl == NUM_PAT_TABLES);
+        cpu::wcr3(*_ptr.raw);
+    }
 
 private:
 
@@ -421,7 +456,7 @@ private:
                     executeDisable:1;
     };
 
-    union EntryPtr {
+    volatile union EntryPtr {
         void *ptr;
         paddr_t *raw;
         EntryCr3 *cr3;
@@ -439,7 +474,31 @@ private:
 inline void
 InvalidateVaddr(vaddr_t va)
 {
-    invlpg(va);
+    cpu::invlpg(va);
+}
+
+/** Initialize paging on the current CPU. */
+inline void
+InitPaging()
+{
+    cpu::CpuCaps caps;
+
+    /* Enable "execute-disable" feature if available. */
+    if (caps.GetCapability(cpu::CPU_CAP_PG_NX)) {
+        cpu::wrmsr(cpu_reg::MSR_IA32_EFER,
+                   cpu::rdmsr(cpu_reg::MSR_IA32_EFER) | cpu_reg::IA32_EFER_NXE);
+    }
+
+    u64 features = cpu::rcr4();
+    /* Enable global pages if available. */
+    if (caps.GetCapability(cpu::CPU_CAP_PG_PGE)) {
+        features |= cpu_reg::CR4_PGE;
+    }
+    /* Enable process context identification if available. */
+    if (caps.GetCapability(cpu::CPU_CAP_PG_PCID)) {
+        features |= cpu_reg::CR4_PCDIE;
+    }
+    cpu::wcr4(features);
 }
 
 } /* namespace vm */

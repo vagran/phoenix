@@ -18,12 +18,14 @@
  */
 
 #ifdef __cplusplus
-/** This namespace contains definitions related to the system boot loading. */
-namespace
-#ifndef AUTONOMOUS_LINKING
-boot
+
+#ifdef AUTONOMOUS_LINKING
+namespace {
 #endif /* AUTONOMOUS_LINKING */
-{
+
+/** This namespace contains definitions related to the system boot loading. */
+namespace boot {
+
 #endif /* __cplusplus */
 
 enum {
@@ -47,8 +49,14 @@ typedef struct {
 extern BootParam *kernBootParam;
 
 #ifdef __cplusplus
+
 } /* namespace boot */
-#endif
+
+#ifdef AUTONOMOUS_LINKING
+}
+#endif /* AUTONOMOUS_LINKING */
+
+#endif /* __cplusplus */
 
 /* Symbols injected by linker script. */
 extern u8   kernBootBss, /**< Start of kernel boot region BSS section. */

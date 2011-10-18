@@ -19,9 +19,10 @@
 /** C++ ABI support class. */
 class Cxa {
 public:
+    typedef void    (*CbkFunc)();
     struct CallbackList {
         u32     n;
-        void    (*func[])();
+        CbkFunc func[1];
     };
 
     static int ConstructStaticObjects();

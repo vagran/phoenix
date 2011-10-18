@@ -39,7 +39,7 @@
 #include <compat_types.h>
 #include <elf.h>
 
-#include <efi.h>
+#include <efi_sys.h>
 #include <efilib.h>
 
 EFI_STATUS _relocate (long ldbase, ElfW(Dyn) *dyn, EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)

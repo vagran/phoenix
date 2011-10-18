@@ -7,3 +7,6 @@
 
 py sys.path.append(os.getcwd())
 py from phoenix_gdb import *
+
+set history filename .gdb_history
+set history save on

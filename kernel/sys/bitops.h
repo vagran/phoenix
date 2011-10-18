@@ -48,7 +48,7 @@ BitFirstSet(void *a, size_t numBits)
     for (size_t word = 0; word < numWords; word++) {
         uintptr_t x = static_cast<uintptr_t *>(a)[word];
         if (x) {
-            size_t bit = bsf(x);
+            size_t bit = cpu::bsf(x);
             bit += word * sizeof(uintptr_t) * NBBY;
             if (bit >= numBits) {
                 return -1;
@@ -78,7 +78,7 @@ BitFirstClear(void *a, u32 numBits)
     for (size_t word = 0; word < numWords; word++) {
         uintptr_t x = static_cast<uintptr_t *>(a)[word];
         if (x != static_cast<uintptr_t>(~0)) {
-            size_t bit = bsf(~x);
+            size_t bit = cpu::bsf(~x);
             bit += word * sizeof(uintptr_t) * NBBY;
             if (bit >= numBits) {
                 return -1;

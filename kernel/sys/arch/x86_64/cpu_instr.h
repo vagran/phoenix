@@ -16,9 +16,13 @@
  * This file contains C wrappers around separate CPU instructions.
  */
 
+#ifdef AUTONOMOUS_LINKING
 namespace {
+#endif /* AUTONOMOUS_LINKING */
 
-__inline u64
+namespace cpu {
+
+inline u64
 bsf(u64 string)
 {
     u64 rc;
@@ -27,7 +31,7 @@ bsf(u64 string)
     return rc;
 }
 
-__inline u8
+inline u8
 inb(u16 port)
 {
     u8 value;
@@ -36,7 +40,7 @@ inb(u16 port)
     return value;
 }
 
-__inline u16
+inline u16
 inw(u16 port)
 {
     u16 value;
@@ -45,7 +49,7 @@ inw(u16 port)
     return value;
 }
 
-__inline u32
+inline u32
 inl(u16 port)
 {
     u32 value;
@@ -54,32 +58,32 @@ inl(u16 port)
     return value;
 }
 
-__inline void
+inline void
 outb(u16 port, u8 value)
 {
     ASM ("outb %b[value], %w[port]" : : [value]"a"(value), [port]"Nd"(port));
 }
 
-__inline void
+inline void
 outw(u16 port, u16 value)
 {
     ASM ("outw %w[value], %w[port]": : [value]"a"(value), [port]"Nd"(port));
 
 }
 
-__inline void
+inline void
 outl(u16 port, u32 value)
 {
     ASM ("outl %[value], %w[port]" : : [value]"a"(value), [port]"Nd"(port));
 }
 
-__inline void
+inline void
 invlpg(vaddr_t va)
 {
     ASM ("invlpg %[va]" : : [va]"m"(*static_cast<u8 *>(reinterpret_cast<void *>(va))));
 }
 
-__inline u64
+inline u64
 rcr0()
 {
     register u64 r;
@@ -88,13 +92,13 @@ rcr0()
     return r;
 }
 
-__inline void
+inline void
 wcr0(u64 x)
 {
     ASM ("mov %[x], %%cr0" : : [x]"r"(x));
 }
 
-__inline u64
+inline u64
 rcr2()
 {
     register u64 r;
@@ -103,13 +107,13 @@ rcr2()
     return r;
 }
 
-__inline void
+inline void
 wcr2(u64 x)
 {
     ASM ("mov %[x], %%cr2" : : [x]"r"(x));
 }
 
-__inline u64
+inline u64
 rcr3()
 {
     register u64 r;
@@ -118,13 +122,13 @@ rcr3()
     return r;
 }
 
-__inline void
+inline void
 wcr3(u64 x)
 {
     ASM ("mov %[x], %%cr3" : : [x]"r"(x));
 }
 
-__inline u64
+inline u64
 rcr4()
 {
     register u64 r;
@@ -133,20 +137,20 @@ rcr4()
     return r;
 }
 
-__inline void
+inline void
 wcr4(u64 x)
 {
     ASM ("mov %[x], %%cr4" : : [x]"r"(x));
 }
 
-__inline void
-cpuid(u32 op, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
+inline void
+cpuid(u32 op, u32 subop, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
 {
     u32 _eax, _ebx, _ecx, _edx;
     ASM (
         "cpuid"
         : "=a"(_eax), "=b"(_ebx), "=c"(_ecx), "=d"(_edx)
-        : "a"(op)
+        : "a"(op), "c"(subop)
     );
     if (eax) {
         *eax = _eax;
@@ -162,7 +166,7 @@ cpuid(u32 op, u32 *eax, u32 *ebx, u32 *ecx, u32 *edx)
     }
 }
 
-__inline u64
+inline u64
 rdtsc()
 {
     u64 x;
@@ -189,7 +193,7 @@ sti()
     ASM("sti");
 }
 
-__inline void
+inline void
 lgdt(void *p)
 {
     ASM (
@@ -199,7 +203,7 @@ lgdt(void *p)
         );
 }
 
-__inline void
+inline void
 lidt(void *p)
 {
     ASM (
@@ -209,7 +213,7 @@ lidt(void *p)
         );
 }
 
-__inline void
+inline void
 lldt(u16 sel)
 {
     ASM (
@@ -219,7 +223,7 @@ lldt(u16 sel)
         );
 }
 
-__inline void
+inline void
 sgdt(void *p)
 {
     ASM (
@@ -228,7 +232,7 @@ sgdt(void *p)
     );
 }
 
-__inline void
+inline void
 sidt(void *p)
 {
     ASM (
@@ -237,7 +241,7 @@ sidt(void *p)
     );
 }
 
-__inline u16
+inline u16
 sldt()
 {
     u16 sel;
@@ -248,7 +252,7 @@ sldt()
     return sel;
 }
 
-__inline void
+inline void
 ltr(u16 sel)
 {
     ASM (
@@ -258,7 +262,7 @@ ltr(u16 sel)
     );
 }
 
-__inline u16
+inline u16
 str()
 {
     u16 sel;
@@ -269,35 +273,41 @@ str()
     return sel;
 }
 
-__inline u64
+inline u64
 rdmsr(u32 msr)
 {
     u64 rc;
     ASM (
-        "rdmsr"
-        : "=A"(rc)
+        "rdmsr\n"
+        "shlq $32, %%rdx\n"
+        "orq %%rdx, %%rax\n"
+        : "=a"(rc)
         : "c"(msr)
+        : "rdx"
     );
     return rc;
 }
 
-__inline void
+inline void
 wrmsr(u32 msr, u64 value)
 {
     ASM (
-        "wrmsr"
+        "movq %%rax, %%rdx\n"
+        "shrq $32, %%rdx\n"
+        "wrmsr\n"
         :
-        : "c"(msr), "A"(value)
+        : "c"(msr), "a"(value)
+        : "rdx"
     );
 }
 
-__inline void
+inline void
 sysenter()
 {
     ASM ("sysenter");
 }
 
-__inline void
+inline void
 sysexit(u32 eip, u32 esp)
 {
     ASM (
@@ -308,7 +318,7 @@ sysexit(u32 eip, u32 esp)
 }
 
 /* Pseudo instructions */
-__inline u64
+inline u64
 GetFlags()
 {
     u64 rc;
@@ -320,7 +330,7 @@ GetFlags()
     return rc;
 }
 
-__inline void
+inline void
 SetFlags(u64 value)
 {
     ASM (
@@ -331,30 +341,34 @@ SetFlags(u64 value)
     );
 }
 
-__inline void
+inline void
 pause()
 {
     ASM ("pause");
 }
 
-__inline void
+inline void
 lfence()
 {
     ASM ("lfence");
 }
 
-__inline void
+inline void
 sfence()
 {
     ASM ("sfence");
 }
 
-__inline void
+inline void
 mfence()
 {
     ASM ("mfence");
 }
 
-} /* Anonymous namespace */
+} /* namespace cpu */
+
+#ifdef AUTONOMOUS_LINKING
+}
+#endif /* AUTONOMOUS_LINKING */
 
 #endif /* CPU_INSTR_H_ */

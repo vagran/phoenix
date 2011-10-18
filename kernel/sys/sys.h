@@ -22,12 +22,26 @@
 #include <debug.h>
 
 #ifndef ASSEMBLER
+
+/* Types */
 #include <types.h>
 #include <compat_types.h>
+
+/* Language support */
+#include <std.h>
+
+/* CPU specific */
+#include <cpu_regs.h>
 #include <cpu_instr.h>
+#include <cpu_caps.h>
+
+/* Run-time support */
 #include <gcc.h>
 #include <stdlib.h>
+
+/* Virtual memory */
 #include <vm.h>
+
 #include <md_stack.h>
 #include <bitops.h>
 #include <lock.h>

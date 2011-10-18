@@ -37,7 +37,7 @@
  *  SUCH DAMAGE.
  */
 
-#include "efi.h"
+#include "efi_sys.h"
 #include "efistdarg.h"
 
 UINT64 efi_call0(void *func);

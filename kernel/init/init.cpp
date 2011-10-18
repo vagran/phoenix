@@ -22,10 +22,8 @@
 #include <sys.h>
 #include <boot.h>
 
-#ifndef AUTONOMOUS_LINKING
 using namespace vm;
 using namespace boot;
-#endif
 
 /* Local bootstrap data. */
 namespace {
@@ -106,13 +104,6 @@ MappedToBoot(Vaddr va)
     return va - KERNEL_ADDRESS + LOAD_ADDRESS;
 }
 
-class MyClass {
-public:
-    int x;
-    MyClass(int _x) { x = _x; }
-    int MyMethod() { return x; }
-};
-
 /* Map all pages starting from kernel virtual address till current heap pointer. */
 static void
 MapHeap()
@@ -128,34 +119,39 @@ MapHeap()
     while (bsLastMapped < bsHeap) {
         u32 tableLvl = NUM_PAT_TABLES - 1;
         void *table = Paddr(bsDefaultPatRoot);
-        do {
-            PatEntry e(bsLastMapped, table, tableLvl);
-            Paddr pa;
-            if (e.CheckFlag(PAT_EF_PRESENT)) {
-                /* Page or table is mapped, skip level. */
-                if (tableLvl) {
-                    table = Paddr(e.GetAddress());
+        /* Map to both bootstrap and kernel VAS regions. */
+        for (Vaddr va: { Vaddr(bsLastMapped), BootToMapped(bsLastMapped) }) {
+            do {
+                PatEntry e(va, table, tableLvl);
+                Paddr pa;
+                if (e.CheckFlag(PAT_EF_PRESENT)) {
+                    /* Page or table is mapped, skip level. */
+                    if (tableLvl) {
+                        table = Paddr(e.GetAddress());
+                        tableLvl--;
+                    }
+                } else if (tableLvl) {
+                    /* Unmapped table, allocate and enter. */
+                    pa = BootAlloc(PAGE_SIZE, PAGE_SIZE).IdentityPaddr();
+                    BootMemset(pa.IdentityVaddr(), 0, PAGE_SIZE);
+                    e = pa;
+                    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
+                               PAT_EF_GLOBAL);
+                    table = pa;
                     tableLvl--;
+                } else {
+                    /* Unmapped page, map it. */
+                    e = va == bsLastMapped ?
+                        va.IdentityPaddr() :
+                        MappedToBoot(va).IdentityPaddr();
+                    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
+                               PAT_EF_GLOBAL);
+                    if (va == bsQuickMap) {
+                        bsQuickMapPte = e;
+                    }
                 }
-            } else if (tableLvl) {
-                /* Unmapped table, allocate and enter. */
-                pa = BootAlloc(PAGE_SIZE, PAGE_SIZE).IdentityPaddr();
-                BootMemset(pa.IdentityVaddr(), 0, PAGE_SIZE);
-                e = pa;
-                e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
-                           PAT_EF_GLOBAL);
-                table = pa;
-                tableLvl--;
-            } else {
-                /* Unmapped page, map it. */
-                e = Vaddr(bsLastMapped).IdentityPaddr();
-                e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
-                           PAT_EF_GLOBAL);
-                if (bsLastMapped == bsQuickMap) {
-                    bsQuickMapPte = e;
-                }
-            }
-        } while (tableLvl > 0);
+            } while (tableLvl > 0);
+        }
         bsLastMapped += PAGE_SIZE;
     }
 }
@@ -185,8 +181,12 @@ Boot(void *arg)
 
     MapHeap();
 
+    /* Set new virtual address space root and turn on/tweak paging. */
+    PatEntry(&bsDefaultPatRoot, NUM_PAT_TABLES).Activate();
+    InitPaging();
+
     while (true) {
-        pause();
+        cpu::pause();
     }
 }
 
@@ -194,11 +194,11 @@ void
 Start(BootParam *bootParam)
 {
     /* Disable all interrupts. */
-    cli();
+    cpu::cli();
 
-    bool wait = true;
+    volatile bool wait = true;
     while (wait) {
-        pause();
+        cpu::pause();
     }
 
     /* Zero bootstrap BSS section. */

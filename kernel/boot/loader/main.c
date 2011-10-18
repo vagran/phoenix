@@ -12,7 +12,7 @@
 #include <compat_types.h>
 #include <boot.h>
 
-#include <efi.h>
+#include <efi_sys.h>
 #include <efilib.h>
 
 #include <libelf.h>

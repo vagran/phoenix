@@ -16,7 +16,7 @@ Revision History
 
 --*/
 
-#include "efi.h"
+#include "efi_sys.h"
 #include "efilib.h"
 #include "efirtlib.h"
 

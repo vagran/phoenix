@@ -9,6 +9,11 @@
 import gdb
 import gdb.printing
 
+'''
+This module is used as GDB extension to provide more convenient and effective
+system debugging and troubleshooting technique.
+'''
+
 # Built-in types
 
 short_t = gdb.lookup_type('short')
@@ -171,6 +176,16 @@ def hex_dump(address_str, size = 16):
         if cur_address & 0xf == 0xf:
             gdb.write(' | %s\n' % chars)
             chars = ''
+
+###############################################################################
+# System-specific helpers
+
+def parse_va(va):
+    pte = (va >> 12) & 0x1ff
+    pde = (va >> (12 + 9)) & 0x1ff
+    pdpte = (va >> (12 + 9 + 9)) & 0x1ff
+    pml4e = (va >> (12 + 9 + 9 + 9)) & 0x1ff
+    print("PML4E=%d PDPTE=%d PDE=%d PTE=%d" % (pml4e, pdpte, pde, pte))
             
 ###############################################################################
 # Module startup code which outputs some useful information
@@ -180,12 +195,13 @@ print('################### phoenix_gdb module ###################')
 ###############################################################################
 # Custom commands
 
+# XXX replace this by some useful command soon
 class PhoenixtestCommand(gdb.Command):
     '''Test command'''
 
     def __init__(self):
         super(PhoenixtestCommand, self).__init__('phoenixtest', gdb.COMMAND_RUNNING,
-                                           gdb.COMPLETE_FILENAME)
+                                                 gdb.COMPLETE_FILENAME)
 
     def invoke(self, arg, from_tty):
         print('phoenixtest command')
@@ -210,7 +226,7 @@ class c_vaddr_printer:
     @staticmethod
     def lookup(val):
         if val.type.code != gdb.TYPE_CODE_STRUCT or \
-            (val.type.tag != '(anonymous namespace)::Vaddr' and val.type.tag != 'vm::Vaddr'):
+            (val.type.tag != '(anonymous namespace)::vm::Vaddr' and val.type.tag != 'vm::Vaddr'):
             return None
         return c_vaddr_printer(val)
     
@@ -231,7 +247,7 @@ class c_paddr_printer:
     @staticmethod
     def lookup(val):
         if val.type.code != gdb.TYPE_CODE_STRUCT or \
-            (val.type.tag != '(anonymous namespace)::Paddr' and val.type.tag != 'vm::Paddr'):
+            (val.type.tag != '(anonymous namespace)::vm::Paddr' and val.type.tag != 'vm::Paddr'):
             return None
         return c_paddr_printer(val)
     
@@ -251,8 +267,7 @@ class t_vaddr_printer:
     
     @staticmethod
     def lookup(val):
-        if val.type.code != gdb.TYPE_CODE_TYPEDEF or \
-            (str(val.type) != 'vaddr_t' and str(val.type) != 'vm::vaddr_t'):
+        if val.type.code != gdb.TYPE_CODE_TYPEDEF or str(val.type) != 'vaddr_t':
             return None
         return t_vaddr_printer(val)
     
@@ -272,8 +287,7 @@ class t_paddr_printer:
     
     @staticmethod
     def lookup(val):
-        if val.type.code != gdb.TYPE_CODE_TYPEDEF or \
-            (str(val.type) != 'paddr_t' and str(val.type) != 'vm::paddr_t'):
+        if val.type.code != gdb.TYPE_CODE_TYPEDEF or str(val.type) != 'paddr_t':
             return None
         return t_paddr_printer(val)
     
@@ -308,7 +322,7 @@ class c_PatEntry_printer:
     @staticmethod
     def lookup(val):
         if val.type.code != gdb.TYPE_CODE_STRUCT or \
-            (val.type.tag != '(anonymous namespace)::PatEntry' and \
+            (val.type.tag != '(anonymous namespace)::vm::PatEntry' and \
              val.type.tag != 'vm::PatEntry'):
             return None
         return c_PatEntry_printer(val)

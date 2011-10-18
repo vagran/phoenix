@@ -14,12 +14,12 @@
  * Virtual memory machine independent definitions.
  */
 
-/** Namespace with virtual memory subsystem components. */
-namespace
-#ifndef AUTONOMOUS_LINKING
-vm
+#ifdef AUTONOMOUS_LINKING
+namespace {
 #endif /* AUTONOMOUS_LINKING */
-{
+
+/** Namespace with virtual memory subsystem components. */
+namespace vm {
 
 /** Machine-independent flags for each PAT table entry.
  * Underlying machine-dependent implementation translates them to real
@@ -57,15 +57,56 @@ enum PatEntryFlags {
     PAT_EF_GLOBAL =         0x40,
 };
 
+/** Virtual memory subsystem capabilities. @ref IsValid method should be called
+ * before accessing the structure data member.
+ */
+#ifndef AUTONOMOUS_LINKING
+extern
+#endif /* AUTONOMOUS_LINKING */
+struct VmCaps {
+    bool    valid:1,    /**< The structure is initialized if true. */
+            pge:1,      /**< Global-page support. */
+            pat:1,      /**< Page-attribute table. */
+            pcid:1,     /**< Process-context identifiers. */
+            smep:1,     /**< Supervisor-mode execution prevention. */
+            nx:1,       /**< Execute disable. */
+            oneGb:1;    /**< 1-GByte pages. */
+    short   width_phys; /**< Physical address width. */
+    short   width_lin;  /**< Linear address width. */
+
+    /** Check if data members are valid.
+     *
+     * @return @a true if data members are valid and can be accessed.
+     */
+    inline bool IsValid() {
+        if (!valid) {
+            Initialize();
+        }
+        return true;
+    }
+
+    void Initialize() {
+        cpu::CpuCaps caps;
+
+        pge = caps.GetCapability(cpu::CPU_CAP_PG_PGE) ? true : false;
+        pat = caps.GetCapability(cpu::CPU_CAP_PG_PAT) ? true : false;
+        pcid = caps.GetCapability(cpu::CPU_CAP_PG_PCID) ? true : false;
+        smep = caps.GetCapability(cpu::CPU_CAP_PG_SMEP) ? true : false;
+        nx = caps.GetCapability(cpu::CPU_CAP_PG_NX) ? true : false;
+        oneGb = caps.GetCapability(cpu::CPU_CAP_PG_1GB) ? true : false;
+        width_phys = caps.GetCapability(cpu::CPU_CAP_PG_WIDTH_PHYS);
+        width_lin = caps.GetCapability(cpu::CPU_CAP_PG_WIDTH_LIN);
+
+        valid = true;
+    }
+
+} vmCaps;
+
 } /* namespace vm */
 
 #include <md_vm.h>
 
-namespace
-#ifndef AUTONOMOUS_LINKING
-vm
-#endif /* AUTONOMOUS_LINKING */
-{
+namespace vm {
 
 enum {
     /** Memory page size in bytes. */
@@ -197,5 +238,9 @@ public:
 };
 
 } /* namespace vm */
+
+#ifdef AUTONOMOUS_LINKING
+}
+#endif /* AUTONOMOUS_LINKING */
 
 #endif /* VM_H_ */

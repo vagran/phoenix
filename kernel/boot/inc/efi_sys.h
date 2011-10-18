@@ -4,7 +4,7 @@ Copyright (c) 1998  Intel Corporation
 
 Module Name:
 
-    efi.h
+    efi_sys.h
 
 Abstract:
 
