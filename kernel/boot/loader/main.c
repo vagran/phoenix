@@ -371,7 +371,7 @@ StartKernel(vaddr_t entry_addr)
     ST->StdErr = NULL;
     ST->BootServices = NULL;
     SetCrc(&ST->Hdr);
-    bootParam.efiSystemTable = ST;
+    bootParam.efiSystemTable = (paddr_t)ST;
 
     /* Pass control to the kernel */
     KernelEntry ke = (KernelEntry)entry_addr;

@@ -32,12 +32,14 @@ enum {
     /** Size of the very initial stack region which is used on the first booting
      * phase.
      */
-    BOOT_STACK_SIZE =       0x4000
+    BOOT_STACK_SIZE =       0x8000,
+    /** Number of quick map entries. */
+    NUM_QUICK_MAP =         4,
 };
 
 /** The kernel gets a pointer to this structure as its entry point argument. */
 typedef struct {
-    void *efiSystemTable; /**< Pointer to the EFI system table. */ //XXX should not be void *
+    paddr_t efiSystemTable; /**< Pointer to the EFI system table. */
     u32 cmdLineSize; /**< Size of @a cmdLine in bytes. */
     char *cmdLine; /**< Null terminated string with the kernel arguments. */
     void *memMap; /**< Memory map. Describes all available memory. */
@@ -46,15 +48,47 @@ typedef struct {
     u32 memMapDescVersion; /**< Descriptor version in @a memMap. */
 } BootParam;
 
+/** Boot parameters which were passed to the kernel by the boot loader are
+ * stored in this variable.
+ */
 extern BootParam *kernBootParam;
 
 #ifdef __cplusplus
+
+/** This structure is passed to the higher level kernel entry point. */
+struct BootstrapParam {
+    BootParam *bootParam; /**< Boot parameters from the boot loader. */
+    vaddr_t heap; /**< Current heap pointer. */
+    paddr_t defaultPatRoot; /**< Default PAT root table. */
+    vaddr_t quickMap; /**< Quick map pages. They are allocated consequentially. */
+    void *quickMapPte[NUM_QUICK_MAP]; /**< Quick map PTEs. */
+};
+
+/** Convert bootstrap identity mapped address to kernel virtual address. */
+static inline vm::Vaddr
+BootToMapped(vm::Vaddr va)
+{
+    return va - LOAD_ADDRESS + KERNEL_ADDRESS;
+}
+
+/** Convert  kernel virtual address to bootstrap identity mapped address. */
+static inline vm::Vaddr
+MappedToBoot(vm::Vaddr va)
+{
+    return va - KERNEL_ADDRESS + LOAD_ADDRESS;
+}
 
 } /* namespace boot */
 
 #ifdef AUTONOMOUS_LINKING
 }
 #endif /* AUTONOMOUS_LINKING */
+
+/** Kernel higher level entry point. It never returns to caller.
+ *
+ * @param arg Pointer to @ref boot::BootstrapParam structure with boot parameters.
+ */
+void Main(void *arg) __NORETURN;
 
 #endif /* __cplusplus */
 

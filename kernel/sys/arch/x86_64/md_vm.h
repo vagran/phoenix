@@ -269,8 +269,8 @@ public:
             break;
         case PAT_EF_GLOBAL:
             prev = _ptr.entryPage->global;
-            if (vmCaps.IsValid() && vmCaps.pge) {
-                //_ptr.entryPage->global = setIt ? 1 : 0;
+            if (_tableLvl == 0 && vmCaps.IsValid() && vmCaps.pge) {
+                _ptr.entryPage->global = setIt ? 1 : 0;
             }
             break;
         default:
@@ -479,26 +479,33 @@ InvalidateVaddr(vaddr_t va)
 
 /** Initialize paging on the current CPU. */
 inline void
-InitPaging()
+InitPaging(bool enablePaging)
 {
-    cpu::CpuCaps caps;
+    if (enablePaging) {
+        u64 cr0 = cpu::rcr0();
+        if (!(cr0 & cpu_reg::CR0_PG)) {
+            cpu::wcr0(cr0 | cpu_reg::CR0_PG);
+        }
+    } else {
+        cpu::CpuCaps caps;
 
-    /* Enable "execute-disable" feature if available. */
-    if (caps.GetCapability(cpu::CPU_CAP_PG_NX)) {
-        cpu::wrmsr(cpu_reg::MSR_IA32_EFER,
-                   cpu::rdmsr(cpu_reg::MSR_IA32_EFER) | cpu_reg::IA32_EFER_NXE);
-    }
+        /* Enable "execute-disable" feature if available. */
+        if (caps.GetCapability(cpu::CPU_CAP_PG_NX)) {
+            cpu::wrmsr(cpu_reg::MSR_IA32_EFER,
+                       cpu::rdmsr(cpu_reg::MSR_IA32_EFER) | cpu_reg::IA32_EFER_NXE);
+        }
 
-    u64 features = cpu::rcr4();
-    /* Enable global pages if available. */
-    if (caps.GetCapability(cpu::CPU_CAP_PG_PGE)) {
-        features |= cpu_reg::CR4_PGE;
+        u64 features = cpu::rcr4();
+        /* Enable global pages if available. */
+        if (caps.GetCapability(cpu::CPU_CAP_PG_PGE)) {
+            features |= cpu_reg::CR4_PGE;
+        }
+        /* Enable process context identification if available. */
+        if (caps.GetCapability(cpu::CPU_CAP_PG_PCID)) {
+            features |= cpu_reg::CR4_PCDIE;
+        }
+        cpu::wcr4(features);
     }
-    /* Enable process context identification if available. */
-    if (caps.GetCapability(cpu::CPU_CAP_PG_PCID)) {
-        features |= cpu_reg::CR4_PCDIE;
-    }
-    cpu::wcr4(features);
 }
 
 } /* namespace vm */

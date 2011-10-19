@@ -14,9 +14,7 @@
 #ifndef CRC_H_
 #define CRC_H_
 
-/** CCITT CRC32 implementation.
- *
- */
+/** CCITT CRC32 implementation. */
 class Crc32 {
 public:
     /** Construct CRC calculator.

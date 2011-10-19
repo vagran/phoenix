@@ -34,8 +34,8 @@ u8 bsStack[BOOT_STACK_SIZE];
 vaddr_t bsHeap; /* Current heap pointer. */
 paddr_t bsDefaultPatRoot; /* Default PAT root table. */
 vaddr_t bsLastMapped; /* Highest mapped virtual address. */
-vaddr_t bsQuickMap; /* Quick map page. */
-void *bsQuickMapPte; /* Quick map page PTE. */
+vaddr_t bsQuickMap; /* Quick map pages. */
+void *bsQuickMapPte[NUM_QUICK_MAP]; /* Quick map page PTE. */
 
 BootParam *bsBootParam;
 
@@ -90,55 +90,37 @@ BootMemset(Vaddr dst, u8 value, size_t size)
     return dst;
 }
 
-/* Convert bootstrap identity mapped address to kernel virtual address. */
-static inline Vaddr
-BootToMapped(Vaddr va)
-{
-    return va - LOAD_ADDRESS + KERNEL_ADDRESS;
-}
-
-/* Convert  kernel virtual address to bootstrap identity mapped address. */
-static inline Vaddr
-MappedToBoot(Vaddr va)
-{
-    return va - KERNEL_ADDRESS + LOAD_ADDRESS;
-}
-
 /* Map all pages starting from kernel virtual address till current heap pointer. */
 static void
 MapHeap()
 {
+    static int quickMapIdx = 0;
+
     if (!bsDefaultPatRoot) {
         /* Initialize of the first call. */
         bsLastMapped = LOAD_ADDRESS;
         bsDefaultPatRoot = BootAlloc(PAGE_SIZE, PAGE_SIZE).IdentityPaddr();
         BootMemset(Paddr(bsDefaultPatRoot).IdentityVaddr(), 0, PAGE_SIZE);
-        bsQuickMap = BootAlloc(PAGE_SIZE, PAGE_SIZE);
+        bsQuickMap = BootAlloc(NUM_QUICK_MAP * PAGE_SIZE, PAGE_SIZE);
     }
 
     while (bsLastMapped < bsHeap) {
-        u32 tableLvl = NUM_PAT_TABLES - 1;
-        void *table = Paddr(bsDefaultPatRoot);
         /* Map to both bootstrap and kernel VAS regions. */
         for (Vaddr va: { Vaddr(bsLastMapped), BootToMapped(bsLastMapped) }) {
-            do {
+            void *table = Paddr(bsDefaultPatRoot);
+            for (int tableLvl = NUM_PAT_TABLES - 1; tableLvl >= 0; tableLvl--) {
                 PatEntry e(va, table, tableLvl);
                 Paddr pa;
                 if (e.CheckFlag(PAT_EF_PRESENT)) {
                     /* Page or table is mapped, skip level. */
-                    if (tableLvl) {
-                        table = Paddr(e.GetAddress());
-                        tableLvl--;
-                    }
+                    table = Paddr(e.GetAddress());
                 } else if (tableLvl) {
                     /* Unmapped table, allocate and enter. */
                     pa = BootAlloc(PAGE_SIZE, PAGE_SIZE).IdentityPaddr();
                     BootMemset(pa.IdentityVaddr(), 0, PAGE_SIZE);
                     e = pa;
-                    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
-                               PAT_EF_GLOBAL);
+                    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
                     table = pa;
-                    tableLvl--;
                 } else {
                     /* Unmapped page, map it. */
                     e = va == bsLastMapped ?
@@ -146,11 +128,15 @@ MapHeap()
                         MappedToBoot(va).IdentityPaddr();
                     e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
                                PAT_EF_GLOBAL);
-                    if (va == bsQuickMap) {
-                        bsQuickMapPte = e;
+
+                    if (quickMapIdx < NUM_QUICK_MAP &&
+                        va == bsQuickMap + quickMapIdx * PAGE_SIZE) {
+
+                        bsQuickMapPte[quickMapIdx] = e;
+                        quickMapIdx++;
                     }
                 }
-            } while (tableLvl > 0);
+            }
         }
         bsLastMapped += PAGE_SIZE;
     }
@@ -181,13 +167,21 @@ Boot(void *arg)
 
     MapHeap();
 
-    /* Set new virtual address space root and turn on/tweak paging. */
+    /* Tweak paging features, set new virtual address space root and turn on
+     * paging if it was not yet enabled.
+     */
+    InitPaging(false);
     PatEntry(&bsDefaultPatRoot, NUM_PAT_TABLES).Activate();
-    InitPaging();
+    InitPaging(true);
 
-    while (true) {
-        cpu::pause();
-    }
+    static BootstrapParam param;
+    param.bootParam = ::bsBootParam;
+    param.heap = ::bsHeap;
+    param.defaultPatRoot = ::bsDefaultPatRoot;
+    param.quickMap = ::bsQuickMap;
+    BootMemcpy(param.quickMapPte, ::bsQuickMapPte, sizeof(::bsQuickMapPte));
+
+    SwitchStack(BootToMapped(::bsStack + sizeof(::bsStack)), ::Main, &param);
 }
 
 void
@@ -196,13 +190,8 @@ Start(BootParam *bootParam)
     /* Disable all interrupts. */
     cpu::cli();
 
-    volatile bool wait = true;
-    while (wait) {
-        cpu::pause();
-    }
-
     /* Zero bootstrap BSS section. */
-    BootMemset(&kernBootBss, 0, &kernBootEnd - &kernBootBss);
+    BootMemset(&::kernBootBss, 0, &::kernBootEnd - &::kernBootBss);
 
     SwitchStack(Vaddr(::bsStack + sizeof(::bsStack)), Boot, bootParam);
 }

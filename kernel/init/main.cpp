@@ -35,9 +35,19 @@ BootParam *kernBootParam;
 
 }
 
-int
-Main(void)
+void
+Main(void *arg)
 {
+    /* Zero BSS section. */
+    memset(&::kernDataEnd, 0, &::kernEnd - &::kernDataEnd);
 
-    return 0;
+    /* Initialize boot parameters. */
+    boot::BootstrapParam *param = vm::Vaddr(arg);
+    boot::kernBootParam = boot::BootToMapped(param->bootParam);
+    boot::kernBootParam->cmdLine = boot::BootToMapped(boot::kernBootParam->cmdLine);
+    boot::kernBootParam->memMap = boot::BootToMapped(boot::kernBootParam->memMap);
+
+    while (true) {
+        cpu::pause();
+    }
 }
