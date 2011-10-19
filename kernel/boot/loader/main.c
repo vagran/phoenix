@@ -15,7 +15,7 @@
 #include <efi_sys.h>
 #include <efilib.h>
 
-#include <libelf.h>
+#include <elf/libelf.h>
 
 #include "loader.h"
 

@@ -47,6 +47,9 @@ Main(void *arg)
     boot::kernBootParam->cmdLine = boot::BootToMapped(boot::kernBootParam->cmdLine);
     boot::kernBootParam->memMap = boot::BootToMapped(boot::kernBootParam->memMap);
 
+    /* Call constructors for all static objects. */
+    Cxa::ConstructStaticObjects();
+
     while (true) {
         cpu::pause();
     }

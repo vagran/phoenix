@@ -36,8 +36,8 @@
 #include <cpu_caps.h>
 
 /* Run-time support */
-#include <gcc.h>
-#include <stdlib.h>
+#include <common/gcc.h>
+#include <common/stdlib.h>
 
 /* Virtual memory */
 #include <vm.h>

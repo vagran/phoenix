@@ -1,5 +1,5 @@
 /*
- * /phoenix/include/stdlib.h
+ * /phoenix/include/common/stdlib.h
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011, Artyom Lebedev <artyom.lebedev@gmail.com>
@@ -17,7 +17,7 @@
  * Phoenix. Used mainly by C code and low-level C++ support code.
  */
 
-#include <crc.h>
+#include <common/crc.h>
 
 namespace {
 

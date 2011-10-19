@@ -10,7 +10,7 @@
 #ifndef LOADER_H_
 #define LOADER_H_
 
-#include <libelf.h>
+#include <elf/libelf.h>
 
 #ifdef __cplusplus
 #define LOADER_EXTERN   extern "C"

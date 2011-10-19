@@ -1,4 +1,4 @@
-/* sys_elf.h.  Generated automatically by configure.  */
+/* sys_elf.h.  Generated automatically by configure. */
 /*
 sys_elf.h.in - configure template for private "switch" file.
 Copyright (C) 1998 - 2001 Michael Riepe

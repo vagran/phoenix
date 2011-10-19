@@ -1,5 +1,5 @@
 /*
- * /phoenix/include/gcc.h
+ * /phoenix/include/common/gcc.h
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011, Artyom Lebedev <artyom.lebedev@gmail.com>

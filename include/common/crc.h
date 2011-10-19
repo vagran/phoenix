@@ -1,5 +1,5 @@
 /*
- * /phoenix/include/crc.h
+ * /phoenix/include/common/crc.h
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011, Artyom Lebedev <artyom.lebedev@gmail.com>

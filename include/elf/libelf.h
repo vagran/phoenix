@@ -24,11 +24,7 @@
 
 #include <types.h>
 
-#if __LIBELF_INTERNAL__
-#include "sys_elf.h"
-#else /* __LIBELF_INTERNAL__ */
-#include <sys_elf.h>
-#endif /* __LIBELF_INTERNAL__ */
+#include <elf/sys_elf.h>
 
 #if defined __GNUC__ && !defined __cplusplus
 #define DEPRECATED  __attribute__((deprecated))

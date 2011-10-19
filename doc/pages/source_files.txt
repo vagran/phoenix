@@ -1,0 +1,9 @@
+====== Source files organization ======
+
+===== Header files =====
+
+Header files are organized in the following directories:
+  * **/phoenix/include** -- top-level architecture-independent header files stored here. These files should describe common system definitions. This directory contains subdirectories which names correspond to library names. If a library has some header files then directory with the same name should be created here and the library header files should be placed in a new directory. This directory is in default include search paths.
+  * **/phoenix/include/common** -- header files for ''libcommon'' library. They describe the most of common convenience types defined by the system run-time framework such as strings, vectors, lists, trees etc. The headers are always included by top-level header file ''sys.h''.
+  * **/phoenix/kernel/sys** -- machine-independent system header files. Most of them are directly related to the kernel features. Here is also located top-level header file -- **sys.h**. This file should be included by each C++ source file in the system. It includes most of the rest required common header files. This directory is in default include search paths.
+  * **/phoenix/kernel/sys/arch/{ARCH_NAME}** -- machine-dependent system header files. {ARCH_NAME} corresponds to the name of target architecture for a particular build. This directory is in default include search paths.
