@@ -1,5 +1,5 @@
 /*
- * /phoenix/kernel/sys/arch/x86_64/lock.h
+ * /phoenix/kernel/sys/arch/x86_64/md_lock.h
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011, Artyom Lebedev <artyom.lebedev@gmail.com>
@@ -7,12 +7,12 @@
  * See COPYING file for copyright details.
  */
 
-#ifndef LOCK_H_
-#define LOCK_H_
-
-/** @file lock.h
+/** @file md_lock.h
  * Machine dependent classes for synchronization primitives implementation.
  */
+
+#ifndef LOCK_H_
+#define LOCK_H_
 
 /** Memory barrier.
  *
