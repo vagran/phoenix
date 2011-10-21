@@ -187,10 +187,53 @@ cli()
     ASM("cli");
 }
 
+/* Pseudo instructions */
+inline u64
+GetFlags()
+{
+    u64 rc;
+    ASM (
+        "pushfq\n"
+        "popq %[flags]\n"
+        : [flags]"=r"(rc)
+    );
+    return rc;
+}
+
+inline void
+SetFlags(u64 value)
+{
+    ASM (
+        "pushq %[flags]\n"
+        "popfq\n"
+        :
+        : [flags]"r"(value)
+    );
+}
+
+/** Disable CPU interrupt.
+ *
+ * @return Previous status of interrupts - @a true if the interrupts were
+ *      enable, @a false otherwise.
+ */
+inline bool
+DisableInterrupts()
+{
+    bool ret = GetFlags() & cpu_reg::EFLAGS_IF;
+    cli();
+    return ret;
+}
+
 inline void
 sti()
 {
     ASM("sti");
+}
+
+inline void
+EnableInterrupts()
+{
+    sti();
 }
 
 inline void
@@ -308,30 +351,6 @@ sysexit(u32 eip, u32 esp)
         "sysexit"
         :
         : "d"(eip), "c"(esp)
-    );
-}
-
-/* Pseudo instructions */
-inline u64
-GetFlags()
-{
-    u64 rc;
-    ASM (
-        "pushfq\n"
-        "popq %[flags]\n"
-        : [flags]"=r"(rc)
-    );
-    return rc;
-}
-
-inline void
-SetFlags(u64 value)
-{
-    ASM (
-        "pushq %[flags]\n"
-        "popfq\n"
-        :
-        : [flags]"r"(value)
     );
 }
 

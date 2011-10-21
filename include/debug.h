@@ -11,7 +11,7 @@
 #define DEBUG_H_
 
 /** @file debug.h
- * This file contains definitions for debugging and troubleshooting.
+ * This file contains definitions for system-wide debugging and troubleshooting.
  */
 
 #define _ASSERT(x)    do { \
@@ -62,5 +62,25 @@
  */
 void __Fault(const char *file, int line, const char *msg, ...)
     __FORMAT(printf, 3, 4) __NORETURN;
+
+/** Macro for printing debug messages into debug console. Has no effect in
+ * production build.
+ *
+ * @param msg Message to output.
+ */
+#ifdef DEBUG
+#define TRACE(msg, ...) __Trace(__FILE__, __LINE__, msg, ## __VA_ARGS__)
+#else /* DEBUG */
+#define TRACE(msg, ...)
+#endif /* DEBUG */
+
+/** Debug messages handler. Should output provided message to debug console.
+ *
+ * @param file Name of the source file where the message created.
+ * @param line Line number in a source file where the message created.
+ * @param msg Formatted message to output.
+ */
+void __Trace(const char *file, int line, const char *msg, ...)
+    __FORMAT(printf, 3, 4);
 
 #endif /* DEBUG_H_ */

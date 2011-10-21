@@ -30,7 +30,7 @@ SECTIONS {
     kernTextEnd = ABSOLUTE(.);
     
     /DISCARD/ : {
-        */init.o(.ctors .dtors)
+        */boot.o(.ctors .dtors)
     }
     
     .rodata : AT(kernTextEnd - kernText + kernBootEnd) {
@@ -38,17 +38,17 @@ SECTIONS {
         *(.gnu.linkonce.r.*)
         
         /* place global constructors and destructors list in .rodata section */
-        . = ALIGN(4);
+        . = ALIGN(8);
         _CTOR_LIST = .;
-        LONG((_CTOR_END - _CTOR_LIST) / 4 - 2)
+        QUAD((_CTOR_END - _CTOR_LIST) / 8 - 2)
         *(SORT(.ctors))
-        LONG(0)
+        QUAD(0)
         _CTOR_END = .;
-        . = ALIGN(4);
+        . = ALIGN(8);
         _DTOR_LIST = .;
-        LONG((_DTOR_END - _DTOR_LIST) / 4 - 2)
+        QUAD((_DTOR_END - _DTOR_LIST) / 8 - 2)
         *(SORT(.dtors))
-        LONG(0)
+        QUAD(0)
         _DTOR_END = .;
     }
 

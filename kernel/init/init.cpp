@@ -188,7 +188,7 @@ void
 Start(BootParam *bootParam)
 {
     /* Disable all interrupts. */
-    cpu::cli();
+    cpu::DisableInterrupts();
 
     /* Zero bootstrap BSS section. */
     BootMemset(&::kernBootBss, 0, &::kernBootEnd - &::kernBootBss);

@@ -11,8 +11,8 @@
  * Machine dependent classes for synchronization primitives implementation.
  */
 
-#ifndef LOCK_H_
-#define LOCK_H_
+#ifndef MD_LOCK_H_
+#define MD_LOCK_H_
 
 /** Memory barrier.
  *
@@ -34,9 +34,6 @@ class SpinLock {
 private:
     volatile u32 _flag;
 public:
-    /**
-     * @param isLocked Initial state of the lock.
-     */
     inline SpinLock() { _flag = 0; }
 
     inline ~SpinLock() { ASSERT(!_flag); }
@@ -154,6 +151,7 @@ public:
             );
     }
 
+    /** Release write lock. */
     inline void WriteUnlock() {
         ASM(
             "lock andl %[write_lock], %[state]\n"
@@ -163,4 +161,4 @@ public:
     }
 };
 
-#endif /* LOCK_H_ */
+#endif /* MD_LOCK_H_ */

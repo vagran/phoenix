@@ -15,16 +15,6 @@
 
 #include <sys.h>
 
-/**
- * 'new' operator for fixed location object constructor. Used with
- * @ref construct macro.
- */
-void *
-operator new(size_t size UNUSED, void *location)
-{
-    return location;
-}
-
 /** Fill block of memory.
  *
  * Sets the first @a size bytes of the block of memory pointed by @a dst

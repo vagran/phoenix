@@ -70,21 +70,6 @@ RoundDown2(T size, Tal align)
 
 } /* Anonymous namespace */
 
-/** Initialize object at predefined location.
- *
- * Can be used for code which is running without C++ run-time support startup
- * code executed (e.g. during kernel early booting stage) so no constructors
- * for global objects had been called. Possible usage example:
- * @code
- * char buf[256];
- * MyClass *obj = construct(buf, MyClass, firstConstrArg);
- * @endcode
- * */
-#define construct(location, type, ...)  new(location) type(__VA_ARGS__)
-void *operator new(size_t size, void *location);
-/** Explicit object destruction template. */
-template<class T> void destruct(T *p) { p->~T(); }
-
 #define memset      __builtin_memset
 #define memcpy      __builtin_memcpy
 #define memmove     __builtin_memmove
@@ -147,5 +132,7 @@ int vsscanf(const char *str, char const *fmt, va_list ap) __FORMAT(scanf, 2, 0);
 #else
 #define trace(fmt, ...)
 #endif
+
+#include <common/OTextStream.h>
 
 #endif /* STDLIB_H_ */
