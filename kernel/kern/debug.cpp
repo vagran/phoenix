@@ -149,6 +149,9 @@ DbgSerialPort::Initialize()
     Putc(0x1b);
     Putc('[');
     Putc('m');
+    /* Start new line. */
+    Putc('\r');
+    Purc('\n');
 }
 
 bool

@@ -14,81 +14,109 @@
  * Bit operations.
  *
  * Common operations for manipulating bits strings are defined in this file.
+ * The implementation is machine-dependent since it must take into account the
+ * machine endianness and utilize special CPU instructions, e.g. for searching
+ * the first bit set, if such available.
  */
 
-/* XXX must be rewritten to inline functions without C casts! */
-/** Set specified bit in a string */
-#define BIT_SET(a, i)       (((u8 *)/* XXX */(a))[(i) / NBBY] |= 1 << ((i) % NBBY))
-/** Clear specified bit in a string */
-#define BIT_CLEAR(a, i)     (((u8 *)/* XXX */(a))[(i) / NBBY] &= ~(1 << ((i) % NBBY)))
-/** Check if specified bit is set in a string */
-#define BIT_IS_SET(a, i)    (((const u8 *)/* XXX */(a))[(i) / NBBY] & (1 << ((i) % NBBY)))
-/** Check if specified bit is cleared in a string */
-#define BIT_IS_CLEAR(a, i)  (!BIT_IS_SET(a, i))
-
-namespace {
-
-/** Find the first set bit in a provided string.
- *
- * This function finds the first bit set in a provided bits string. Scanning for
- * a bit in a byte is done starting from least significant bits.
- * @param a String of bits.
- * @param numBits Total number of bits in a provided string. Should be multiple
- *      of sizeof(uintptr_t) * NBBY.
- * @return The first set bit index, -1 if no bits set.
- */
-inline int
-BitFirstSet(void *a, size_t numBits)
-{
-    ASSERT(numBits % (sizeof(uintptr_t) * NBBY) == 0);
-
-    size_t numWords = (numBits + sizeof(uintptr_t) * NBBY - 1) /
-                      (sizeof(uintptr_t) * NBBY);
-
-    for (size_t word = 0; word < numWords; word++) {
-        uintptr_t x = static_cast<uintptr_t *>(a)[word];
-        if (x) {
-            size_t bit = cpu::bsf(x);
-            bit += word * sizeof(uintptr_t) * NBBY;
-            if (bit >= numBits) {
-                return -1;
-            }
-            return bit;
-        }
+/** String of bits representation. */
+template <size_t numBits>
+class BitString {
+public:
+    /** Set bit at specified position.
+     *
+     * @param idx Null based bit index.
+     */
+    inline void Set(size_t idx) {
+        ASSERT(idx < numBits);
+        _bits[idx / NBBY] |= 1 << (idx % NBBY);
     }
-    return -1;
-}
 
-/** Find the first cleared bit in a provided string.
- *
- * This function finds the first bit cleared in a provided bits string. Scanning
- * for a bit in a byte is done starting from least significant bits.
- * @param a String of bits.
- * @param numBits Total number of bits in a provided string. Should be multiple
- *      of sizeof(uintptr_t) * NBBY.
- * @return The first cleared bit index, -1 if no bits set.
- */
-inline int
-BitFirstClear(void *a, u32 numBits)
-{
-    ASSERT(numBits % (sizeof(uintptr_t) * NBBY) == 0);
-
-    u32 numWords = (numBits + sizeof(uintptr_t) * NBBY - 1) /
-                   (sizeof(uintptr_t) * NBBY) ;
-    for (size_t word = 0; word < numWords; word++) {
-        uintptr_t x = static_cast<uintptr_t *>(a)[word];
-        if (x != static_cast<uintptr_t>(~0)) {
-            size_t bit = cpu::bsf(~x);
-            bit += word * sizeof(uintptr_t) * NBBY;
-            if (bit >= numBits) {
-                return -1;
-            }
-            return bit;
-        }
+    /** Clear bit at specified position.
+     *
+     * @param idx Null based bit index.
+     */
+    inline void Clear(size_t idx) {
+        ASSERT(idx < numBits);
+        _bits[idx / NBBY] &= ~(1 << (idx % NBBY));
     }
-    return -1;
-}
 
-} /* Anonymous namespace */
+    /** Check if  bit is set at specified position.
+     *
+     * @param idx Null based bit index.
+     * @return @a true if the bit is set, @a false otherwise.
+     */
+    inline bool IsSet(size_t idx) {
+        ASSERT(idx < numBits);
+        return _bits[idx / NBBY] & (1 << (idx % NBBY));
+    }
+
+    /** Check if  bit is clear at specified position.
+     *
+     * @param idx Null based bit index.
+     * @return @a true if the bit is clear, @a false otherwise.
+     */
+    inline bool IsClear(size_t idx) {
+        ASSERT(idx < numBits);
+        return !IsSet(idx);
+    }
+
+    /** Find first set bit.
+     *
+     * @return Index of first bit set. -1 if no bits set.
+     */
+    int FirstSet() {
+        size_t numWords = numBits / (sizeof(uintptr_t) * NBBY);
+        for (size_t word = 0; word < numWords; word++) {
+            uintptr_t x = static_cast<uintptr_t *>(_bits)[word];
+            if (x) {
+                size_t bit = cpu::bsf(x);
+                bit += word * sizeof(uintptr_t) * NBBY;
+                return bit;
+            }
+        }
+        /* Check remainder. */
+        for (size_t idx = numWords * sizeof(uintptr_t) * NBBY;
+             idx < numBits;
+             idx++) {
+
+            if (IsSet(idx)) {
+                return idx;
+            }
+        }
+
+        return -1;
+    }
+
+    /** Find first clear bit.
+     *
+     * @return Index of first bit set. -1 if no bits set.
+     */
+    int FirstClear() {
+        size_t numWords = numBits / (sizeof(uintptr_t) * NBBY);
+        for (size_t word = 0; word < numWords; word++) {
+            uintptr_t x = static_cast<uintptr_t *>(_bits)[word];
+            if (x != static_cast<uintptr_t>(~0)) {
+                size_t bit = cpu::bsf(~x);
+                bit += word * sizeof(uintptr_t) * NBBY;
+                return bit;
+            }
+        }
+
+        /* Check remainder. */
+        for (size_t idx = numWords * sizeof(uintptr_t) * NBBY;
+             idx < numBits;
+             idx++) {
+
+            if (IsClear(idx)) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
+private:
+    u8 _bits[(numBits + NBBY - 1) / NBBY];
+};
 
 #endif /* BITOPS_H_ */
