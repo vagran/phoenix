@@ -43,7 +43,7 @@
 #include <vm.h>
 
 #include <md_stack.h>
-#include <bitops.h>
+#include <BitString.h>
 #include <lock.h>
 
 #endif /* ASSEMBLER */

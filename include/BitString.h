@@ -1,5 +1,5 @@
 /*
- * /phoenix/include/bitops.h
+ * /phoenix/include/BitString.h
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011, Artyom Lebedev <artyom.lebedev@gmail.com>
@@ -7,11 +7,11 @@
  * See COPYING file for copyright details.
  */
 
-#ifndef BITOPS_H_
-#define BITOPS_H_
+#ifndef BITSTRING_H_
+#define BITSTRING_H_
 
-/** @file bitops.h
- * Bit operations.
+/** @file BitString.h
+ * Bit strings operations.
  *
  * Common operations for manipulating bits strings are defined in this file.
  * The implementation is machine-dependent since it must take into account the
@@ -23,6 +23,10 @@
 template <size_t numBits>
 class BitString {
 public:
+    inline BitString() {
+        memset(_bits, 0, sizeof(_bits));
+    }
+
     /** Set bit at specified position.
      *
      * @param idx Null based bit index.
@@ -84,7 +88,6 @@ public:
                 return idx;
             }
         }
-
         return -1;
     }
 
@@ -102,7 +105,6 @@ public:
                 return bit;
             }
         }
-
         /* Check remainder. */
         for (size_t idx = numWords * sizeof(uintptr_t) * NBBY;
              idx < numBits;
@@ -119,4 +121,4 @@ private:
     u8 _bits[(numBits + NBBY - 1) / NBBY];
 };
 
-#endif /* BITOPS_H_ */
+#endif /* BITSTRING_H_ */

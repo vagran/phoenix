@@ -18,7 +18,7 @@
 OTextStreamBase::Context::Context()
 {
     _size = 0;
-    memset(_optMap, 0, sizeof(_optMap));
+    _endOfStream = false;
     memset(_optVal, 0, sizeof(_optVal));
 }
 
@@ -27,10 +27,27 @@ OTextStreamBase::OTextStreamBase()
 
 }
 
-OTextStreamBase &
-OTextStreamBase::operator << (bool value UNUSED)
+bool
+OTextStreamBase::_Puts(Context &ctx, const char *str)
 {
+    while (*str) {
+        if (!_Putc(ctx, *str)) {
+            break;
+        }
+        str++;
+    }
+    return ctx;
+}
 
+OTextStreamBase &
+OTextStreamBase::operator << (bool value)
+{
+    const char *out;
+    if (_globalCtx.Opt(O_NUM_BOOl)) {
+        _Puts(_globalCtx, value ? "1" : "0");
+    } else {
+        _Puts(_globalCtx, value ? "true" : "false");
+    }
     return *this;
 }
 

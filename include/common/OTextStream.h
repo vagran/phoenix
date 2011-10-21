@@ -83,9 +83,11 @@ public:
 
 protected:
 
+    /** Conversion context. */
     class Context {
     public:
         Context();
+
         /** Get option presence and value.
          *
          * @param opt Option to check.
@@ -93,25 +95,83 @@ protected:
          *      Can be zero if value is not required.
          * @return @a true if the option is set, @a false otherwise.
          */
-        bool Opt(Option opt, long *value = 0);
-        /** Increment counter of written characters. */
+        inline bool Opt(Option opt, long *value = 0) {
+            bool ret = _optMap.IsSet(opt);
+            if (value) {
+                *value = ret ? _optVal[opt] : 0;
+            }
+            return ret;
+        }
+
+        /** Set specified option.
+         *
+         * @param opt Option to set.
+         * @param value Optional associated value.
+         */
+        inline void SetOpt(Option opt, long value = 0) {
+            _optMap.Set(opt);
+            _optVal[opt] = value;
+        }
+
+        /** Clear specified option.
+         *
+         * @param opt Option to clear.
+         */
+        inline void ClearOpt(Option opt) {
+            _optMap.Clear(opt);
+        }
+
+        /** Indicate end of stream status. */
+        inline void End() { _endOfStream = true; }
+
+        /** Increment counter of written characters.
+         * @return New counter value.
+         */
         inline size_t operator++(int) { return ++_size; }
+
+        /** Add specified value to counter for written characters.
+         * @param addend Value to add.
+         * @return New counter value.
+         */
+        inline size_t operator+=(size_t addend) { return _size += addend; }
+
         /** Get number of written characters. */
         inline operator size_t() { return _size; }
+
+        /** Get end of stream status.
+         * @return @a true if end of stream reached.
+         */
+        inline operator bool() { return _endOfStream; }
+
     private:
         /** Bitmap of set options. */
-        u8 _optMap[(O_MAX + NBBY - 1) / NBBY];
+        BitString<O_MAX> _optMap;
         /** Values of options. */
         long _optVal[O_MAX];
         /** Number of characters written. */
         size_t _size;
+        /** @a true if end of stream reached. */
+        bool _endOfStream;
     };
 
-    Context _globalCtx;
+    Context _globalCtx; /**< Global context for insertion operators. */
 
     OTextStreamBase();
 
-
+    /** Output provided character.
+     *
+     * @param ctx Writing context.
+     * @param c Character to output.
+     * @return @a true if character was written, @a false otherwise.
+     */
+    inline bool _Putc(Context &ctx, char c) {
+        if (Putc(c)) {
+            ctx++;
+            return true;
+        }
+        ctx.End();
+        return false;
+    }
 
     /** Output provided string.
      *
@@ -119,7 +179,7 @@ protected:
      * @param str String to output.
      * @return @a true if all @a Putc calls returned @a true, @a false otherwise.
      */
-    bool _Puts(size_t &size, const char *str);
+    bool _Puts(Context &ctx, const char *str);
 
     /** @a _FormatValue methods family converts value of specific type into string.
      * @param size Incremented by number of characters written.
@@ -164,7 +224,10 @@ public:
 
     template <typename T>
     OTextStream &operator << (T value) {
-        OTextStreamBase::operator <<(value);
+        /* If there are no << operator for a provided type in the base class
+         * then use >> operator in the object being converted to string.
+         */
+        value >> *this;
         return *this;
     }
 
