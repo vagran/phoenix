@@ -19,7 +19,10 @@
  * the first bit set, if such available.
  */
 
-/** String of bits representation. */
+/** Class for manipulating bit strings. Bit string is a sequence of bits which
+ * are indexed by a null-based index. Each bit in a string can be accessed
+ * (checked or modified) individually by its index.
+ */
 template <size_t numBits>
 class BitString {
 public:

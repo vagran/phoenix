@@ -14,12 +14,17 @@
 #ifndef OTEXTSTREAM_H_
 #define OTEXTSTREAM_H_
 
+#include <BitString.h>
+
+/** Text streams manipulations. */
+namespace text_stream {
+
 /** Base class for output text stream objects. They should be derived from this
  * class.
  */
 class OTextStreamBase {
 public:
-
+    /** Converting options. */
     enum Option {
         /** Set radix for subsequent integer numbers conversions. Parameter
          * is a new radix value.
@@ -46,16 +51,6 @@ public:
         long _option, _param;
     };
 
-    /** This method must be overridden in a derived class. All formatting
-     * methods call it to output next text character.
-     *
-     * @param c Character to output.
-     * @return @a true if the character was output. @a false if end of stream
-     *      reached, the rest characters in current string will be dropped in
-     *      such case.
-     */
-    virtual bool Putc(char c) = 0;
-
     /** Output formatted string.
      *
      * @param fmt Format to output.
@@ -71,15 +66,36 @@ public:
      */
     OTextStreamBase &operator << (const Opt &&opt);
 
-    /** Convert a value to string. This operator is overloaded for all
-     * supported types. For the types which are not supported here, the derived
-     * class will call >> operator of the object provided as value.
+    /** Convert the provided value to string. This operator is overloaded for
+     * all supported types. For the types which are not supported here, the
+     * @a >> operator of the object provided as value will be called. The
+     * operator should have the following prototype:
+     * @code
+     * void operator >> (OTextStreamBase &s);
+     * @endcode
      *
-     * @param value Value to convert.
      * @return Reference to itself.
      */
     OTextStreamBase &operator << (bool value);
+
+    OTextStreamBase &operator << (char value);
+
     OTextStreamBase &operator << (short value);
+    OTextStreamBase &operator << (unsigned short value);
+    OTextStreamBase &operator << (int value);
+    OTextStreamBase &operator << (unsigned int value);
+    OTextStreamBase &operator << (long value);
+    OTextStreamBase &operator << (unsigned long value);
+
+    /** Default conversion operator. */
+    template <class T>
+    inline OTextStreamBase &operator << (T value) {
+        /* If there are no << operator for a provided type in the base class
+         * then use >> operator in the object being converted to string.
+         */
+        value >> *this;
+        return *this;
+    }
 
 protected:
 
@@ -158,9 +174,19 @@ protected:
 
     OTextStreamBase();
 
+    /** This method must be overridden in a derived class. All formatting
+     * methods call it to output next text character.
+     *
+     * @param c Character to output.
+     * @return @a true if the character was output. @a false if end of stream
+     *      reached, the rest characters in current string will be dropped in
+     *      such case.
+     */
+    virtual bool Putc(char c) = 0;
+
     /** Output provided character.
      *
-     * @param ctx Writing context.
+     * @param ctx Conversion context.
      * @param c Character to output.
      * @return @a true if character was written, @a false otherwise.
      */
@@ -175,36 +201,39 @@ protected:
 
     /** Output provided string.
      *
-     * @param size Incremented by number of characters written.
+     * @param ctx Conversion context.
      * @param str String to output.
-     * @return @a true if all @a Putc calls returned @a true, @a false otherwise.
+     * @return @a true if end of stream is not yet reached, @a false otherwise
+     *      (end of stream reached).
      */
     bool _Puts(Context &ctx, const char *str);
 
     /** @a _FormatValue methods family converts value of specific type into string.
-     * @param size Incremented by number of characters written.
-     * @param opt Points to optional characters preceding format letter @a fmt
-     *      for a specific type.
+     * @param ctx Conversion context.
+     * @param value Value of specific type to convert to string. @a _FormatValue
+     *      method should call @ref _Putc method for each character it wants to
+     *      output.
      * @param fmt Format letter. When format letter is searched the first
      *      alphabetical symbol except 'l', 'L', 'h' and 'H' is considered
      *      to be format letter. All preceding symbols are considered to be
      *      options.
-     * @param optSize Number of characters in option string
-     * @param value Value of specific type to convert to string. @a _FormatValue
-     * method should call @a Putc method for each character it wants to output.
-     * @return @a true if all @a Putc calls returned @a true, and @a false
+     * @return @a true if end of stream is not yet reached and @a false
      *      otherwise.
      */
-    bool _FormatValue(size_t &size, char fmt, const char *opt, size_t optSize, bool value);
-    bool _FormatValue(size_t &size, char fmt, const char *opt, size_t optSize, short value);
+    bool _FormatValue(Context &ctx, long value, char fmt = 0);
+    bool _FormatValue(Context &ctx, unsigned long value, char fmt = 0);
+
+    bool _FormatValue(Context &ctx, bool value, char fmt = 0);
 };
 
 /** Implementation class for output text stream.
  *
  * @param T_backend Back-end class which must implement @a Putc method which
- *      is called for each character of stream stream. The method must have the
- *      following prototype: @n
- *      bool Putc(char c, T_arg *arg = 0); @n
+ *      is called for each character of stream. The method must have the
+ *      following prototype:
+ *      @code
+ *      bool Putc(char c, T_arg *arg = 0);
+ *      @endcode
  *      It should have optional argument which is of type @a T_arg in this
  *      template.
  * @param T_arg Type of optional argument which is passed to the @a Putc method
@@ -218,22 +247,15 @@ public:
         _arg = arg;
     }
 
-    virtual bool Putc(char c) {
-        return _backend->Putc(c, _arg);
-    }
-
-    template <typename T>
-    OTextStream &operator << (T value) {
-        /* If there are no << operator for a provided type in the base class
-         * then use >> operator in the object being converted to string.
-         */
-        value >> *this;
-        return *this;
-    }
-
 private:
     T_backend *_backend;
     T_arg *_arg;
+
+    virtual bool Putc(char c) {
+        return _backend->Putc(c, _arg);
+    }
 };
+
+} /* namespace text_stream */
 
 #endif /* OTEXTSTREAM_H_ */

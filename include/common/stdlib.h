@@ -14,7 +14,7 @@
  * Prototypes for standard library function.
  *
  * This file contains prototypes for all standard C library functions used in
- * Phoenix. Used mainly by C code and low-level C++ support code.
+ * Phoenix. Used mainly by low-level C++ support code.
  */
 
 #include <common/crc.h>

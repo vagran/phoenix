@@ -39,12 +39,12 @@
 #include <common/gcc.h>
 #include <common/stdlib.h>
 
-/* Virtual memory */
-#include <vm.h>
-
 #include <md_stack.h>
 #include <BitString.h>
 #include <lock.h>
+
+/* Virtual memory */
+#include <vm.h>
 
 #endif /* ASSEMBLER */
 

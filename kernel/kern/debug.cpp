@@ -151,7 +151,7 @@ DbgSerialPort::Initialize()
     Putc('m');
     /* Start new line. */
     Putc('\r');
-    Purc('\n');
+    Putc('\n');
 }
 
 bool
@@ -207,10 +207,26 @@ DbgSerialPort::Putc(u8 c, void *arg UNUSED)
 }
 
 static DbgSerialPort dbgSerialPort;
-static OTextStream<DbgSerialPort> dbgStream(&dbgSerialPort);
+static text_stream::OTextStream<DbgSerialPort> dbgStream(&dbgSerialPort);
+
+class A {
+public:
+    void operator >> (text_stream::OTextStreamBase &s) {
+        s << 'Q';
+    }
+};
 
 void
 __Trace(const char *file UNUSED, int line UNUSED, const char *msg UNUSED, ...)
 {
     dbgSerialPort.Putc('Z');
+
+    bool t = true;
+    A a;
+
+    dbgStream << a << '\n' << t << '\n';
+
+    int i = -237;
+    dbgStream << i << '\n';
+
 }

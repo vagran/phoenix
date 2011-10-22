@@ -13,6 +13,8 @@
 
 #include <sys.h>
 
+using namespace text_stream;
+
 /* Conversion context */
 
 OTextStreamBase::Context::Context()
@@ -42,12 +44,14 @@ OTextStreamBase::_Puts(Context &ctx, const char *str)
 OTextStreamBase &
 OTextStreamBase::operator << (bool value)
 {
-    const char *out;
-    if (_globalCtx.Opt(O_NUM_BOOl)) {
-        _Puts(_globalCtx, value ? "1" : "0");
-    } else {
-        _Puts(_globalCtx, value ? "true" : "false");
-    }
+    _FormatValue(_globalCtx, value);
+    return *this;
+}
+
+OTextStreamBase &
+OTextStreamBase::operator << (char value)
+{
+    _Putc(_globalCtx, value);
     return *this;
 }
 
@@ -59,14 +63,12 @@ OTextStreamBase::operator << (short value UNUSED)
 }
 
 bool
-OTextStreamBase::_FormatValue(size_t &size UNUSED, char fmt UNUSED, const char *opt UNUSED, size_t optSize UNUSED, bool value UNUSED)
+OTextStreamBase::_FormatValue(Context &ctx, bool value, char fmt UNUSED)
 {
-
-    return false;
-}
-
-bool
-OTextStreamBase::_FormatValue(size_t &size UNUSED, char fmt UNUSED, const char *opt UNUSED, size_t optSize UNUSED, short value UNUSED)
-{
-    return false;
+    if (ctx.Opt(O_NUM_BOOl)) {
+        _Puts(ctx, value ? "1" : "0");
+    } else {
+        _Puts(ctx, value ? "true" : "false");
+    }
+    return ctx;
 }
