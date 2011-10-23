@@ -13,12 +13,38 @@
 
 #include <phoenix_ut.h>
 
+#include <string.h>
 #include <stdio.h>
+#include <string>
+#include <sstream>
 #include <list>
 
 using namespace ut;
 
+#define UT_HDL2STR(str_hdl) (*static_cast<std::string *>(str_hdl))
+#define UT_STR2HDL(str)     (static_cast<void *>(&str))
+
 namespace {
+
+std::string &
+GetUtString(UtString &s)
+{
+    return UT_HDL2STR(s.GetHandle());
+}
+
+void
+TestValueBase_Describe(TestValueBase &value, std::string &s)
+{
+    UtString str(UT_STR2HDL(s));
+    value.Describe(str);
+}
+
+void
+TestException_Describe(TestException &e, std::string &s)
+{
+    UtString str(UT_STR2HDL(s));
+    e.Describe(str);
+}
 
 /** Tests manager. */
 class TestMan {
@@ -85,7 +111,7 @@ TestMan::Run()
             t->TestBody();
         } catch (TestException &e) {
             std::string desc;
-            e.Describe(desc);
+            TestException_Describe(e, desc);
             printf("%s\n", desc.c_str());
             printf("Test FAILED\n");
             PrintStat();
@@ -132,20 +158,22 @@ TestDesc::~TestDesc()
 }
 
 void
-TestValueBase::Describe(std::string &s)
+TestValueBase::Describe(UtString &_s)
 {
+    std::string &s = GetUtString(_s);
     std::stringstream ss;
     ss << "Value: " << _name;
-    if (!_value.empty()) {
-        ss << " [" << _value << "]";
+    if (!GetUtString(_value).empty()) {
+        ss << " [" << GetUtString(_value) << "]";
     }
     ss << " (defined at " << _file << ":" << _line << ")";
     s = ss.str();
 }
 
 void
-TestException::Describe(std::string &s)
+TestException::Describe(UtString &_s)
 {
+    std::string &s = GetUtString(_s);
     std::stringstream ss;
     switch (_type) {
     case BINARY_ASSERT:
@@ -163,14 +191,14 @@ TestException::Describe(std::string &s)
     std::string value;
     switch (_type) {
     case BINARY_ASSERT:
-        _value1.Describe(value);
+        TestValueBase_Describe(_value1, value);
         ss << value << "\n";
-        _value2.Describe(value);
+        TestValueBase_Describe(_value2, value);
         ss << value;
         break;
     case UNARY_ASSERT:
     case USER_FAILURE:
-        _value1.Describe(value);
+        TestValueBase_Describe(_value1, value);
         ss << value;
         break;
     }
@@ -194,6 +222,72 @@ ut::__ut_hit_assert()
 {
     ::testMan.HitAssert();
 }
+
+int
+ut::__ut_strcmp(const char *s1, const char *s2)
+{
+    return strcmp(s1, s2);
+}
+
+/* UtString class */
+
+UtString::UtString()
+{
+    _handle = UT_STR2HDL(*new std::string);
+    _allocated = true;
+}
+
+UtString::UtString(void *handle)
+{
+    _handle = handle;
+    _allocated = false;
+}
+
+UtString::~UtString()
+{
+    if (_allocated) {
+        delete &UT_HDL2STR(_handle);
+    }
+}
+
+UtString &
+UtString::operator =(void *handle)
+{
+    UT_HDL2STR(_handle) = UT_HDL2STR(handle);
+    return *this;
+}
+
+UtString &
+UtString::operator =(const UtString &s)
+{
+    UT_HDL2STR(_handle) = UT_HDL2STR(s._handle);
+    return *this;
+}
+
+template <typename T>
+void
+UtString::_ToString(T value)
+{
+    std::stringstream ss;
+    ss << value;
+    UT_HDL2STR(_handle) = ss.str();
+}
+
+#define UT_STR_INSTANTIATE(__type) \
+    template void UtString::_ToString<__type>(__type value)
+
+UT_STR_INSTANTIATE(bool);
+UT_STR_INSTANTIATE(char);
+UT_STR_INSTANTIATE(unsigned char);
+UT_STR_INSTANTIATE(short);
+UT_STR_INSTANTIATE(unsigned short);
+UT_STR_INSTANTIATE(int);
+UT_STR_INSTANTIATE(unsigned int);
+UT_STR_INSTANTIATE(long);
+UT_STR_INSTANTIATE(unsigned long);
+UT_STR_INSTANTIATE(char *);
+UT_STR_INSTANTIATE(const char *);
+UT_STR_INSTANTIATE(void *);
 
 /* Main function. It will run all tests. Returns zero if all tests succeeded,
  * non-zero if any failures occurred.

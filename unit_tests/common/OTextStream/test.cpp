@@ -9,6 +9,8 @@
 
 #include <phoenix_ut.h>
 
+#include <sys.h>
+
 UT_TEST("Stringifying boolean values")
 {
 

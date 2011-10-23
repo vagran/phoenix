@@ -8,12 +8,10 @@
  */
 
 /** @file phoenix_ut.h
- * Main header file for unit tests source files inclusions.
+ * Main header file for unit tests source files inclusions. This header should
+ * not include any third party header (e.g. standard library headers) to avoid
+ * conflicts with the code being tested.
  */
-
-#include <string.h>
-#include <string>
-#include <sstream>
 
 #ifndef PHOENIX_UT_H_
 #define PHOENIX_UT_H_
@@ -82,6 +80,55 @@ void __ut_hit_value();
 /** Increment assertions statistics. */
 void __ut_hit_assert();
 
+int __ut_strcmp(const char *s1, const char *s2);
+
+class UtString {
+public:
+    UtString();
+    UtString(void *handle);
+    ~UtString();
+
+    inline void *GetHandle() { return _handle; }
+
+    UtString &operator =(void *handle);
+    UtString &operator =(const UtString &s);
+
+    template <typename T>
+    void ToString(T value)
+    {
+        _ToString(value);
+    }
+
+    template <typename T>
+    void ToString(T *value)
+    {
+        _ToString(static_cast<void *>(value));
+    }
+
+    template <typename T>
+    void ToString(const T *value)
+    {
+        _ToString(static_cast<void *>(const_cast<T *>(value)));
+    }
+
+    void ToString(char *value)
+    {
+        _ToString(value);
+    }
+
+    void ToString(const char *value)
+    {
+        _ToString(value);
+    }
+
+private:
+    void *_handle;
+    bool _allocated;
+
+    template <typename T>
+    void _ToString(T value);
+};
+
 /** Test descriptor. Used for registering tests. */
 class TestDesc {
 public:
@@ -123,19 +170,17 @@ public:
 
     template <typename T>
     void SetValue(T value) {
-        std::stringstream ss;
-        ss << value;
-        _value = ss.str();
+        _value.ToString(value);
     }
 
     const char *GetName() { return _name; }
 
-    void Describe(std::string &s);
+    void Describe(UtString &_s);
 
 protected:
     const char *_name, *_file;
     int _line;
-    std::string _value;
+    UtString _value;
 };
 
 /** Exceptions during a test (e.g. failed assertion) are represented by this
@@ -189,7 +234,7 @@ public:
 
     }
 
-    void Describe(std::string &s);
+    void Describe(UtString &s);
 
 private:
     TestValueBase _value1, _value2;
