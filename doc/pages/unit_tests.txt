@@ -1,0 +1,33 @@
+====== Unit tests ======
+
+Special framework was created for Phoenix unit tests.
+
+===== Makefile variables =====
+
+The following variables should be defined in makefile for a particular unit test:
+  * [M] ''TEST_NAME'' -- symbolic test name without spaces.
+  * [O] ''TEST_DESC'' -- short description of the test.
+  * [M] ''TEST_SRCS'' -- all product source files which should be compiled for this test. These files do not include source files of the test itself (test sources are searched automatically in the same directory where the makefile is located).
+  * [O] ''TEST_CXX_FLAGS'' -- additional compiler flags.
+
+===== Test definition =====
+
+Tests writing is as simple as possible:
+<code cpp>
+UT_TEST("Some test case name")
+{
+    // This will generate failure if someValue is not equal to anotherValue
+    UT(someValue) == UT(anotherValue);
+
+    if (somethingWrong) {
+        // Failure can be reported explicitly
+        UT_FAIL("Something went wrong");
+    }
+    
+    UT(somePointer) != UT_NULL;
+    !UT(someValueOrPointer);
+}
+UT_TEST_END
+</code>
+
+And that's all! Use just these several macros to describe all your test cases. '''UT''' macro wraps all values in special classes which have various operators defined. If operator result is ''false'' then assertion failure is raised.

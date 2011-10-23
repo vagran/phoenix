@@ -5,14 +5,14 @@
 # All rights reserved.
 # See COPYING file for copyright details.
 
-TOOLS_BIN = $(PHOENIX_BUILD_TOOLS)/bin/
+TOOLS_BIN = $(PHOENIX_BUILD_TOOLS)/bin
 TOOLS_PREFIX = x86_64-phoenix-elf-
 
-export CC = $(TOOLS_BIN)$(TOOLS_PREFIX)gcc
-export LD = $(TOOLS_BIN)$(TOOLS_PREFIX)ld
-export STRIP = $(TOOLS_BIN)$(TOOLS_PREFIX)strip
-export AR = $(TOOLS_BIN)$(TOOLS_PREFIX)ar
-export OBJCOPY = $(TOOLS_BIN)$(TOOLS_PREFIX)objcopy
+export CC = $(TOOLS_BIN)/$(TOOLS_PREFIX)gcc
+export LD = $(TOOLS_BIN)/$(TOOLS_PREFIX)ld
+export STRIP = $(TOOLS_BIN)/$(TOOLS_PREFIX)strip
+export AR = $(TOOLS_BIN)/$(TOOLS_PREFIX)ar
+export OBJCOPY = $(TOOLS_BIN)/$(TOOLS_PREFIX)objcopy
 export INSTALL = install
 export DD = dd
 export CP = cp
@@ -23,10 +23,10 @@ export DF = df
 export SUDO_ASKPASS = /usr/bin/ssh-askpass
 export SUDO = sudo
 export MKE2FS = mke2fs
-export DOXYGEN = $(TOOLS_BIN)doxygen
+export DOXYGEN = $(TOOLS_BIN)/doxygen
 
-export NAT_CC = gcc
-export NAT_LD = gcc
+export NAT_CC = $(TOOLS_BIN)/gcc
+export NAT_LD = $(TOOLS_BIN)/gcc
 
 export APP_RUNTIME_LIB_NAME = apprt
 export APP_RUNTIME_LIB_DIR = $(PHOENIX_ROOT)/lib/startup
@@ -56,7 +56,7 @@ INCLUDE_DIRS = $(PHOENIX_ROOT)/kernel $(PHOENIX_ROOT)/kernel/sys \
 	$(PHOENIX_ROOT)/kernel/sys/arch/$(PHOENIX_ARCH) $(PHOENIX_ROOT)/include 
 INCLUDE_FLAGS += $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
-NAT_INCLUDE_DIRS = /usr/include
+NAT_INCLUDE_DIRS = 
 NAT_INCLUDE_FLAGS = $(foreach dir,$(NAT_INCLUDE_DIRS),-I$(dir))
 
 GLOBAL_FLAGS = -DARCH_$(PHOENIX_ARCH)
