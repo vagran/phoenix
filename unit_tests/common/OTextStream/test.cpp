@@ -11,9 +11,38 @@
 
 #include <sys.h>
 
+#include <string>
+
+class utStringStream : public text_stream::OTextStream<utStringStream, std::string> {
+public:
+    utStringStream (std::string *s) :
+        OTextStream<utStringStream, std::string>(this, s)
+    {
+
+    }
+
+    bool Putc(u8 c, std::string *arg) {
+        (*arg) += c;
+        return true;
+    }
+};
+
+#define CHECK_STR(value) \
+    do {\
+        UT(s.c_str()) == UT(value); \
+        s.erase(); \
+    } while (0)
+
 UT_TEST("Stringifying boolean values")
 {
+    std::string s;
+    utStringStream stream(&s);
 
+    stream << true;
+    CHECK_STR("true");
+
+    stream << false;
+    CHECK_STR("false");
 }
 UT_TEST_END
 
