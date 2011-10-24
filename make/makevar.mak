@@ -20,6 +20,7 @@ export RM = rm
 export MOUNT = mount
 export UMOUNT = umount
 export DF = df
+export CAT = cat
 export SUDO_ASKPASS = /usr/bin/ssh-askpass
 export SUDO = sudo
 export MKE2FS = mke2fs
@@ -27,6 +28,8 @@ export DOXYGEN = $(TOOLS_BIN)/doxygen
 
 export NAT_CC = $(TOOLS_BIN)/gcc
 export NAT_LD = $(TOOLS_BIN)/gcc
+export NAT_NM = $(TOOLS_BIN)/nm
+export NAT_CPPFILT = $(TOOLS_BIN)/c++filt
 
 export APP_RUNTIME_LIB_NAME = apprt
 export APP_RUNTIME_LIB_DIR = $(PHOENIX_ROOT)/lib/startup

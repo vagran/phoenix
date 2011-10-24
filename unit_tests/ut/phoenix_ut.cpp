@@ -98,6 +98,9 @@ bool
 TestMan::Run()
 {
     printf("========= Phoenix unit testing framework =========\n");
+    if (*__ut_test_description) {
+        printf("Test suite: %s\n", __ut_test_description);
+    }
 
     size_t numTests = _tests.size();
     size_t testIdx = 0;
@@ -107,21 +110,22 @@ TestMan::Run()
         printf("==== Running test '%s' (%lu of %lu) ====\n(defined at %s:%d)\n\n",
                t->GetName(), testIdx + 1, numTests, t->GetFile(), t->GetLine());
 
+        bool failed = false;
         try {
             t->TestBody();
         } catch (TestException &e) {
             std::string desc;
             TestException_Describe(e, desc);
             printf("%s\n", desc.c_str());
-            printf("Test FAILED\n");
-            PrintStat();
-            break;
+            failed = true;
         }
 
-        printf("Test PASSED\n");
+        printf("Test %s\n", failed ? "FAILED" : "PASSED");
         PrintStat();
         testIdx++;
-        numPassed++;
+        if (!failed ) {
+            numPassed++;
+        }
     }
 
     printf("======== Testing complete ========\n"

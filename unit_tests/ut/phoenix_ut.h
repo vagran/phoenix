@@ -67,6 +67,12 @@
 /** Wrapper for null pointer value. */
 #define UT_NULL     ut::TestValue<void *>(0, "NULL", __FILE__, __LINE__)
 
+#define UT_CPTR(value) ut::TestValue<const void *>( \
+    static_cast<const void *>(value), __UT_STR(value), __FILE__, __LINE__)
+
+#define UT_PTR(value) ut::TestValue<void *>( \
+    static_cast<void *>(value), __UT_STR(value), __FILE__, __LINE__)
+
 /** User requested failure.
  * @param desc Description of the fault.
  */
@@ -327,6 +333,9 @@ public:
 
 /** Throw user requested fault. Use @ref UT_FAIL macro to call this function. */
 void __ut_user_fault(const char *desc, const char *file, int line);
+
+/** Description provided in the test makefile. */
+extern const char *__ut_test_description;
 
 }
 
