@@ -56,7 +56,7 @@ UT_TEST("Stringifying boolean values")
     CHECK_STR("true");
 
     stream << false;
-    CHECK_STR("ffalse");
+    CHECK_STR("false");
 }
 UT_TEST_END
 
