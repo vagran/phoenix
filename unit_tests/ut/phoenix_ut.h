@@ -67,11 +67,23 @@
 /** Wrapper for null pointer value. */
 #define UT_NULL     ut::TestValue<void *>(0, "NULL", __FILE__, __LINE__)
 
+/** Wrapper which interprets value as pointer to constant data. Can be useful
+ * to force comparing strings by pointers instead of comparing by content.
+ */
 #define UT_CPTR(value) ut::TestValue<const void *>( \
     static_cast<const void *>(value), __UT_STR(value), __FILE__, __LINE__)
 
+/** Wrapper which interprets value as pointer to data. */
 #define UT_PTR(value) ut::TestValue<void *>( \
     static_cast<void *>(value), __UT_STR(value), __FILE__, __LINE__)
+
+/** Wrapper which interprets value as pointer to constant string. Example:
+ * @code
+ * UT(someString) == UT_CSTR("some string");
+ * @endcode
+ */
+#define UT_CSTR(value) ut::TestValue<const char *>( \
+    static_cast<const char *>(value), __UT_STR(value), __FILE__, __LINE__)
 
 /** User requested failure.
  * @param desc Description of the fault.

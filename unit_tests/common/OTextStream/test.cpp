@@ -11,38 +11,52 @@
 
 #include <sys.h>
 
-#include <string>
-
-class utStringStream : public text_stream::OTextStream<utStringStream, std::string> {
+class utStringStream : public text_stream::OTextStream<utStringStream> {
 public:
-    utStringStream (std::string *s) :
-        OTextStream<utStringStream, std::string>(this, s)
+    utStringStream (char *buf, size_t bufSize) : OTextStream<utStringStream>(this)
     {
-
+        _buf = buf;
+        _bufSize = bufSize;
+        _curPos = 0;
     }
 
-    bool Putc(u8 c, std::string *arg) {
-        (*arg) += c;
+    bool Putc(char c, void *arg UNUSED) {
+        if (_curPos >= _bufSize - 1) {
+            return false;
+        }
+        _buf[_curPos] = c;
+        _curPos++;
+        _buf[_curPos] = 0;
         return true;
     }
+
+    char *Get() { return _buf; }
+
+    void Erase() {
+        _curPos = 0;
+        _buf[0] = 0;
+    }
+private:
+    size_t _bufSize, _curPos;
+    char *_buf;
 };
 
 #define CHECK_STR(value) \
     do {\
-        UT(s.c_str()) == UT(value); \
-        s.erase(); \
+        UT(stream.Get()) == UT_CSTR(value); \
+        stream.Erase(); \
     } while (0)
 
 UT_TEST("Stringifying boolean values")
 {
-    std::string s;
-    utStringStream stream(&s);
+    char buf[1024];
+    utStringStream stream(buf, sizeof(buf));
 
     stream << true;
     CHECK_STR("true");
 
     stream << false;
-    CHECK_STR("false");
+    CHECK_STR("ffalse");
 }
 UT_TEST_END
 
