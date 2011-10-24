@@ -182,7 +182,7 @@ protected:
      *      reached, the rest characters in current string will be dropped in
      *      such case.
      */
-    virtual bool Putc(char c) = 0;
+    virtual bool _Putc(char c) = 0;
 
     /** Output provided character.
      *
@@ -191,7 +191,7 @@ protected:
      * @return @a true if character was written, @a false otherwise.
      */
     inline bool _Putc(Context &ctx, char c) {
-        if (Putc(c)) {
+        if (_Putc(c)) {
             ctx++;
             return true;
         }
@@ -251,7 +251,7 @@ private:
     T_backend *_backend;
     T_arg *_arg;
 
-    virtual bool Putc(char c) {
+    virtual bool _Putc(char c) {
         return _backend->Putc(c, _arg);
     }
 };
