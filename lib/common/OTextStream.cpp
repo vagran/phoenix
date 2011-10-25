@@ -56,9 +56,44 @@ OTextStreamBase::operator << (char value)
 }
 
 OTextStreamBase &
-OTextStreamBase::operator << (short value UNUSED)
+OTextStreamBase::operator << (short value)
 {
+    _FormatValue(_globalCtx, value);
+    return *this;
+}
 
+OTextStreamBase &
+OTextStreamBase::operator << (unsigned short value)
+{
+    _FormatValue(_globalCtx, value);
+    return *this;
+}
+
+OTextStreamBase &
+OTextStreamBase::operator << (int value)
+{
+    _FormatValue(_globalCtx, value);
+    return *this;
+}
+
+OTextStreamBase &
+OTextStreamBase::operator << (unsigned int value)
+{
+    _FormatValue(_globalCtx, value);
+    return *this;
+}
+
+OTextStreamBase &
+OTextStreamBase::operator << (long value)
+{
+    _FormatValue(_globalCtx, value);
+    return *this;
+}
+
+OTextStreamBase &
+OTextStreamBase::operator << (unsigned long value)
+{
+    _FormatValue(_globalCtx, value);
     return *this;
 }
 
@@ -71,4 +106,35 @@ OTextStreamBase::_FormatValue(Context &ctx, bool value, char fmt UNUSED)
         _Puts(ctx, value ? "true" : "false");
     }
     return ctx;
+}
+
+bool
+OTextStreamBase::_FormatInt(Context &ctx, unsigned long value, bool neg, char fmt)
+{
+    /* Max number conversion buffer length: a 64-bits value with radix 2. */
+    char nbuf[sizeof(u64) * NBBY];
+
+    size_t numChars = _IntToString(value, nbuf);
+    while (numChars) {
+        if (!_Putc(ctx, nbuf[numChars - 1])) {
+            break;
+        }
+        numChars--;
+    }
+    return ctx;
+}
+
+size_t
+OTextStreamBase::_IntToString(unsigned long value, char *buf, unsigned long radix,
+                              bool upperCase)
+{
+    size_t numChars = 0;
+    char const digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+
+    ASSERT(radix >= 2 && radix <= 36);
+    do {
+        char c = digits[value % radix];
+        buf[numChars++] = upperCase ? toupper(c) : c;
+    } while (value /= radix);
+    return numChars;
 }

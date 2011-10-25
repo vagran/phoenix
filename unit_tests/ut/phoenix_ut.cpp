@@ -166,11 +166,8 @@ TestValueBase::Describe(UtString &_s)
 {
     std::string &s = GetUtString(_s);
     std::stringstream ss;
-    ss << "Value: " << _name;
-    if (!GetUtString(_value).empty()) {
-        ss << " [" << GetUtString(_value) << "]";
-    }
-    ss << " (defined at " << _file << ":" << _line << ")";
+    ss << "Value: " << _name << " [" << GetUtString(_value) << "]" <<
+        " (defined at " << _file << ":" << _line << ")";
     s = ss.str();
 }
 

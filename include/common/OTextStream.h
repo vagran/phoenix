@@ -220,10 +220,55 @@ protected:
      * @return @a true if end of stream is not yet reached and @a false
      *      otherwise.
      */
-    bool _FormatValue(Context &ctx, long value, char fmt = 0);
-    bool _FormatValue(Context &ctx, unsigned long value, char fmt = 0);
+    bool _FormatValue(Context &ctx, short value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    bool _FormatValue(Context &ctx, unsigned short value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    bool _FormatValue(Context &ctx, int value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    bool _FormatValue(Context &ctx, unsigned int value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    bool _FormatValue(Context &ctx, long value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    bool _FormatValue(Context &ctx, unsigned long value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
 
     bool _FormatValue(Context &ctx, bool value, char fmt = 0);
+
+    template <typename T>
+    bool _FormatIntValue(Context &ctx, T value, char fmt = 0) {
+        bool neg;
+        unsigned long v;
+
+        if (value >= 0) {
+            v = value;
+            neg = false;
+        } else {
+            v = -value;
+            neg = true;
+        }
+        return _FormatInt(ctx, v, neg, fmt);
+    }
+
+    bool _FormatInt(Context &ctx, unsigned long value, bool neg = 0, char fmt = 0);
+
+    /** Convert integer value to string. String is filled in reverse order.
+     *
+     * @param value Value to convert.
+     * @param buf Buffer where to store the result.
+     * @param radix Radix for integer representation (2..36).
+     * @param upperCase Use upper case letter if @a true.
+     * @return Number of characters stored in output buffer.
+     */
+    size_t _IntToString(unsigned long value, char *buf, unsigned long radix = 10,
+                       bool upperCase = false);
+
 };
 
 /** Implementation class for output text stream.

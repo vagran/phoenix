@@ -16,6 +16,7 @@ public:
     utStringStream (char *buf, size_t bufSize) : OTextStream<utStringStream>(this)
     {
         _buf = buf;
+        _buf[0] = 0;
         _bufSize = bufSize;
         _curPos = 0;
     }
@@ -62,6 +63,10 @@ UT_TEST_END
 
 UT_TEST("Stringifying integer values")
 {
+    char buf[1024];
+    utStringStream stream(buf, sizeof(buf));
 
+    stream << 12345678;
+    CHECK_STR("12345678");
 }
 UT_TEST_END
