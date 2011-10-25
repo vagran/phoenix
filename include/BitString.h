@@ -75,7 +75,7 @@ public:
     int FirstSet() {
         size_t numWords = numBits / (sizeof(uintptr_t) * NBBY);
         for (size_t word = 0; word < numWords; word++) {
-            uintptr_t x = static_cast<uintptr_t *>(_bits)[word];
+            uintptr_t x = static_cast<uintptr_t *>(static_cast<void *>(_bits))[word];
             if (x) {
                 size_t bit = cpu::bsf(x);
                 bit += word * sizeof(uintptr_t) * NBBY;
