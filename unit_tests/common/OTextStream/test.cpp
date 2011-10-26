@@ -11,7 +11,9 @@
 
 #include <sys.h>
 
-class utStringStream : public text_stream::OTextStream<utStringStream> {
+using namespace text_stream;
+
+class utStringStream : public OTextStream<utStringStream> {
 public:
     utStringStream (char *buf, size_t bufSize) : OTextStream<utStringStream>(this)
     {
@@ -58,6 +60,22 @@ UT_TEST("Stringifying boolean values")
 
     stream << false;
     CHECK_STR("false");
+
+    stream << OtsOpt(OtsOpt::O_NUM_BOOL);
+
+    stream << true;
+    CHECK_STR("1");
+
+    stream << false;
+    CHECK_STR("0");
+
+    stream << OtsOpt(OtsOpt::O_NUM_BOOL, false);
+
+    stream << true;
+    CHECK_STR("true");
+
+    stream << false;
+    CHECK_STR("false");
 }
 UT_TEST_END
 
@@ -68,5 +86,9 @@ UT_TEST("Stringifying integer values")
 
     stream << 12345678;
     CHECK_STR("12345678");
+
+    size_t size = stream.Format(static_cast<const char *>("Value %d tail"), 12345678);
+    UT(size) == UT(sizeof("Value 12345678 tail") - 1);
+    CHECK_STR("Value 12345678 tail");
 }
 UT_TEST_END

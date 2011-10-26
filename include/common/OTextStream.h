@@ -24,40 +24,75 @@ namespace text_stream {
  */
 class OTextStreamBase {
 public:
-    /** Converting options. */
-    enum Option {
-        /** Set radix for subsequent integer numbers conversions. Parameter
-         * is a new radix value.
-         */
-        O_RADIX,
-        /** Set width for subsequent formatting. Valid for one value only.
-         * Parameter is width in characters.
-         */
-        O_WIDTH,
-        /** Represent booleans as numbers instead of symbolic name. */
-        O_NUM_BOOl,
-
-        /** Maximal option value. */
-        O_MAX
-    };
-
+    /** Wrapper for options. Objects of this class can be applied to text
+     * stream by the insertion operator.
+     */
     class Opt {
     public:
-        inline Opt(Option option, long param = 0) {
+        /** Converting options. */
+        enum Option {
+            /** Set radix for subsequent integer numbers conversions. Parameter
+             * is a new radix value.
+             */
+            O_RADIX,
+            /** Set width for subsequent formatting. Valid for one value only.
+             * Parameter is width in characters.
+             */
+            O_WIDTH,
+            /** Represent booleans as numbers instead of symbolic name. */
+            O_NUM_BOOL,
+
+            /** Maximal option value. */
+            O_MAX
+        };
+
+        inline Opt(Option option, long param, bool _enable = true) {
             _option = option;
             _param = param;
+            _enable = true;
+        }
+
+        inline Opt(Option option, bool enable = true) {
+            _option = option;
+            _param = 0;
+            _enable = enable;
         }
     private:
-        long _option, _param;
+        friend class OTextStreamBase;
+        Option _option;
+        long _param;
+        bool _enable;
     };
 
-    /** Output formatted string.
+    /** Output formatted string. It has more limited functionality than
+     * @ref Format method because it is not types aware for format arguments.
+     * So it cannot format user defined classes.
      *
      * @param fmt Format to output.
      * @param args List of variable arguments for a format.
      * @return Number of characters written.
      */
     size_t FormatV(const char *fmt, va_list args);
+
+    template <typename... Args>
+    inline size_t Format(const char *fmt, Args... args) {
+        Context ctx;
+        _Format(ctx, fmt, args...);
+        return ctx;
+    }
+
+    /** This method handles edge case of previous template when only format
+     * string is specified.
+     *
+     * @param fmt Format string. Should not contain any formatting
+     *      operators.
+     * @return Number of characters written.
+     */
+    inline size_t Format(const char *fmt) {
+        Context ctx;
+        _Format(ctx, fmt);
+        return ctx;
+    }
 
     /** Specify option for conversion.
      *
@@ -111,7 +146,7 @@ protected:
          *      Can be zero if value is not required.
          * @return @a true if the option is set, @a false otherwise.
          */
-        inline bool Opt(Option opt, long *value = 0) {
+        inline bool Opt(Opt::Option opt, long *value = 0) {
             bool ret = _optMap.IsSet(opt);
             if (value) {
                 *value = ret ? _optVal[opt] : 0;
@@ -124,7 +159,7 @@ protected:
          * @param opt Option to set.
          * @param value Optional associated value.
          */
-        inline void SetOpt(Option opt, long value = 0) {
+        inline void SetOpt(Opt::Option opt, long value = 0) {
             _optMap.Set(opt);
             _optVal[opt] = value;
         }
@@ -133,7 +168,7 @@ protected:
          *
          * @param opt Option to clear.
          */
-        inline void ClearOpt(Option opt) {
+        inline void ClearOpt(Opt::Option opt) {
             _optMap.Clear(opt);
         }
 
@@ -161,9 +196,9 @@ protected:
 
     private:
         /** Bitmap of set options. */
-        BitString<O_MAX> _optMap;
+        BitString<Opt::O_MAX> _optMap;
         /** Values of options. */
-        long _optVal[O_MAX];
+        long _optVal[Opt::O_MAX];
         /** Number of characters written. */
         size_t _size;
         /** @a true if end of stream reached. */
@@ -207,6 +242,68 @@ protected:
      *      (end of stream reached).
      */
     bool _Puts(Context &ctx, const char *str);
+
+    /** Output formatted string.
+     *
+     * @param ctx Conversion context.
+     * @param fmt Format string.
+     * @param args Format arguments.
+     * @return @a true if end of stream is not yet reached, @a false otherwise.
+     */
+    template <typename T, typename... Args>
+    inline bool _Format(Context &ctx, const char *fmt, T value, Args... args) {
+        char fmtChar;
+        Context _ctx;
+        if (!_ParseFormat(_ctx, &fmt, &fmtChar)) {
+            ctx += _ctx;
+            return false;
+        }
+
+        if (!fmtChar) {
+            FAULT("Format arguments without format operator");
+            ctx += _ctx;
+            return false;
+        }
+
+#if 0 //XXX will user defined class be supported?
+        if (!_CheckFmtChar(fmtChar, value)) {
+            FAULT("Format operator ('%c') does not match format argument", fmtChar);
+            ctx += _ctx;
+            return false;
+        }
+#endif
+        /* Output value. */
+        bool ret = _FormatValue(_ctx, value, fmtChar);
+        ctx += _ctx;
+        if (ret) {
+            ret = _Format(ctx, fmt, args...);
+        }
+
+        return ret;
+    }
+
+    /** This method handles the last recursive iteration (or format string
+     * without arguments) of the previous template.
+     * @param ctx Conversion context.
+     * @param fmt Format string. Should not contain any formatting operators.
+     * @return @a true if end of stream is not yet reached, @a false otherwise.
+     */
+    bool _Format(Context &ctx, const char *fmt);
+
+    /** Parse format string. All encountered options should be applied to the
+     * provided conversion context. Plain string preceding format operators
+     * should be output using provided context.
+     *
+     * @param ctx Conversion context.
+     * @param fmt Format string. Pointer is advanced during string parsing.
+     *      When the functions returns it point to the character next to a
+     *      format operator found.
+     * @param fmtChar Pointer to location where format character will be stored.
+     *      Will store zero if no format operators were found.
+     * @return @true if end of stream is not yet reached during plain strings
+     *      output, @a false otherwise.
+     */
+    bool _ParseFormat(Context &ctx, const char **fmt, char *fmtChar);
 
     /** @a _FormatValue methods family converts value of specific type into string.
      * @param ctx Conversion context.
@@ -270,6 +367,8 @@ protected:
                        bool upperCase = false);
 
 };
+
+typedef OTextStreamBase::Opt OtsOpt;
 
 /** Implementation class for output text stream.
  *

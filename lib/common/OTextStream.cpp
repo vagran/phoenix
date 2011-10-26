@@ -42,6 +42,17 @@ OTextStreamBase::_Puts(Context &ctx, const char *str)
 }
 
 OTextStreamBase &
+OTextStreamBase::operator << (const Opt &&opt)
+{
+    if (opt._enable) {
+        _globalCtx.SetOpt(opt._option, opt._param);
+    } else {
+        _globalCtx.ClearOpt(opt._option);
+    }
+    return *this;
+}
+
+OTextStreamBase &
 OTextStreamBase::operator << (bool value)
 {
     _FormatValue(_globalCtx, value);
@@ -98,9 +109,23 @@ OTextStreamBase::operator << (unsigned long value)
 }
 
 bool
+OTextStreamBase::_ParseFormat(Context &ctx, const char **fmt, char *fmtChar)
+{
+    //XXX
+    return ctx;
+}
+
+bool
+OTextStreamBase::_Format(Context &ctx, const char *fmt UNUSED)
+{
+    //XXX
+    return ctx;
+}
+
+bool
 OTextStreamBase::_FormatValue(Context &ctx, bool value, char fmt UNUSED)
 {
-    if (ctx.Opt(O_NUM_BOOl)) {
+    if (ctx.Opt(Opt::O_NUM_BOOL)) {
         _Puts(ctx, value ? "1" : "0");
     } else {
         _Puts(ctx, value ? "true" : "false");
