@@ -111,15 +111,51 @@ OTextStreamBase::operator << (unsigned long value)
 bool
 OTextStreamBase::_ParseFormat(Context &ctx, const char **fmt, char *fmtChar)
 {
+    /* Skip all characters preceding format. */
+    while (**fmt) {
+        if (**fmt != '%') {
+            if (!_Putc(ctx, **fmt)) {
+                return false;
+            }
+        } else if ((*fmt)[1] == '%') {
+            (*fmt)++;
+            if (!_Putc(ctx, '%')) {
+                return false;
+            }
+        } else {
+            break;
+        }
+        (*fmt)++;
+    }
+
+    /* (*fmt) is pointing to the first character after '%' */
+
     //XXX
+
     return ctx;
 }
 
 bool
-OTextStreamBase::_Format(Context &ctx, const char *fmt UNUSED)
+OTextStreamBase::Format(Context &ctx, const char *fmt UNUSED)
 {
-    //XXX
+    char fmtChar;
+    _ParseFormat(ctx, &fmt, &fmtChar);
+    if (fmtChar) {
+        FAULT("Format operator '%c' found after arguments exhausted", fmtChar);
+    }
     return ctx;
+}
+
+bool
+OTextStreamBase::_CheckFmtChar(char fmtChar, int value)
+{
+    return fmtChar == 'd' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X';
+}
+
+bool
+OTextStreamBase::_CheckFmtChar(char fmtChar, char value)
+{
+    return fmtChar == 'c';
 }
 
 bool
@@ -131,6 +167,12 @@ OTextStreamBase::_FormatValue(Context &ctx, bool value, char fmt UNUSED)
         _Puts(ctx, value ? "true" : "false");
     }
     return ctx;
+}
+
+bool
+OTextStreamBase::_FormatValue(Context &ctx, char value, char fmt UNUSED)
+{
+    return _Putc(ctx, value);
 }
 
 bool

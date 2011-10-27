@@ -20,7 +20,27 @@
 namespace text_stream {
 
 /** Base class for output text stream objects. They should be derived from this
- * class.
+ * class. Output text streams are capable of converting user defined classes
+ * to strings. In order to support such conversion the user defined class
+ * should have the following methods defined:
+ *
+ * @code
+ * bool CheckFmtChar(char fmtChar);
+ * @endcode
+ * This method should check is the provided format character applicable for the
+ * class being stringified.
+ *
+ * @code
+ * bool ToString(OTextStreamBase &stream, OTextStreamBase::Context &ctx, char fmtChar = 0);
+ * @endcode
+ * This method actually converts user defined class object to string.
+ * @a fmtChar has value of format character specified for this object if it was
+ * converted by @a Format method, or can be zero if it was converted by @a <<
+ * operator. @a ctx is a conversion context which just should be passed to
+ * @a Format method, which must be used by the object to output all string data.
+ * It should return @a true if all @a Format calls returned @a true, and
+ * @a false otherwise - the same result is achived by returning @a ctx casted
+ * to boolean.
  */
 class OTextStreamBase {
 public:
@@ -63,76 +83,6 @@ public:
         long _param;
         bool _enable;
     };
-
-    /** Output formatted string. It has more limited functionality than
-     * @ref Format method because it is not types aware for format arguments.
-     * So it cannot format user defined classes.
-     *
-     * @param fmt Format to output.
-     * @param args List of variable arguments for a format.
-     * @return Number of characters written.
-     */
-    size_t FormatV(const char *fmt, va_list args);
-
-    template <typename... Args>
-    inline size_t Format(const char *fmt, Args... args) {
-        Context ctx;
-        _Format(ctx, fmt, args...);
-        return ctx;
-    }
-
-    /** This method handles edge case of previous template when only format
-     * string is specified.
-     *
-     * @param fmt Format string. Should not contain any formatting
-     *      operators.
-     * @return Number of characters written.
-     */
-    inline size_t Format(const char *fmt) {
-        Context ctx;
-        _Format(ctx, fmt);
-        return ctx;
-    }
-
-    /** Specify option for conversion.
-     *
-     * @param opt Option to switch.
-     * @return Reference to itself.
-     */
-    OTextStreamBase &operator << (const Opt &&opt);
-
-    /** Convert the provided value to string. This operator is overloaded for
-     * all supported types. For the types which are not supported here, the
-     * @a >> operator of the object provided as value will be called. The
-     * operator should have the following prototype:
-     * @code
-     * void operator >> (OTextStreamBase &s);
-     * @endcode
-     *
-     * @return Reference to itself.
-     */
-    OTextStreamBase &operator << (bool value);
-
-    OTextStreamBase &operator << (char value);
-
-    OTextStreamBase &operator << (short value);
-    OTextStreamBase &operator << (unsigned short value);
-    OTextStreamBase &operator << (int value);
-    OTextStreamBase &operator << (unsigned int value);
-    OTextStreamBase &operator << (long value);
-    OTextStreamBase &operator << (unsigned long value);
-
-    /** Default conversion operator. */
-    template <class T>
-    inline OTextStreamBase &operator << (T value) {
-        /* If there are no << operator for a provided type in the base class
-         * then use >> operator in the object being converted to string.
-         */
-        value >> *this;
-        return *this;
-    }
-
-protected:
 
     /** Conversion context. */
     class Context {
@@ -205,6 +155,122 @@ protected:
         bool _endOfStream;
     };
 
+    /** Output formated string. */
+    template <typename... Args>
+    inline size_t Format(const char *fmt, Args... args) {
+        Context ctx;
+        Format(ctx, fmt, args...);
+        return ctx;
+    }
+
+    /** This method handles edge case of previous template when only format
+     * string is specified.
+     *
+     * @param fmt Format string. Should not contain any formatting
+     *      operators.
+     * @return Number of characters written.
+     */
+    inline size_t Format(const char *fmt) {
+        Context ctx;
+        Format(ctx, fmt);
+        return ctx;
+    }
+
+    /** Output formatted string. This method should be used by user defined
+     * classes in @a ToString method to output string data into provided stream.
+     *
+     * @param ctx Conversion context.
+     * @param fmt Format string.
+     * @param value Value to format.
+     * @param args Format arguments.
+     * @return @a true if end of stream is not yet reached, @a false otherwise.
+     */
+    template <typename T, typename... Args>
+    inline bool Format(Context &ctx, const char *fmt, T &value, Args... args) {
+        char fmtChar;
+        Context _ctx;
+        if (!_ParseFormat(_ctx, &fmt, &fmtChar)) {
+            ctx += _ctx;
+            return false;
+        }
+
+        if (!fmtChar) {
+            FAULT("Format arguments without format operator");
+            ctx += _ctx;
+            return false;
+        }
+
+        if (!_CheckFmtChar(fmtChar, value)) {
+            FAULT("Format operator ('%c') does not match format argument", fmtChar);
+            ctx += _ctx;
+            return false;
+        }
+
+        /* Output value. */
+        bool ret = _FormatValue(_ctx, value, fmtChar);
+        ctx += _ctx;
+        if (ret) {
+            ret = Format(ctx, fmt, args...);
+        }
+
+        return ret;
+    }
+
+    /** This method handles the last recursive iteration (or format string
+     * without arguments) of the previous template.
+     * @param ctx Conversion context.
+     * @param fmt Format string. Should not contain any formatting operators.
+     * @return @a true if end of stream is not yet reached, @a false otherwise.
+     */
+    bool Format(Context &ctx, const char *fmt);
+
+    /** Output formatted string. It has more limited functionality than
+     * @a Format method because it is not types aware for format arguments.
+     * So it cannot format user defined classes.
+     *
+     * @param fmt Format to output.
+     * @param args List of variable arguments for a format.
+     * @return Number of characters written.
+     */
+    size_t FormatV(const char *fmt, va_list args);
+
+    /** Specify option for conversion.
+     *
+     * @param opt Option to switch.
+     * @return Reference to itself.
+     */
+    OTextStreamBase &operator << (const Opt &&opt);
+
+    /** Convert the provided value to string. This operator is overloaded for
+     * all supported types. For the types which are not supported here, the
+     * @a >> operator of the object provided as value will be called. The
+     * operator should have the following prototype:
+     * @code
+     * void operator >> (OTextStreamBase &s);
+     * @endcode
+     *
+     * @return Reference to itself.
+     */
+    OTextStreamBase &operator << (bool value);
+
+    OTextStreamBase &operator << (char value);
+
+    OTextStreamBase &operator << (short value);
+    OTextStreamBase &operator << (unsigned short value);
+    OTextStreamBase &operator << (int value);
+    OTextStreamBase &operator << (unsigned int value);
+    OTextStreamBase &operator << (long value);
+    OTextStreamBase &operator << (unsigned long value);
+
+    /** Default conversion operator for user defined classes. */
+    template <class T>
+    inline OTextStreamBase &operator << (T &value) {
+        value.ToString(*this, _globalCtx, '\0');
+        return *this;
+    }
+
+protected:
+
     Context _globalCtx; /**< Global context for insertion operators. */
 
     OTextStreamBase();
@@ -243,52 +309,21 @@ protected:
      */
     bool _Puts(Context &ctx, const char *str);
 
-    /** Output formatted string.
+    /** These methods validate type against format character.
      *
-     * @param ctx Conversion context.
-     * @param fmt Format string.
-     * @param args Format arguments.
-     * @return @a true if end of stream is not yet reached, @a false otherwise.
+     * @param fmtChar Format character which was specified for @a value.
+     * @param value Corresponding value from arguments list.
+     * @return @a true if the specified format character is valid for the
+     *      specified type.
      */
-    template <typename T, typename... Args>
-    inline bool _Format(Context &ctx, const char *fmt, T value, Args... args) {
-        char fmtChar;
-        Context _ctx;
-        if (!_ParseFormat(_ctx, &fmt, &fmtChar)) {
-            ctx += _ctx;
-            return false;
-        }
+    bool _CheckFmtChar(char fmtChar, int value);
 
-        if (!fmtChar) {
-            FAULT("Format arguments without format operator");
-            ctx += _ctx;
-            return false;
-        }
+    bool _CheckFmtChar(char fmtChar, char value);
 
-#if 0 //XXX will user defined class be supported?
-        if (!_CheckFmtChar(fmtChar, value)) {
-            FAULT("Format operator ('%c') does not match format argument", fmtChar);
-            ctx += _ctx;
-            return false;
-        }
-#endif
-        /* Output value. */
-        bool ret = _FormatValue(_ctx, value, fmtChar);
-        ctx += _ctx;
-        if (ret) {
-            ret = _Format(ctx, fmt, args...);
-        }
-
-        return ret;
+    template <class T>
+    inline bool _CheckFmtChar(char fmtChar, T &value) {
+        return value.CheckFmtChar(fmtChar);
     }
-
-    /** This method handles the last recursive iteration (or format string
-     * without arguments) of the previous template.
-     * @param ctx Conversion context.
-     * @param fmt Format string. Should not contain any formatting operators.
-     * @return @a true if end of stream is not yet reached, @a false otherwise.
-     */
-    bool _Format(Context &ctx, const char *fmt);
 
     /** Parse format string. All encountered options should be applied to the
      * provided conversion context. Plain string preceding format operators
@@ -300,7 +335,7 @@ protected:
      *      format operator found.
      * @param fmtChar Pointer to location where format character will be stored.
      *      Will store zero if no format operators were found.
-     * @return @true if end of stream is not yet reached during plain strings
+     * @return @a true if end of stream is not yet reached during plain strings
      *      output, @a false otherwise.
      */
     bool _ParseFormat(Context &ctx, const char **fmt, char *fmtChar);
@@ -317,26 +352,33 @@ protected:
      * @return @a true if end of stream is not yet reached and @a false
      *      otherwise.
      */
-    bool _FormatValue(Context &ctx, short value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, short value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
-    bool _FormatValue(Context &ctx, unsigned short value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, unsigned short value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
-    bool _FormatValue(Context &ctx, int value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, int value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
-    bool _FormatValue(Context &ctx, unsigned int value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, unsigned int value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
-    bool _FormatValue(Context &ctx, long value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, long value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
-    bool _FormatValue(Context &ctx, unsigned long value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, unsigned long value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
 
     bool _FormatValue(Context &ctx, bool value, char fmt = 0);
+    bool _FormatValue(Context &ctx, char value, char fmt = 0);
+
+    /** Format user defined class object. */
+    template <class T>
+    inline bool _FormatValue(Context &ctx, T value, char fmt = 0) {
+        return value.ToString(*this, ctx, fmt);
+    }
 
     template <typename T>
     bool _FormatIntValue(Context &ctx, T value, char fmt = 0) {

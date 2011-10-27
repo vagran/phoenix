@@ -25,7 +25,8 @@
 #define __UT_STR(x)             __UT_STR2(x)
 
 /** Get unique identifier. */
-#define __UT_UID(str)           __UT_CONCAT(str, __COUNTER__)
+//XXX should use __COUNTER__ after Eclipse will recognize it.
+#define __UT_UID(str)           __UT_CONCAT(str, __LINE__)
 
 #define __UT_TEST_DESC          __UT_CONCAT(UtTestDesc_, __LINE__)
 

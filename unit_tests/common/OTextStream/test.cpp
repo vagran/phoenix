@@ -92,3 +92,40 @@ UT_TEST("Stringifying integer values")
     CHECK_STR("Value 12345678 tail");
 }
 UT_TEST_END
+
+class utPrintable {
+public:
+    int x;
+
+    utPrintable(int x) { this->x = x; }
+
+    bool CheckFmtChar(char fmtChar) {
+        return fmtChar == 'a' || fmtChar == 'b' || fmtChar == 'c';
+    }
+
+    bool ToString(OTextStreamBase &stream, OTextStreamBase::Context &ctx,
+                  char fmtChar = 0)
+    {
+        if (fmtChar) {
+            stream.Format(ctx, "fmt '%c': %d", fmtChar, x);
+        } else {
+            stream.Format(ctx, "nofmt: %d", x);
+        }
+        return ctx;
+    }
+};
+
+UT_TEST("Stringifying user defined classes")
+{
+    char buf[1024];
+    utStringStream stream(buf, sizeof(buf));
+    utPrintable p(12345678);
+
+    stream << p;
+    CHECK_STR("nofmt: 12345678");
+
+    size_t size = stream.Format("Object: %a tail", p);
+    UT(size) == UT(sizeof("Object: fmt 'a: 12345678 tail"));
+    CHECK_STR("Object: fmt 'a: 12345678 tail");
+}
+UT_TEST_END
