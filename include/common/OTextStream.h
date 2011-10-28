@@ -103,10 +103,10 @@ public:
             O_MAX
         };
 
-        inline Opt(Option option, long param, bool _enable = true) {
+        inline Opt(Option option, long param, bool enable = true) {
             _option = option;
             _param = param;
-            _enable = true;
+            _enable = enable;
         }
 
         inline Opt(Option option, bool enable = true) {
@@ -259,12 +259,14 @@ public:
         } else if (ctx.Opt(Opt::O_FMT_PARSED, &_fmtChar)) {
             fmtChar = _fmtChar;
             pCtx = &ctx;
+            ctx.ClearOpt(Opt::O_FMT_PARSED);
         } else {
             if (!_ParseFormat(__ctx, &fmt, &fmtChar)) {
                 return ctx += __ctx;
             }
             if (__ctx.Opt(Opt::O_WIDTH_REQUIRED) || __ctx.Opt(Opt::O_PREC_REQUIRED)) {
-                return Format(__ctx, fmt, value, args...);
+                Format(__ctx, fmt, value, args...);
+                return ctx += __ctx;
             }
             if (!fmtChar) {
                 FAULT("Format arguments without format operator");
@@ -487,6 +489,8 @@ protected:
 
     template <typename T>
     inline bool _FormatValue(Context &ctx, T *value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_RADIX, 16);
+        ctx.SetOpt(Opt::O_SHARP);
         return _FormatIntValue(ctx, reinterpret_cast<uintptr_t>(value), fmt);
     }
 
@@ -549,12 +553,10 @@ protected:
      * @param numChars Number of characters to take from @a value.
      * @param padChar Padding character. Use default if zero. Default may come
      *      from option O_PAD_CHAR.
-     * @param firstPadChar First character in right padding. Is equal to @a
-     *      padChar if zero.
      * @return @a true if end of stream is not yet reached, @a false otherwise.
      */
     bool _FormatField(Context &ctx, const char *value, size_t numChars,
-                      char padChar = 0, char firstPadChar = 0);
+                      char padChar = 0);
 };
 
 /** Shortcut type for output text stream options. */

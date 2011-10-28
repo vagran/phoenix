@@ -146,13 +146,28 @@ UT_TEST("Stringifying integer values")
     size = stream.Format("Value %12d tail", 12345678);
     CHECK_STR_SZ("Value     12345678 tail");
 
+    size = stream.Format("Value %*d tail", 12, 12345678);
+    CHECK_STR_SZ("Value     12345678 tail");
+
     size = stream.Format("Value %12d tail", -12345678);
     CHECK_STR_SZ("Value    -12345678 tail");
 
     size = stream.Format("Value %012d tail", 12345678);
     CHECK_STR_SZ("Value 000012345678 tail");
 
+    size = stream.Format("Value % 012d tail", 12345678);
+    CHECK_STR_SZ("Value  00012345678 tail");
+
+    size = stream.Format("Value %+012d tail", 12345678);
+    CHECK_STR_SZ("Value +00012345678 tail");
+
     size = stream.Format("Value %012d tail", -12345678);
+    CHECK_STR_SZ("Value -00012345678 tail");
+
+    size = stream.Format("Value % 012d tail", -12345678);
+    CHECK_STR_SZ("Value -00012345678 tail");
+
+    size = stream.Format("Value %+012d tail", -12345678);
     CHECK_STR_SZ("Value -00012345678 tail");
 
     size = stream.Format("Value %-12d tail", 12345678);
@@ -188,11 +203,21 @@ UT_TEST("Stringifying integer values")
     size = stream.Format("Value %8.4s tail", "12345678");
     CHECK_STR_SZ("Value     1234 tail");
 
+    size = stream.Format("Value %*.*s tail", 8, 4, "12345678");
+    CHECK_STR_SZ("Value     1234 tail");
+
+    size = stream.Format("Value %.**s tail", 4, 8, "12345678");
+    CHECK_STR_SZ("Value     1234 tail");
+
     size = stream.Format("Value %-8.4s tail", "12345678");
     CHECK_STR_SZ("Value 1234     tail");
 
     size = stream.Format("Value %.4-8s tail", "12345678");
     CHECK_STR_SZ("Value 1234     tail");
+
+    void *p = reinterpret_cast<void *>(0x1234);
+    size = stream.Format("Value %p tail", p);
+    CHECK_STR_SZ("Value 0x1234 tail");
 }
 UT_TEST_END
 
