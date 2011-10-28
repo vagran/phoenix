@@ -44,11 +44,20 @@ private:
     char *_buf;
 };
 
+/* Verify string. */
 #define CHECK_STR(value) \
     do {\
         UT(stream.Get()) == UT_CSTR(value); \
         stream.Erase(); \
     } while (0)
+
+/* Verify string and size. */
+#define CHECK_STR_SZ(value) \
+do {\
+    UT(size) == UT(sizeof(value) - 1); \
+    UT(stream.Get()) == UT_CSTR(value); \
+    stream.Erase(); \
+} while (0)
 
 UT_TEST("Stringifying boolean values")
 {
@@ -83,13 +92,65 @@ UT_TEST("Stringifying integer values")
 {
     char buf[1024];
     utStringStream stream(buf, sizeof(buf));
+    size_t size;
 
     stream << 12345678;
     CHECK_STR("12345678");
 
-    size_t size = stream.Format(static_cast<const char *>("Value %d tail"), 12345678);
-    UT(size) == UT(sizeof("Value 12345678 tail") - 1);
-    CHECK_STR("Value 12345678 tail");
+    stream << -12345678;
+    CHECK_STR("-12345678");
+
+    stream << 12345678 << " in the middle " << 87654321;
+    CHECK_STR("12345678 in the middle 87654321");
+
+    stream << OtsOpt(OtsOpt::O_RADIX, 2l) << BIN(0x11001101);
+    CHECK_STR("11001101");
+    stream.ClearOptions();
+
+    size = stream.Format("Value %d tail", 12345678);
+    CHECK_STR_SZ("Value 12345678 tail");
+
+    size = stream.Format("Value %d tail", -12345678);
+    CHECK_STR_SZ("Value -12345678 tail");
+
+    size = stream.Format("Value % d tail", 12345678);
+    CHECK_STR_SZ("Value  12345678 tail");
+
+    size = stream.Format("Value %+d tail", 12345678);
+    CHECK_STR_SZ("Value +12345678 tail");
+
+    size = stream.Format("Value % +d tail", 12345678);
+    CHECK_STR_SZ("Value +12345678 tail");
+
+    size = stream.Format("Value %d in the middle %d tail", 12345678, 87654321);
+    CHECK_STR_SZ("Value 12345678 in the middle 87654321 tail");
+
+    size = stream.Format("Value %o tail", 01234567);
+    CHECK_STR_SZ("Value 1234567 tail");
+
+    size = stream.Format("Value %x tail", 0x1234abcd);
+    CHECK_STR_SZ("Value 1234abcd tail");
+
+    size = stream.Format("Value %X tail", 0x1234abcd);
+    CHECK_STR_SZ("Value 1234ABCD tail");
+
+    size = stream.Format("Value %#o tail", 01234567);
+    CHECK_STR_SZ("Value 01234567 tail");
+
+    size = stream.Format("Value %#x tail", 0x1234abcd);
+    CHECK_STR_SZ("Value 0x1234abcd tail");
+
+    size = stream.Format("Value %#X tail", 0x1234abcd);
+    CHECK_STR_SZ("Value 0X1234ABCD tail");
+
+    size = stream.Format("Value %12d tail", 12345678);
+    CHECK_STR_SZ("Value     12345678 tail");
+
+    size = stream.Format("Value %012d tail", 12345678);
+    CHECK_STR_SZ("Value 000012345678 tail");
+
+    size = stream.Format("Value %-12d tail", 12345678);
+    CHECK_STR_SZ("Value 12345678     tail");
 }
 UT_TEST_END
 
@@ -106,12 +167,13 @@ public:
     bool ToString(OTextStreamBase &stream, OTextStreamBase::Context &ctx,
                   char fmtChar = 0)
     {
+        OTextStreamBase::Context _ctx;
         if (fmtChar) {
-            stream.Format(ctx, "fmt '%c': %d", fmtChar, x);
+            stream.Format(_ctx, "fmt '%c': %d", fmtChar, x);
         } else {
-            stream.Format(ctx, "nofmt: %d", x);
+            stream.Format(_ctx, "nofmt: %d", x);
         }
-        return ctx;
+        return ctx += _ctx;
     }
 };
 
@@ -125,7 +187,6 @@ UT_TEST("Stringifying user defined classes")
     CHECK_STR("nofmt: 12345678");
 
     size_t size = stream.Format("Object: %a tail", p);
-    UT(size) == UT(sizeof("Object: fmt 'a: 12345678 tail"));
-    CHECK_STR("Object: fmt 'a: 12345678 tail");
+    CHECK_STR_SZ("Object: fmt 'a': 12345678 tail");
 }
 UT_TEST_END

@@ -120,6 +120,11 @@ public:
         return -1;
     }
 
+    /** Clear all bits in the string. */
+    inline void ClearAll() {
+        memset(_bits, 0, sizeof(_bits));
+    }
+
 private:
     u8 _bits[(numBits + NBBY - 1) / NBBY];
 };

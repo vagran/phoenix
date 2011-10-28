@@ -36,11 +36,11 @@ namespace text_stream {
  * This method actually converts user defined class object to string.
  * @a fmtChar has value of format character specified for this object if it was
  * converted by @a Format method, or can be zero if it was converted by @a <<
- * operator. @a ctx is a conversion context which just should be passed to
- * @a Format method, which must be used by the object to output all string data.
- * It should return @a true if all @a Format calls returned @a true, and
- * @a false otherwise - the same result is achived by returning @a ctx casted
- * to boolean.
+ * operator. @a ctx is a conversion context which can be used to get formatting
+ * options. @a Format method should be used by the object to output all string
+ * data. Number of printed characters via @a Format method should be accounted
+ * in @a ctx. The method should return @a true if all @a Format calls returned
+ * @a true, and @a false otherwise.
  */
 class OTextStreamBase {
 public:
@@ -59,8 +59,43 @@ public:
              * Parameter is width in characters.
              */
             O_WIDTH,
+            /** Precision -
+             * @li Number of digits to appear after the radix
+             * character for floating point numbers.
+             * @li Number of characters to take from string argument.
+             */
+            O_PREC,
             /** Represent booleans as numbers instead of symbolic name. */
             O_NUM_BOOL,
+            /** Prepend octal numbers with 0 and hexadecimal with '0x'. */
+            O_SHARP,
+            /** Leave space before positive integers. */
+            O_SPACE,
+            /** Always prepend integers by sign. */
+            O_SIGN,
+            /** Pad integer numbers with zero when right justified. */
+            O_ZERO,
+            /** Left adjust the result. */
+            O_LEFT_ADJ,
+
+            /** Internal option, indicates that width should be taken from
+             * format arguments. Value indicates position relatively to
+             * @a O_PREC_REQUIRED if such exists.
+             */
+            O_WIDTH_REQUIRED,
+            /** Internal option, indicates that precision should be taken from
+             * format arguments. Value indicates position relatively to
+             * @a O_WIDTH_REQUIRED if such exists.
+             */
+            O_PREC_REQUIRED,
+            /** Internal option, indicates that current format specifier was
+             * already parsed. Value is a format character.
+             */
+            O_FMT_PARSED,
+            /** Internal option, indicates that it is signed conversion of
+             * integer value.
+             */
+            O_SIGNED,
 
             /** Maximal option value. */
             O_MAX
@@ -122,6 +157,11 @@ public:
             _optMap.Clear(opt);
         }
 
+        /** Clear all options. */
+        inline void ClearAllOpts() {
+            _optMap.ClearAll();
+        }
+
         /** Indicate end of stream status. */
         inline void End() { _endOfStream = true; }
 
@@ -136,13 +176,22 @@ public:
          */
         inline size_t operator+=(size_t addend) { return _size += addend; }
 
+        /** Apply provided sub-context state to the given context. */
+        inline Context &operator+=(const Context &ctx) {
+            _size += ctx._size;
+            if (ctx._endOfStream) {
+                _endOfStream = true;
+            }
+            return *this;
+        }
+
         /** Get number of written characters. */
         inline operator size_t() { return _size; }
 
         /** Get end of stream status.
-         * @return @a true if end of stream reached.
+         * @return @a true if end of stream not yet reached.
          */
-        inline operator bool() { return _endOfStream; }
+        inline operator bool() { return !_endOfStream; }
 
     private:
         /** Bitmap of set options. */
@@ -186,33 +235,55 @@ public:
      * @return @a true if end of stream is not yet reached, @a false otherwise.
      */
     template <typename T, typename... Args>
-    inline bool Format(Context &ctx, const char *fmt, T &value, Args... args) {
+    bool Format(Context &ctx, const char *fmt, T &value, Args... args) {
         char fmtChar;
-        Context _ctx;
-        if (!_ParseFormat(_ctx, &fmt, &fmtChar)) {
-            ctx += _ctx;
-            return false;
-        }
+        long _fmtChar;
+        Context __ctx, *pCtx;
 
-        if (!fmtChar) {
-            FAULT("Format arguments without format operator");
-            ctx += _ctx;
-            return false;
+        if (ctx.Opt(Opt::O_WIDTH_REQUIRED) || ctx.Opt(Opt::O_PREC_REQUIRED)) {
+            long widthOrder = 0, precOrder = 0;
+            ctx.Opt(Opt::O_WIDTH_REQUIRED, &widthOrder);
+            ctx.Opt(Opt::O_PREC_REQUIRED, &precOrder);
+            if ((widthOrder < precOrder || !ctx.Opt(Opt::O_PREC_REQUIRED)) &&
+                ctx.Opt(Opt::O_WIDTH_REQUIRED)) {
+
+                ctx.ClearOpt(Opt::O_WIDTH_REQUIRED);
+                _SetOpt(ctx, Opt::O_WIDTH, value);
+            } else if (ctx.Opt(Opt::O_PREC_REQUIRED)) {
+                ctx.ClearOpt(Opt::O_PREC_REQUIRED);
+                _SetOpt(ctx, Opt::O_PREC, value);
+            }
+            return Format(ctx, fmt, args...);
+        } else if (ctx.Opt(Opt::O_FMT_PARSED, &_fmtChar)) {
+            fmtChar = _fmtChar;
+            pCtx = &ctx;
+        } else {
+            if (!_ParseFormat(__ctx, &fmt, &fmtChar)) {
+                return ctx += __ctx;
+            }
+            if (__ctx.Opt(Opt::O_WIDTH_REQUIRED) || __ctx.Opt(Opt::O_PREC_REQUIRED)) {
+                return Format(__ctx, fmt, value, args...);
+            }
+            if (!fmtChar) {
+                FAULT("Format arguments without format operator");
+                return ctx += __ctx;
+            }
+            pCtx = &__ctx;
         }
 
         if (!_CheckFmtChar(fmtChar, value)) {
             FAULT("Format operator ('%c') does not match format argument", fmtChar);
-            ctx += _ctx;
-            return false;
+            return ctx += *pCtx;
         }
 
         /* Output value. */
-        bool ret = _FormatValue(_ctx, value, fmtChar);
-        ctx += _ctx;
+        bool ret = _FormatValue(*pCtx, value, fmtChar);
+        if (pCtx != &ctx) {
+            ctx += *pCtx;
+        }
         if (ret) {
             ret = Format(ctx, fmt, args...);
         }
-
         return ret;
     }
 
@@ -255,6 +326,15 @@ public:
 
     OTextStreamBase &operator << (char value);
 
+    inline OTextStreamBase &operator << (char *value) {
+        _FormatString(_globalCtx, const_cast<const char *>(value));
+        return *this;
+    }
+    inline OTextStreamBase &operator << (const char *value) {
+        _FormatString(_globalCtx, value);
+        return *this;
+    }
+
     OTextStreamBase &operator << (short value);
     OTextStreamBase &operator << (unsigned short value);
     OTextStreamBase &operator << (int value);
@@ -267,6 +347,13 @@ public:
     inline OTextStreamBase &operator << (T &value) {
         value.ToString(*this, _globalCtx, '\0');
         return *this;
+    }
+
+    /** Clear all global options for the stream. The stream will have default
+     * conversion behavior after this operation.
+     */
+    inline void ClearOptions() {
+        _globalCtx.ClearAllOpts();
     }
 
 protected:
@@ -316,9 +403,21 @@ protected:
      * @return @a true if the specified format character is valid for the
      *      specified type.
      */
+    bool _CheckFmtChar(char fmtChar, short value);
+    bool _CheckFmtChar(char fmtChar, unsigned short value);
     bool _CheckFmtChar(char fmtChar, int value);
+    bool _CheckFmtChar(char fmtChar, unsigned value);
+    bool _CheckFmtChar(char fmtChar, long value);
+    bool _CheckFmtChar(char fmtChar, unsigned long value);
 
     bool _CheckFmtChar(char fmtChar, char value);
+    bool _CheckFmtChar(char fmtChar, char *value);
+    bool _CheckFmtChar(char fmtChar, const char *value);
+
+    template <typename T>
+    inline bool _CheckFmtChar(char fmtChar, T *value UNUSED) {
+        return fmtChar == 'p';
+    }
 
     template <class T>
     inline bool _CheckFmtChar(char fmtChar, T &value) {
@@ -353,18 +452,21 @@ protected:
      *      otherwise.
      */
     inline bool _FormatValue(Context &ctx, short value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_SIGNED);
         return _FormatIntValue(ctx, value, fmt);
     }
     inline bool _FormatValue(Context &ctx, unsigned short value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
     inline bool _FormatValue(Context &ctx, int value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_SIGNED);
         return _FormatIntValue(ctx, value, fmt);
     }
     inline bool _FormatValue(Context &ctx, unsigned int value, char fmt = 0) {
         return _FormatIntValue(ctx, value, fmt);
     }
     inline bool _FormatValue(Context &ctx, long value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_SIGNED);
         return _FormatIntValue(ctx, value, fmt);
     }
     inline bool _FormatValue(Context &ctx, unsigned long value, char fmt = 0) {
@@ -373,10 +475,17 @@ protected:
 
     bool _FormatValue(Context &ctx, bool value, char fmt = 0);
     bool _FormatValue(Context &ctx, char value, char fmt = 0);
+    bool _FormatValue(Context &ctx, char *value, char fmt = 0);
+    bool _FormatValue(Context &ctx, const char *value, char fmt = 0);
+
+    template <typename T>
+    inline bool _FormatValue(Context &ctx, T *value, char fmt = 0) {
+        return _FormatIntValue(ctx, reinterpret_cast<uintptr_t>(value), fmt);
+    }
 
     /** Format user defined class object. */
     template <class T>
-    inline bool _FormatValue(Context &ctx, T value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, T &value, char fmt = 0) {
         return value.ToString(*this, ctx, fmt);
     }
 
@@ -397,6 +506,23 @@ protected:
 
     bool _FormatInt(Context &ctx, unsigned long value, bool neg = 0, char fmt = 0);
 
+    bool _FormatString(Context &ctx, const char *value);
+
+    /** Wrappers for setting option value from format arguments. They should
+     * ensure that argument will have correct type for corresponding option.
+     */
+    inline void _SetOpt(Context &ctx, Opt::Option opt, long value) { ctx.SetOpt(opt, value); }
+    inline void _SetOpt(Context &ctx, Opt::Option opt, unsigned long value) { ctx.SetOpt(opt, value); }
+    inline void _SetOpt(Context &ctx, Opt::Option opt, int value) { ctx.SetOpt(opt, value); }
+    inline void _SetOpt(Context &ctx, Opt::Option opt, unsigned int value) { ctx.SetOpt(opt, value); }
+    inline void _SetOpt(Context &ctx, Opt::Option opt, short value) { ctx.SetOpt(opt, value); }
+    inline void _SetOpt(Context &ctx, Opt::Option opt, unsigned short value) { ctx.SetOpt(opt, value); }
+
+    template <typename T>
+    inline void _SetOpt(Context &ctx UNUSED, Opt::Option opt UNUSED, T value UNUSED) {
+        FAULT("Invalid argument type used for initializing format option");
+    }
+
     /** Convert integer value to string. String is filled in reverse order.
      *
      * @param value Value to convert.
@@ -406,10 +532,21 @@ protected:
      * @return Number of characters stored in output buffer.
      */
     size_t _IntToString(unsigned long value, char *buf, unsigned long radix = 10,
-                       bool upperCase = false);
+                        bool upperCase = false);
 
+    /** Output field representation.
+     *
+     * @param ctx Conversion context. Width and adjustment options are taken
+     *      from it.
+     * @param value Field string representation.
+     * @param numChars Number of characters to take from @a value.
+     * @param padChar Padding character.
+     * @return @a true if end of stream is not yet reached, @a false otherwise.
+     */
+    bool _FormatField(Context &ctx, const char *value, size_t numChars, char padChar = ' ');
 };
 
+/** Shortcut type for output text stream options. */
 typedef OTextStreamBase::Opt OtsOpt;
 
 /** Implementation class for output text stream.
@@ -420,10 +557,10 @@ typedef OTextStreamBase::Opt OtsOpt;
  *      @code
  *      bool Putc(char c, T_arg *arg = 0);
  *      @endcode
- *      It should have optional argument which is of type @a T_arg in this
- *      template.
- * @param T_arg Type of optional argument which is passed to the @a Putc method
- *      of a back-end class.
+ *      It should have optional argument which is pointer to type @a T_arg in
+ *      this template.
+ * @param T_arg Type of optional argument pointer to which is passed to the
+ *      @a Putc method of a back-end class.
  */
 template <class T_backend, typename T_arg = void>
 class OTextStream : public OTextStreamBase {

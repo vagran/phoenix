@@ -89,7 +89,12 @@
 /** User requested failure.
  * @param desc Description of the fault.
  */
-#define UT_FAIL(desc) ut::__ut_user_fault(desc, __FILE__, __LINE__)
+#define UT_FAIL(desc)   ut::__ut_user_fault(desc, __FILE__, __LINE__)
+
+/** Indicate successful milestone passing. Can be used to affect assertions
+ * statistics while checking conditions manually.
+ */
+#define UT_PASS()       ut::__ut_hit_assert()
 
 /** Unit tests related definitions reside in this namespace. */
 namespace ut {
