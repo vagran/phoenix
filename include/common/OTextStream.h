@@ -77,6 +77,8 @@ public:
             O_ZERO,
             /** Left adjust the result. */
             O_LEFT_ADJ,
+            /** Padding character. */
+            O_PAD_CHAR,
 
             /** Internal option, indicates that width should be taken from
              * format arguments. Value indicates position relatively to
@@ -475,8 +477,13 @@ protected:
 
     bool _FormatValue(Context &ctx, bool value, char fmt = 0);
     bool _FormatValue(Context &ctx, char value, char fmt = 0);
-    bool _FormatValue(Context &ctx, char *value, char fmt = 0);
-    bool _FormatValue(Context &ctx, const char *value, char fmt = 0);
+
+    inline bool _FormatValue(Context &ctx, char *value, char fmt UNUSED) {
+        return _FormatString(ctx, value);
+    }
+    inline bool _FormatValue(Context &ctx, const char *value, char fmt UNUSED) {
+        return _FormatString(ctx, value);
+    }
 
     template <typename T>
     inline bool _FormatValue(Context &ctx, T *value, char fmt = 0) {
@@ -540,10 +547,14 @@ protected:
      *      from it.
      * @param value Field string representation.
      * @param numChars Number of characters to take from @a value.
-     * @param padChar Padding character.
+     * @param padChar Padding character. Use default if zero. Default may come
+     *      from option O_PAD_CHAR.
+     * @param firstPadChar First character in right padding. Is equal to @a
+     *      padChar if zero.
      * @return @a true if end of stream is not yet reached, @a false otherwise.
      */
-    bool _FormatField(Context &ctx, const char *value, size_t numChars, char padChar = ' ');
+    bool _FormatField(Context &ctx, const char *value, size_t numChars,
+                      char padChar = 0, char firstPadChar = 0);
 };
 
 /** Shortcut type for output text stream options. */

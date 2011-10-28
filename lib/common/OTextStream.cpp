@@ -267,43 +267,70 @@ OTextStreamBase::_CheckFmtChar(char fmtChar, const char *value)
 bool
 OTextStreamBase::_FormatValue(Context &ctx, bool value, char fmt UNUSED)
 {
+    const char *s;
     if (ctx.Opt(Opt::O_NUM_BOOL)) {
-        _Puts(ctx, value ? "1" : "0");
+        s = value ? "1" : "0";
     } else {
-        _Puts(ctx, value ? "true" : "false");
+        s = value ? "true" : "false";
     }
-    return ctx;
+
+    return _FormatField(ctx, s, strlen(s));
 }
 
 bool
 OTextStreamBase::_FormatValue(Context &ctx, char value, char fmt UNUSED)
 {
-    return _Putc(ctx, value);
-}
-
-bool
-OTextStreamBase::_FormatValue(Context &ctx, char *value, char fmt)
-{
-    //XXX
-    return false;
-}
-
-bool
-OTextStreamBase::_FormatValue(Context &ctx, const char *value, char fmt)
-{
-    //XXX
-    return false;
+    return _FormatField(ctx, &value, 1);
 }
 
 bool
 OTextStreamBase::_FormatField(Context &ctx, const char *value, size_t numChars,
-                              char padChar)
+                              char padChar, char firstPadChar)
 {
-    long width;
-    if (!ctx.Opt(Opt::O_WIDTH, &width)) {
+    size_t width;
+    long l;
 
+    if (!ctx.Opt(Opt::O_WIDTH, &l) || (width = l) < numChars) {
+        width = numChars;
     }
-    //XXX
+
+    if (!padChar) {
+        if (ctx.Opt(Opt::O_PAD_CHAR, &l)) {
+            padChar = l;
+        } else {
+            padChar = ' ';
+        }
+    }
+
+    if (!firstPadChar) {
+        firstPadChar = padChar;
+    }
+
+    if (ctx.Opt(Opt::O_LEFT_ADJ)) {
+        for (size_t i = 0; i < numChars; i++) {
+            if (!_Putc(ctx, value[i])) {
+                return false;
+            }
+        }
+        for (size_t i = 0; i < numChars - width; i++) {
+            if (!_Putc(ctx, padChar)) {
+                return false;
+            }
+        }
+    } else {
+        for (size_t i = 0; i < numChars - width; i++) {
+            char c = i ? padChar : firstPadChar;
+            if (!_Putc(ctx, c)) {
+                return false;
+            }
+        }
+        for (size_t i = 0; i < numChars; i++) {
+            if (!_Putc(ctx, value[i])) {
+                return false;
+            }
+        }
+    }
+
     return ctx;
 }
 
@@ -348,7 +375,8 @@ OTextStreamBase::_FormatInt(Context &ctx, unsigned long value, bool neg, char fm
     }
 
     size_t numChars = _IntToString(value, nbuf, radix, upperCase);
-    if (ctx.Opt(Opt::O_SHARP)) {
+    if (ctx.Opt(Opt::O_SHARP) && !ctx.Opt(Opt::O_ZERO)) {
+        //XXX
         if (radix == 8) {
             nbuf[numChars++] = '0';
         } else if (radix == 16) {
@@ -357,18 +385,32 @@ OTextStreamBase::_FormatInt(Context &ctx, unsigned long value, bool neg, char fm
         }
     }
 
+    char padChar = 0, firstPadChar = 0;
+
     if (ctx.Opt(Opt::O_SIGNED)) {
         if (neg) {
-            nbuf[numChars++] = '-';
+            firstPadChar = '-';
         } else {
             if (ctx.Opt(Opt::O_SIGN)) {
-                nbuf[numChars++] = '+';
+                firstPadChar = '+';
             } else if (ctx.Opt(Opt::O_SPACE)) {
-                nbuf[numChars++] = ' ';
+                firstPadChar = ' ';
             }
         }
     } else if (neg) {
         FAULT("Negative integer provided for unsigned conversion");
+    }
+
+    if (firstPadChar && (ctx.Opt(Opt::O_LEFT_ADJ) || !ctx.Opt(Opt::O_ZERO))) {
+        nbuf[numChars++] = firstPadChar;
+        firstPadChar = 0;
+    }
+    //XXX
+
+    if (ctx.Opt(Opt::O_ZERO) && !ctx.Opt(Opt::O_LEFT_ADJ)) {
+        padChar = '0';
+    } else {
+        padChar = ' ';
     }
 
     /* Reverse characters in buffer. */
@@ -377,8 +419,7 @@ OTextStreamBase::_FormatInt(Context &ctx, unsigned long value, bool neg, char fm
         nbuf[idx] = nbuf[numChars - 1 - idx];
         nbuf[numChars - 1 - idx] = c;
     }
-    return _FormatField(ctx, nbuf, numChars,
-                        ctx.Opt(Opt::O_ZERO) && !ctx.Opt(Opt::O_LEFT_ADJ) ? '0' : ' ');
+    return _FormatField(ctx, nbuf, numChars, padChar, firstPadChar);
 }
 
 size_t
@@ -399,7 +440,7 @@ OTextStreamBase::_IntToString(unsigned long value, char *buf, unsigned long radi
 bool
 OTextStreamBase::_FormatString(Context &ctx, const char *value)
 {
-    //XXX use _FormatField
-    _Puts(ctx, value);
-    return ctx;
+    long len;
+    size_t numChars = ctx.Opt(Opt::O_PREC, &len) ? static_cast<size_t>(len) : strlen(value);
+    return _FormatField(ctx, value, numChars);
 }
