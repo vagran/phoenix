@@ -43,6 +43,8 @@
 #include <BitString.h>
 #include <lock.h>
 
+#include <log.h>
+
 /* Virtual memory */
 #include <vm.h>
 

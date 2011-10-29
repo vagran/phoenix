@@ -164,11 +164,6 @@ _elf_arhdr(Elf *arf)
     } else if (namelen > 0 && name[namelen - 1] == '/') {
         namelen--;
     }
-    /* XXX some broken software omits the trailing slash
-     else {
-     namelen = 0;
-     }
-     */
 
     if (!(arhdr = (Elf_Arhdr*) elf_malloc(
         sizeof(*arhdr) + sizeof(hdr->ar_name) + namelen + 2))) {

@@ -50,9 +50,7 @@ Main(void *arg)
     /* Call constructors for all static objects. */
     Cxa::ConstructStaticObjects();
 
-    TRACE("aaa");
+    TRACE("aaa %d %s\n", 238, "bbb");
 
-    while (true) {
-        cpu::pause();
-    }
+    FAULT("Main() end reached %d", 237 /*XXX*/);
 }

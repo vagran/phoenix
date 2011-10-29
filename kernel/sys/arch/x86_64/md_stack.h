@@ -48,7 +48,6 @@ SwitchStack(vaddr_t stackAddr, StackEntryFunc entryFunc, void *arg = 0)
         : "memory"
         );
     NOT_REACHED();
-    while (true); /* xxx Make compiler happy */
 }
 
 } /* anonymous namespace */

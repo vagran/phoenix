@@ -23,6 +23,8 @@
 /* Load ELF binary into memory. Return 0 on success. */
 LOADER_EXTERN int LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr);
 LOADER_EXTERN void LoaderPrint(const WCHAR_T *fmt, ...);
+LOADER_EXTERN void LoaderPrintV(const WCHAR_T *fmt, va_list args);
+LOADER_EXTERN WCHAR_T *LoaderStrConvert(const char *str);
 /* Allocate physical memory of specified size at specified address. */
 LOADER_EXTERN int LoaderGetMemory(vaddr_t address, u64 pages);
 /* Read file chunk to the provided memory. */

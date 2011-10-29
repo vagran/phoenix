@@ -290,13 +290,32 @@ OpenImageFile(SIMPLE_READ_FILE file)
 }
 
 void
+LoaderPrintV(const WCHAR_T *fmt, va_list args)
+{
+    VPrint((WCHAR_T *)fmt, args);
+}
+
+void
 LoaderPrint(const WCHAR_T *fmt, ...)
 {
     va_list args;
 
     va_start(args, fmt);
-    VPrint((WCHAR_T *)fmt, args);
+    LoaderPrintV((WCHAR_T *)fmt, args);
     va_end(args);
+}
+
+WCHAR_T *
+LoaderStrConvert(const char *str)
+{
+    size_t len, i;
+    for (len = 0; str[len]; len++);
+    CHAR16 *msgW = AllocatePool((len + 1) * sizeof(CHAR16));
+    for (i = 0; i < len; i++) {
+        msgW[i] = str[i];
+    }
+    msgW[len] = 0;
+    return msgW;
 }
 
 int

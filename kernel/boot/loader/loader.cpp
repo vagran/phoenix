@@ -13,6 +13,26 @@
 
 #include "loader.h"
 
+void
+__Fault(const char *file, int line, const char *msg, ...)
+{
+    LoaderPrint(L"Fault occurred in %a:%d:\n", file, line);
+    va_list args;
+    va_start(args, msg);
+    WCHAR_T *wMsg = LoaderStrConvert(msg);
+    for (WCHAR_T *p = wMsg; *p; p++) {
+        if (*p == '%' && (p == wMsg || *(p - 1) != '%') && p[1] == 's') {
+            p[1] = 'a';
+        }
+    }
+    LoaderPrintV(wMsg, args);
+    va_end(args);
+
+    while(true) {
+        __asm__ __volatile__ ("pause");
+    }
+}
+
 int
 LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr)
 {

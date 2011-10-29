@@ -443,7 +443,7 @@ OTextStreamBase::_FormatInt(Context &ctx, unsigned long value, bool neg, char fm
             radix = 10;
         } else {
             if (radix < 2 || radix > 36) {
-                FAULT("Invalid radix specified (must be 2..36): %d", radix);
+                FAULT("Invalid radix specified (must be 2..36): %ld", radix);
                 return false;
             }
         }
