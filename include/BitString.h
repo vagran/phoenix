@@ -101,7 +101,7 @@ public:
     int FirstClear() {
         size_t numWords = numBits / (sizeof(uintptr_t) * NBBY);
         for (size_t word = 0; word < numWords; word++) {
-            uintptr_t x = static_cast<uintptr_t *>(_bits)[word];
+            uintptr_t x = static_cast<uintptr_t *>(static_cast<void *>(_bits))[word];
             if (x != static_cast<uintptr_t>(~0)) {
                 size_t bit = cpu::bsf(~x);
                 bit += word * sizeof(uintptr_t) * NBBY;
@@ -123,6 +123,24 @@ public:
     /** Clear all bits in the string. */
     inline void ClearAll() {
         memset(_bits, 0, sizeof(_bits));
+    }
+
+    inline void SetAll() {
+        memset(_bits, 0xff, sizeof(_bits));
+    }
+
+    inline void Invert() {
+        size_t numWords = numBits / (sizeof(uintptr_t) * NBBY);
+        for (size_t word = 0; word < numWords; word++) {
+            static_cast<uintptr_t *>(static_cast<void *>(_bits))[word] ^= ~0ul;
+        }
+        /* Invert remainder. */
+        for (size_t idx = numWords * sizeof(uintptr_t);
+             idx < (numBits + NBBY - 1) / NBBY;
+             idx++) {
+
+            _bits[idx] ^= 0xff;
+        }
     }
 
 private:

@@ -27,7 +27,7 @@ bsf(u64 string)
 {
     u64 rc;
 
-    ASM ("bsfq %[rc], %[string]" : [rc]"=r"(rc) : [string]"r"(string));
+    ASM ("bsfq %[string], %[rc]" : [rc]"=r"(rc) : [string]"r"(string));
     return rc;
 }
 

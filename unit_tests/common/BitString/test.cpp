@@ -11,7 +11,7 @@
 
 #include <sys.h>
 
-UT_TEST("Finding first set bit")
+UT_TEST("Finding first set/clear bit")
 {
     BitString<1024> bs;
 
@@ -21,11 +21,8 @@ UT_TEST("Finding first set bit")
     UT(bs.IsSet(1020)) == UT(true);
     UT(bs.IsClear(1020)) == UT(false);
     UT(bs.FirstSet()) == UT(1020);
-}
-UT_TEST_END
-
-UT_TEST("Finding first clear bit")
-{
-
+    bs.Invert();
+    UT(bs.IsClear(1020)) == UT(true);
+    UT(bs.FirstClear()) == UT(1020);
 }
 UT_TEST_END
