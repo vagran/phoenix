@@ -7,8 +7,6 @@
  * See COPYING file for copyright details.
  */
 
- */
-
 ENTRY(AppStart)
 
 PHDRS

@@ -42,7 +42,7 @@ OTextStreamBase::_Puts(Context &ctx, const char *str)
 }
 
 OTextStreamBase &
-OTextStreamBase::operator << (const Opt &&opt)
+OTextStreamBase::operator << (Opt &&opt)
 {
     if (opt._enable) {
         _globalCtx.SetOpt(opt._option, opt._param);
@@ -140,10 +140,12 @@ OTextStreamBase::_ParseFormat(Context &ctx, const char **fmt, char *fmtChar)
         switch(**fmt) {
         case 'l':
         case 'L':
+            ctx.SetOpt(Opt::O_LONG);
+            break;
         case 'h':
         case 'H':
+            ctx.SetOpt(Opt::O_SHORT);
             break;
-
         case '*':
             if (dotFlag) {
                 ctx.SetOpt(Opt::O_PREC_REQUIRED, asteriskOrder++);
@@ -231,14 +233,106 @@ OTextStreamBase::Format(Context &ctx, const char *fmt)
     return ctx;
 }
 
+bool
+OTextStreamBase::FormatV(Context &ctx, const char *fmt, va_list args)
+{
+    while (true) {
+        char fmtChar;
+        Context _ctx;
+
+        if (!_ParseFormat(_ctx, &fmt, &fmtChar) || !fmtChar) {
+            ctx += _ctx;
+            return false;
+        }
+
+        if (_ctx.Opt(Opt::O_WIDTH_REQUIRED) || _ctx.Opt(Opt::O_PREC_REQUIRED)) {
+
+            long widthOrder = 0, precOrder = 0;
+
+            _ctx.Opt(Opt::O_WIDTH_REQUIRED, &widthOrder);
+            _ctx.Opt(Opt::O_PREC_REQUIRED, &precOrder);
+
+            if ((widthOrder < precOrder || !_ctx.Opt(Opt::O_PREC_REQUIRED)) &&
+                _ctx.Opt(Opt::O_WIDTH_REQUIRED)) {
+
+                _ctx.ClearOpt(Opt::O_WIDTH_REQUIRED);
+                _ctx.SetOpt(Opt::O_WIDTH, va_arg(args, int));
+            }
+            if (_ctx.Opt(Opt::O_PREC_REQUIRED)) {
+                _ctx.ClearOpt(Opt::O_PREC_REQUIRED);
+                _ctx.SetOpt(Opt::O_PREC, va_arg(args, int));
+            }
+            /* Set width if it follows precision. */
+            if (_ctx.Opt(Opt::O_WIDTH_REQUIRED)) {
+                _ctx.ClearOpt(Opt::O_WIDTH_REQUIRED);
+                _ctx.SetOpt(Opt::O_WIDTH, va_arg(args, int));
+            }
+        }
+
+        switch (fmtChar) {
+        case 'd':
+            _ctx.SetOpt(Opt::O_SIGNED);
+            /* FALL THROUGH */
+        case 'o':
+        case 'u':
+        case 'x':
+        case 'X':
+            if (_ctx.Opt(Opt::O_SIGNED)) {
+                if (_ctx.Opt(Opt::O_SHORT)) {
+                    short x = va_arg(args, int);
+                    _FormatIntValue(_ctx, x, fmtChar);
+                } else if (_ctx.Opt(Opt::O_LONG)) {
+                    long x = va_arg(args, long);
+                    _FormatIntValue(_ctx, x, fmtChar);
+                } else {
+                    int x = va_arg(args, int);
+                    _FormatIntValue(_ctx, x, fmtChar);
+                }
+            } else {
+                if (_ctx.Opt(Opt::O_SHORT)) {
+                    unsigned short x = va_arg(args, unsigned int);
+                    _FormatIntValue(_ctx, x, fmtChar);
+                } else if (_ctx.Opt(Opt::O_LONG)) {
+                    unsigned long x = va_arg(args, unsigned long);
+                    _FormatIntValue(_ctx, x, fmtChar);
+                } else {
+                    unsigned int x = va_arg(args, unsigned int);
+                    _FormatIntValue(_ctx, x, fmtChar);
+                }
+            }
+            break;
+        case 's':
+            _FormatValue(_ctx, va_arg(args, char *), fmtChar);
+            break;
+        case 'c':
+            {
+                char c = va_arg(args, int);
+                _FormatValue(_ctx, c, fmtChar);
+            }
+            break;
+        case 'p':
+            _FormatValue(_ctx, va_arg(args, void *), fmtChar);
+            break;
+        default:
+            FAULT("Unknown format character specified: '%c'", fmtChar);
+            break;
+        }
+        ctx += _ctx;
+        if (!ctx) {
+            return false;
+        }
+    }
+    return ctx;
+}
+
 #define CHECK_FMT_CHAR_SIGNED(type) \
-    bool OTextStreamBase::_CheckFmtChar(char fmtChar, type value) \
+    bool OTextStreamBase::_CheckFmtChar(char fmtChar, type value UNUSED) \
     { \
         return fmtChar == 'd' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X'; \
     }
 
 #define CHECK_FMT_CHAR_UNSIGNED(type) \
-    bool OTextStreamBase::_CheckFmtChar(char fmtChar, unsigned type value) \
+    bool OTextStreamBase::_CheckFmtChar(char fmtChar, unsigned type value UNUSED) \
     { \
         return fmtChar == 'u' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X'; \
     }
@@ -251,19 +345,19 @@ CHECK_FMT_CHAR_UNSIGNED(int)
 CHECK_FMT_CHAR_UNSIGNED(long)
 
 bool
-OTextStreamBase::_CheckFmtChar(char fmtChar, char value)
+OTextStreamBase::_CheckFmtChar(char fmtChar, char value UNUSED)
 {
     return fmtChar == 'c';
 }
 
 bool
-OTextStreamBase::_CheckFmtChar(char fmtChar, char *value)
+OTextStreamBase::_CheckFmtChar(char fmtChar, char *value UNUSED)
 {
     return fmtChar == 's';
 }
 
 bool
-OTextStreamBase::_CheckFmtChar(char fmtChar, const char *value)
+OTextStreamBase::_CheckFmtChar(char fmtChar, const char *value UNUSED)
 {
     return fmtChar == 's';
 }
@@ -419,7 +513,7 @@ OTextStreamBase::_FormatInt(Context &ctx, unsigned long value, bool neg, char fm
         numChars = totalChars;
     }
 
-    char padChar = 0;
+    char padChar;
     if (ctx.Opt(Opt::O_ZERO) && !ctx.Opt(Opt::O_LEFT_ADJ)) {
         padChar = '0';
     } else {
@@ -454,6 +548,9 @@ OTextStreamBase::_IntToString(unsigned long value, char *buf, unsigned long radi
 bool
 OTextStreamBase::_FormatString(Context &ctx, const char *value)
 {
+    if (!value) {
+        return _FormatField(ctx, "(null)", sizeof("(null)") - 1);
+    }
     long len;
     size_t numChars = ctx.Opt(Opt::O_PREC, &len) ? static_cast<size_t>(len) : strlen(value);
     return _FormatField(ctx, value, numChars);

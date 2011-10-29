@@ -44,6 +44,19 @@ private:
     char *_buf;
 };
 
+bool
+CheckFormatV(const char *result, utStringStream &stream, const char *fmt, ...)
+{
+    bool ret;
+    va_list args;
+    va_start(args, fmt);
+    size_t size = stream.FormatV(fmt, args);
+    va_end(args);
+    ret = size == ut::__ut_strlen(result);
+    ret = ret && !ut::__ut_strcmp(stream.Get(), result);
+    return ret;
+}
+
 /* Verify string. */
 #define CHECK_STR(value) \
     do {\
@@ -52,11 +65,22 @@ private:
     } while (0)
 
 /* Verify string and size. */
-#define CHECK_STR_SZ(value) \
+#define CHECK_FMT_NOV(result, fmt, ...) \
 do {\
-    UT(size) == UT(sizeof(value) - 1); \
-    UT(stream.Get()) == UT_CSTR(value); \
+    size_t size = stream.Format(fmt, ## __VA_ARGS__); \
+    UT(size) == UT(sizeof(result) - 1); \
+    UT(stream.Get()) == UT_CSTR(result); \
     stream.Erase(); \
+    stream.ClearOptions(); \
+} while (0)
+
+/* Verify string and size. */
+#define CHECK_FMT(result, fmt, ...) \
+do {\
+    CHECK_FMT_NOV(result, fmt, ## __VA_ARGS__); \
+    UT(CheckFormatV(result, stream, fmt, ## __VA_ARGS__)) == UT(true); \
+    stream.Erase(); \
+    stream.ClearOptions(); \
 } while (0)
 
 UT_TEST("Stringifying boolean values")
@@ -92,7 +116,6 @@ UT_TEST("Stringifying integer values")
 {
     char buf[1024];
     utStringStream stream(buf, sizeof(buf));
-    size_t size;
 
     stream << 12345678;
     CHECK_STR("12345678");
@@ -107,117 +130,47 @@ UT_TEST("Stringifying integer values")
     CHECK_STR("11001101");
     stream.ClearOptions();
 
-    size = stream.Format("Value %d tail", 12345678);
-    CHECK_STR_SZ("Value 12345678 tail");
-
-    size = stream.Format("Value %d tail", -12345678);
-    CHECK_STR_SZ("Value -12345678 tail");
-
-    size = stream.Format("Value % d tail", 12345678);
-    CHECK_STR_SZ("Value  12345678 tail");
-
-    size = stream.Format("Value %+d tail", 12345678);
-    CHECK_STR_SZ("Value +12345678 tail");
-
-    size = stream.Format("Value % +d tail", 12345678);
-    CHECK_STR_SZ("Value +12345678 tail");
-
-    size = stream.Format("Value %d in the middle %d tail", 12345678, 87654321);
-    CHECK_STR_SZ("Value 12345678 in the middle 87654321 tail");
-
-    size = stream.Format("Value %o tail", 01234567);
-    CHECK_STR_SZ("Value 1234567 tail");
-
-    size = stream.Format("Value %x tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 1234abcd tail");
-
-    size = stream.Format("Value %X tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 1234ABCD tail");
-
-    size = stream.Format("Value %#o tail", 01234567);
-    CHECK_STR_SZ("Value 01234567 tail");
-
-    size = stream.Format("Value %#x tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 0x1234abcd tail");
-
-    size = stream.Format("Value %#X tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 0X1234ABCD tail");
-
-    size = stream.Format("Value %12d tail", 12345678);
-    CHECK_STR_SZ("Value     12345678 tail");
-
-    size = stream.Format("Value %*d tail", 12, 12345678);
-    CHECK_STR_SZ("Value     12345678 tail");
-
-    size = stream.Format("Value %12d tail", -12345678);
-    CHECK_STR_SZ("Value    -12345678 tail");
-
-    size = stream.Format("Value %012d tail", 12345678);
-    CHECK_STR_SZ("Value 000012345678 tail");
-
-    size = stream.Format("Value % 012d tail", 12345678);
-    CHECK_STR_SZ("Value  00012345678 tail");
-
-    size = stream.Format("Value %+012d tail", 12345678);
-    CHECK_STR_SZ("Value +00012345678 tail");
-
-    size = stream.Format("Value %012d tail", -12345678);
-    CHECK_STR_SZ("Value -00012345678 tail");
-
-    size = stream.Format("Value % 012d tail", -12345678);
-    CHECK_STR_SZ("Value -00012345678 tail");
-
-    size = stream.Format("Value %+012d tail", -12345678);
-    CHECK_STR_SZ("Value -00012345678 tail");
-
-    size = stream.Format("Value %-12d tail", 12345678);
-    CHECK_STR_SZ("Value 12345678     tail");
-
-    size = stream.Format("Value %-12d tail", -12345678);
-    CHECK_STR_SZ("Value -12345678    tail");
-
-    size = stream.Format("Value %#-12x tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 0x1234abcd   tail");
-
-    size = stream.Format("Value %012x tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 00001234abcd tail");
-
-    size = stream.Format("Value %#012x tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 0x001234abcd tail");
-
-    size = stream.Format("Value %#-12x tail", 0x1234abcd);
-    CHECK_STR_SZ("Value 0x1234abcd   tail");
-
-    size = stream.Format("Value %s tail", "12345678");
-    CHECK_STR_SZ("Value 12345678 tail");
-
-    size = stream.Format("Value %12s tail", "12345678");
-    CHECK_STR_SZ("Value     12345678 tail");
-
-    size = stream.Format("Value %-12s tail", "12345678");
-    CHECK_STR_SZ("Value 12345678     tail");
-
-    size = stream.Format("Value %.4s tail", "12345678");
-    CHECK_STR_SZ("Value 1234 tail");
-
-    size = stream.Format("Value %8.4s tail", "12345678");
-    CHECK_STR_SZ("Value     1234 tail");
-
-    size = stream.Format("Value %*.*s tail", 8, 4, "12345678");
-    CHECK_STR_SZ("Value     1234 tail");
-
-    size = stream.Format("Value %.**s tail", 4, 8, "12345678");
-    CHECK_STR_SZ("Value     1234 tail");
-
-    size = stream.Format("Value %-8.4s tail", "12345678");
-    CHECK_STR_SZ("Value 1234     tail");
-
-    size = stream.Format("Value %.4-8s tail", "12345678");
-    CHECK_STR_SZ("Value 1234     tail");
-
-    void *p = reinterpret_cast<void *>(0x1234);
-    size = stream.Format("Value %p tail", p);
-    CHECK_STR_SZ("Value 0x1234 tail");
+#if 0
+    CHECK_FMT("Value 12345678 tail", "Value %d tail", 12345678);
+    CHECK_FMT("Value -12345678 tail", "Value %d tail", -12345678);
+    CHECK_FMT("Value  12345678 tail", "Value % d tail", 12345678);
+    CHECK_FMT("Value +12345678 tail", "Value %+d tail", 12345678);
+    CHECK_FMT("Value +12345678 tail", "Value % +d tail", 12345678);
+    CHECK_FMT("Value 12345678 in the middle 87654321 tail", "Value %d in the middle %d tail", 12345678, 87654321);
+    CHECK_FMT("Value 1234567 tail", "Value %o tail", 01234567);
+    CHECK_FMT("Value 1234abcd tail", "Value %x tail", 0x1234abcd);
+    CHECK_FMT("Value 1234ABCD tail", "Value %X tail", 0x1234abcd);
+    CHECK_FMT("Value 01234567 tail", "Value %#o tail", 01234567);
+    CHECK_FMT("Value 0x1234abcd tail", "Value %#x tail", 0x1234abcd);
+    CHECK_FMT("Value 0X1234ABCD tail", "Value %#X tail", 0x1234abcd);
+    CHECK_FMT("Value     12345678 tail", "Value %12d tail", 12345678);
+    CHECK_FMT("Value     12345678 tail", "Value %*d tail", 12, 12345678);
+    CHECK_FMT("Value    -12345678 tail", "Value %12d tail", -12345678);
+    CHECK_FMT("Value 000012345678 tail", "Value %012d tail", 12345678);
+    CHECK_FMT("Value  00012345678 tail", "Value % 012d tail", 12345678);
+    CHECK_FMT("Value +00012345678 tail", "Value %+012d tail", 12345678);
+    CHECK_FMT("Value -00012345678 tail", "Value %012d tail", -12345678);
+    CHECK_FMT("Value -00012345678 tail", "Value % 012d tail", -12345678);
+    CHECK_FMT("Value -00012345678 tail", "Value %+012d tail", -12345678);
+    CHECK_FMT("Value 12345678     tail", "Value %-12d tail", 12345678);
+    CHECK_FMT("Value -12345678    tail", "Value %-12d tail", -12345678);
+    CHECK_FMT("Value 0x1234abcd   tail", "Value %#-12x tail", 0x1234abcd);
+    CHECK_FMT("Value 00001234abcd tail", "Value %012x tail", 0x1234abcd);
+    CHECK_FMT("Value 0x001234abcd tail", "Value %#012x tail", 0x1234abcd);
+    CHECK_FMT("Value 0x1234abcd   tail", "Value %#-12x tail", 0x1234abcd);
+    CHECK_FMT("Value 12345678 tail", "Value %s tail", "12345678");
+    CHECK_FMT("Value     12345678 tail", "Value %12s tail", "12345678");
+    CHECK_FMT("Value 12345678     tail", "Value %-12s tail", "12345678");
+    CHECK_FMT("Value 1234 tail", "Value %.4s tail", "12345678");
+    CHECK_FMT("Value     1234 tail", "Value %8.4s tail", "12345678");
+#endif
+    CHECK_FMT("Value     1234 tail", "Value %*.*s tail", 8, 4, "12345678");
+    CHECK_FMT("Value     1234 tail", "Value %.**s tail", 4, 8, "12345678");
+    CHECK_FMT("Value 1234     tail", "Value %-8.4s tail", "12345678");
+    CHECK_FMT("Value 1234     tail", "Value %.4-8s tail", "12345678");
+    CHECK_FMT("Value (null) tail", "Value %s tail", static_cast<char *>(0));
+    CHECK_FMT("Value 1 tail", "Value %c tail", '1');
+    CHECK_FMT("Value 0x1234 tail", "Value %p tail", reinterpret_cast<void *>(0x1234));
 }
 UT_TEST_END
 
@@ -253,7 +206,6 @@ UT_TEST("Stringifying user defined classes")
     stream << p;
     CHECK_STR("nofmt: 12345678");
 
-    size_t size = stream.Format("Object: %a tail", p);
-    CHECK_STR_SZ("Object: fmt 'a': 12345678 tail");
+    CHECK_FMT_NOV("Object: fmt 'a': 12345678 tail", "Object: %a tail", p);
 }
 UT_TEST_END

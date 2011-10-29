@@ -211,8 +211,12 @@ static text_stream::OTextStream<DbgSerialPort> dbgStream(&dbgSerialPort);
 
 class A {
 public:
-    void operator >> (text_stream::OTextStreamBase &s) {
-        s << 'Q';
+    bool ToString(text_stream::OTextStreamBase &stream,
+                  text_stream::OTextStreamBase::Context &ctx,
+                  char fmtChar UNUSED)
+    {
+        stream.Format(ctx, "class A");
+        return ctx;
     }
 };
 

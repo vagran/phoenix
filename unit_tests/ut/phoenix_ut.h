@@ -104,6 +104,7 @@ void __ut_hit_value();
 /** Increment assertions statistics. */
 void __ut_hit_assert();
 
+unsigned __ut_strlen(const char *s);
 int __ut_strcmp(const char *s1, const char *s2);
 
 class UtString {

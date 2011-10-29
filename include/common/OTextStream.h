@@ -79,6 +79,10 @@ public:
             O_LEFT_ADJ,
             /** Padding character. */
             O_PAD_CHAR,
+            /** Long modifier. */
+            O_LONG,
+            /** Short modifier. */
+            O_SHORT,
 
             /** Internal option, indicates that width should be taken from
              * format arguments. Value indicates position relatively to
@@ -237,15 +241,18 @@ public:
      * @return @a true if end of stream is not yet reached, @a false otherwise.
      */
     template <typename T, typename... Args>
-    bool Format(Context &ctx, const char *fmt, T &value, Args... args) {
+    bool Format(Context &ctx, const char *fmt, T &&value, Args... args) {
         char fmtChar;
         long _fmtChar;
         Context __ctx, *pCtx;
 
         if (ctx.Opt(Opt::O_WIDTH_REQUIRED) || ctx.Opt(Opt::O_PREC_REQUIRED)) {
+
             long widthOrder = 0, precOrder = 0;
+
             ctx.Opt(Opt::O_WIDTH_REQUIRED, &widthOrder);
             ctx.Opt(Opt::O_PREC_REQUIRED, &precOrder);
+
             if ((widthOrder < precOrder || !ctx.Opt(Opt::O_PREC_REQUIRED)) &&
                 ctx.Opt(Opt::O_WIDTH_REQUIRED)) {
 
@@ -256,10 +263,12 @@ public:
                 _SetOpt(ctx, Opt::O_PREC, value);
             }
             return Format(ctx, fmt, args...);
+
         } else if (ctx.Opt(Opt::O_FMT_PARSED, &_fmtChar)) {
             fmtChar = _fmtChar;
             pCtx = &ctx;
             ctx.ClearOpt(Opt::O_FMT_PARSED);
+
         } else {
             if (!_ParseFormat(__ctx, &fmt, &fmtChar)) {
                 return ctx += __ctx;
@@ -293,6 +302,7 @@ public:
 
     /** This method handles the last recursive iteration (or format string
      * without arguments) of the previous template.
+     *
      * @param ctx Conversion context.
      * @param fmt Format string. Should not contain any formatting operators.
      * @return @a true if end of stream is not yet reached, @a false otherwise.
@@ -301,20 +311,34 @@ public:
 
     /** Output formatted string. It has more limited functionality than
      * @a Format method because it is not types aware for format arguments.
-     * So it cannot format user defined classes.
+     * So it cannot format user defined classes. For the same reason it is not
+     * safe and should not be used unless absolutely necessary.
      *
      * @param fmt Format to output.
      * @param args List of variable arguments for a format.
      * @return Number of characters written.
      */
-    size_t FormatV(const char *fmt, va_list args);
+    inline size_t FormatV(const char *fmt, va_list args) {
+        Context ctx;
+        FormatV(ctx, fmt, args);
+        return ctx;
+    }
+
+    /** Output formatted string.
+     *
+     * @param ctx Conversion context.
+     * @param fmt Format to output.
+     * @param args List of variable arguments for a format.
+     * @return @a true if end of stream is not yet reached, @a false otherwise.
+     */
+    bool FormatV(Context &ctx, const char *fmt, va_list args);
 
     /** Specify option for conversion.
      *
      * @param opt Option to switch.
      * @return Reference to itself.
      */
-    OTextStreamBase &operator << (const Opt &&opt);
+    OTextStreamBase &operator << (Opt &&opt);
 
     /** Convert the provided value to string. This operator is overloaded for
      * all supported types. For the types which are not supported here, the
@@ -348,7 +372,7 @@ public:
 
     /** Default conversion operator for user defined classes. */
     template <class T>
-    inline OTextStreamBase &operator << (T &value) {
+    inline OTextStreamBase &operator << (T &&value) {
         value.ToString(*this, _globalCtx, '\0');
         return *this;
     }
@@ -415,8 +439,8 @@ protected:
     bool _CheckFmtChar(char fmtChar, unsigned long value);
 
     bool _CheckFmtChar(char fmtChar, char value);
-    bool _CheckFmtChar(char fmtChar, char *value);
-    bool _CheckFmtChar(char fmtChar, const char *value);
+    bool _CheckFmtChar(char fmtChar, char *value UNUSED);
+    bool _CheckFmtChar(char fmtChar, const char *value UNUSED);
 
     template <typename T>
     inline bool _CheckFmtChar(char fmtChar, T *value UNUSED) {
@@ -424,7 +448,7 @@ protected:
     }
 
     template <class T>
-    inline bool _CheckFmtChar(char fmtChar, T &value) {
+    inline bool _CheckFmtChar(char fmtChar, T &&value) {
         return value.CheckFmtChar(fmtChar);
     }
 
@@ -496,7 +520,7 @@ protected:
 
     /** Format user defined class object. */
     template <class T>
-    inline bool _FormatValue(Context &ctx, T &value, char fmt = 0) {
+    inline bool _FormatValue(Context &ctx, T &&value, char fmt = 0) {
         return value.ToString(*this, ctx, fmt);
     }
 
@@ -515,6 +539,16 @@ protected:
         return _FormatInt(ctx, v, neg, fmt);
     }
 
+    inline bool _FormatIntValue(Context &ctx, unsigned short value, char fmt = 0) {
+        return _FormatInt(ctx, value, false, fmt);
+    }
+    inline bool _FormatIntValue(Context &ctx, unsigned int value, char fmt = 0) {
+        return _FormatInt(ctx, value, false, fmt);
+    }
+    inline bool _FormatIntValue(Context &ctx, unsigned long value, char fmt = 0) {
+        return _FormatInt(ctx, value, false, fmt);
+    }
+
     bool _FormatInt(Context &ctx, unsigned long value, bool neg = 0, char fmt = 0);
 
     bool _FormatString(Context &ctx, const char *value);
@@ -530,7 +564,7 @@ protected:
     inline void _SetOpt(Context &ctx, Opt::Option opt, unsigned short value) { ctx.SetOpt(opt, value); }
 
     template <typename T>
-    inline void _SetOpt(Context &ctx UNUSED, Opt::Option opt UNUSED, T value UNUSED) {
+    inline void _SetOpt(Context &ctx UNUSED, Opt::Option opt UNUSED, T &&value UNUSED) {
         FAULT("Invalid argument type used for initializing format option");
     }
 
