@@ -13,8 +13,10 @@
 
 #include <sys.h>
 
+using namespace log;
+
 /** Serial console driver implementation in the kernel for debug logging purposes. */
-class DbgSerialPort {
+class log::DbgSerialPort {
 public:
     enum UART {
         /* The offsets of UART registers.  */
@@ -196,7 +198,7 @@ DbgSerialPort::Putc(u8 c, void *arg UNUSED)
             }
             return false;
         }
-        cpu::pause();
+        cpu::Pause();
     }
     cpu::outb(iobase + UART_TX, c);
     lock.Unlock();
@@ -206,22 +208,68 @@ DbgSerialPort::Putc(u8 c, void *arg UNUSED)
     return true;
 }
 
-DbgSerialPort dbgSerialPort;
-text_stream::OTextStream<DbgSerialPort> dbgStream(&dbgSerialPort);
+DbgSerialPort log::dbgSerialPort;
 
-class A {
-public:
-    bool ToString(text_stream::OTextStreamBase &stream,
-                  text_stream::OTextStreamBase::Context &ctx,
-                  char fmtChar UNUSED)
-    {
-        stream.Format(ctx, "class A");
-        return ctx;
-    }
-};
+text_stream::OTextStream<DbgSerialPort> log::dbgStream(&dbgSerialPort);
 
-void
-__Trace(const char *file UNUSED, int line UNUSED, const char *msg UNUSED, ...)
+/* Implementation of the kernel interface to the system log. */
+
+SysLog log::sysLog;
+
+KSysLog::KSysLog()
 {
+    lastNewLine = true;
+}
 
+SysLogBase &
+KSysLog::operator << (Level level)
+{
+    /* Terminate previous message if necessary. */
+    if (!lastNewLine) {
+        Putc('\n');
+        lastNewLine = true;
+    }
+
+    _curLevel = level;
+    if (_curLevel > _maxLevel) {
+        return *this;
+    }
+
+    const char *name;
+    switch (level) {
+    case LOG_ALERT:
+        name = "ALERT";
+        break;
+    case LOG_CRITICAL:
+        name = "CRITICAL";
+        break;
+    case LOG_ERROR:
+        name = "ERROR";
+        break;
+    case LOG_WARNING:
+        name = "WARNING";
+        break;
+    case LOG_NOTICE:
+        name = "NOTICE";
+        break;
+    case LOG_INFO:
+        name = "INFO";
+        break;
+    case LOG_DEBUG:
+        name = "DEBUG";
+        break;
+    default:
+        FAULT("Invalid log level specified: %d", static_cast<int>(level));
+        break;
+    }
+    Format("[%s] ", name);
+    return *this;
+}
+
+bool
+KSysLog::Putc(char c, void *)
+{
+    lastNewLine = c == '\n';
+    /* XXX Just use debug console on the first phase. */
+    return dbgSerialPort.Putc(c);
 }

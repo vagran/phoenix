@@ -9,6 +9,7 @@ The following variables should be defined in makefile for a particular unit test
   * [O] ''TEST_DESC'' -- short description of the test.
   * [M] ''TEST_SRCS'' -- all product source files which should be compiled for this test. These files do not include source files of the test itself (test sources are searched automatically in the same directory where the makefile is located).
   * [O] ''TEST_CXX_FLAGS'' -- additional compiler flags.
+  * [O] ''TEST_DEFS'' -- macros to define by "-D" compiler options.
 
 ===== Test definition =====
 

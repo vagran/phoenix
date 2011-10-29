@@ -11,7 +11,7 @@ CONF_FILES = kernel_doc.conf
 
 OUTPUT_DIRS = kernel
 
-.PHONY: all clean
+.PHONY: all clean test
 
 clean:
 	$(RM) -rf $(foreach dir,$(OUTPUT_DIRS),$(dir)/*)
@@ -20,3 +20,5 @@ all:
 	for conf in $(CONF_FILES); do \
 		$(DOXYGEN) $$conf; \
 	done
+
+test:

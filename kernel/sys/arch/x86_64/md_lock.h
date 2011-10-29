@@ -117,7 +117,7 @@ public:
             : "cc");
         /* Wait until write lock released. */
         while (_state & WRITE_LOCK) {
-            cpu::pause();
+            cpu::Pause();
         }
     }
 

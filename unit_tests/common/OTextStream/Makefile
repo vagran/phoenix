@@ -11,4 +11,6 @@ TEST_DESC = Output text stream
 TEST_SRCS = $(PHOENIX_ROOT)/lib/common/OTextStream.cpp \
 	$(PHOENIX_ROOT)/lib/common/CommonLib.cpp
 
+TEST_DEFS = KERNEL
+
 include $(PHOENIX_ROOT)/make/unit_test.mak

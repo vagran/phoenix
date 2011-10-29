@@ -5,7 +5,7 @@
 # All rights reserved.
 # See COPYING file for copyright details.
 
-SUBDIRS = doc kernel
+SUBDIRS = doc kernel unit_tests
 
 include $(PHOENIX_ROOT)/make/make.mak
 

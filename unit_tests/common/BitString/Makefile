@@ -10,4 +10,6 @@ TEST_DESC = Bit strings
 
 TEST_SRCS = $(PHOENIX_ROOT)/lib/common/CommonLib.cpp
 
+TEST_DEFS = KERNEL
+
 include $(PHOENIX_ROOT)/make/unit_test.mak

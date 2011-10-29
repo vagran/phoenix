@@ -15,10 +15,13 @@
 
 /* Kernel fatal fault handler. */
 void
-__Fault(const char *file UNUSED, int line UNUSED, const char *msg UNUSED, ...)
+__Fault(const char *file, int line, const char *msg, ...)
 {
+    log::sysLog.Alert("System fault occurred: %s:%d: ", file, line);
+    va_list args;
+    va_start(args, msg);
+    log::sysLog.FormatV(msg, args) << '\n';
+    va_end(args);
 
-    while (true) {
-        cpu::pause();
-    }
+    cpu::Halt();
 }

@@ -130,7 +130,6 @@ UT_TEST("Stringifying integer values")
     CHECK_STR("11001101");
     stream.ClearOptions();
 
-#if 0
     CHECK_FMT("Value 12345678 tail", "Value %d tail", 12345678);
     CHECK_FMT("Value -12345678 tail", "Value %d tail", -12345678);
     CHECK_FMT("Value  12345678 tail", "Value % d tail", 12345678);
@@ -163,7 +162,6 @@ UT_TEST("Stringifying integer values")
     CHECK_FMT("Value 12345678     tail", "Value %-12s tail", "12345678");
     CHECK_FMT("Value 1234 tail", "Value %.4s tail", "12345678");
     CHECK_FMT("Value     1234 tail", "Value %8.4s tail", "12345678");
-#endif
     CHECK_FMT("Value     1234 tail", "Value %*.*s tail", 8, 4, "12345678");
     CHECK_FMT("Value     1234 tail", "Value %.**s tail", 4, 8, "12345678");
     CHECK_FMT("Value 1234     tail", "Value %-8.4s tail", "12345678");

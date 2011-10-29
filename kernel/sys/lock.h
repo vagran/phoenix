@@ -39,7 +39,7 @@ public:
             }
             lock.Unlock();
             if (!acquired) {
-                cpu::pause();
+                cpu::Pause();
             }
         } while (!acquired);
     }

@@ -51,7 +51,7 @@ namespace {}
 /** Macro for indicating a fatal fault.
  * @param msg Message to log or output.
  */
-#define FAULT(msg, ...)  __Fault(__FILE__, __LINE__, msg, ## __VA_ARGS__)
+#define FAULT(msg, ...) __Fault(__FILE__, __LINE__, msg, ## __VA_ARGS__)
 
 /** Fault handler. This function should be defined in each component to handle
  * various fatal faults, such as failed asserts, invalid internal state,

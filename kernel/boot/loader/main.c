@@ -456,8 +456,6 @@ LoadKernel()
         return rc;
     }
 
-    DbgPrint(D_INFO, "handleCount = %d\n", handleCount);
-
     for (handleIdx = 0; handleIdx < handleCount; handleIdx++) {
         EFI_HANDLE deviceHandle;
 

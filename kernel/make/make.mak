@@ -69,7 +69,7 @@ BOOT_OBJ = $(OBJ_DIR)/boot.o
 BOOT_LINK_SCRIPT = $(KERNROOT)/make/boot_link.lds
 BOOT_LINK_MAP = $(OBJ_DIR)/boot.map
 
-.PHONY: all clean FORCE $(SUBDIRS_TARGET)
+.PHONY: all clean test FORCE $(SUBDIRS_TARGET)
 
 all: $(OBJ_DIR) $(OBJS) $(IMAGE) $(SUBDIRS_TARGET) $(LIB_FILE)
 
@@ -129,3 +129,5 @@ clean: $(SUBDIRS_TARGET)
 	$(RMBUILD)
 
 install:
+
+test:

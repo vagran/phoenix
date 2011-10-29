@@ -151,7 +151,7 @@ ifdef LINK_SCRIPTS
 LINK_FLAGS += $(foreach script,$(LINK_SCRIPTS), -T $(script))
 endif
 
-.PHONY: all clean install FORCE $(SUBDIRS_TARGET) $(BINARY_NAME)
+.PHONY: all clean install test FORCE $(SUBDIRS_TARGET) $(BINARY_NAME)
 
 all: $(BINARY) $(SUBDIRS_TARGET)
 
@@ -252,6 +252,8 @@ endif
 else
 install: $(SUBDIRS_TARGET)
 endif
+
+test: $(SUBDIRS_TARGET)
 
 # KERNROOT
 endif

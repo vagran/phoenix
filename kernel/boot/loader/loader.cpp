@@ -28,9 +28,7 @@ __Fault(const char *file, int line, const char *msg, ...)
     LoaderPrintV(wMsg, args);
     va_end(args);
 
-    while(true) {
-        __asm__ __volatile__ ("pause");
-    }
+    cpu::Halt();
 }
 
 int

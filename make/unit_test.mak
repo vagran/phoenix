@@ -44,13 +44,10 @@ else
 $(error Target not supported: $(PHOENIX_TARGET))
 endif
 
+COMMON_FLAGS += $(foreach def,$(TEST_DEFS),-D$(def))
+
 CXX_FLAGS = $(GLOBAL_FLAGS) $(GLOBAL_CXX_FLAGS) $(CXX_STANDARD) \
 	$(CXX_RESTRICTIONS) $(TEST_CXX_FLAGS)
-
-define NL
-
-
-endef
 
 define AUTO_CHUNK
 

@@ -378,6 +378,28 @@ mfence()
     ASM ("mfence");
 }
 
+/** Pseudo-instruction. Pause CPU for short time to use in spin loops. Should
+ * be defined in all architectures.
+ */
+inline void
+Pause()
+{
+    pause();
+}
+
+/** Pseudo-instruction. Stop CPU completely. Should be defined in all
+ * architectures.
+ */
+inline void Halt() __NORETURN;
+inline void
+Halt()
+{
+    cli();
+    while (true) {
+        hlt();
+    }
+}
+
 } /* namespace cpu */
 
 #ifdef AUTONOMOUS_LINKING
