@@ -239,6 +239,8 @@ public:
 
 } /* namespace vm */
 
+#include <vm_mm.h>
+
 #ifdef AUTONOMOUS_LINKING
 }
 #endif /* AUTONOMOUS_LINKING */

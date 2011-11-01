@@ -87,7 +87,9 @@ template<class _Tp>
 constexpr const _Tp*
 end(initializer_list<_Tp> __ils)
 {
-    return __ils.end();}
+    return __ils.end();
 }
+
+} /* namespace std */
 
 #endif /* STD_H_ */

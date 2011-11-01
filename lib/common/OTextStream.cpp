@@ -301,6 +301,9 @@ OTextStreamBase::FormatV(Context &ctx, const char *fmt, va_list args)
                 }
             }
             break;
+        case 'z':
+            _FormatIntValue(_ctx, va_arg(args, size_t), fmtChar);
+            break;
         case 's':
             _FormatValue(_ctx, va_arg(args, char *), fmtChar);
             break;
@@ -342,7 +345,13 @@ CHECK_FMT_CHAR_SIGNED(int)
 CHECK_FMT_CHAR_SIGNED(long)
 CHECK_FMT_CHAR_UNSIGNED(short)
 CHECK_FMT_CHAR_UNSIGNED(int)
-CHECK_FMT_CHAR_UNSIGNED(long)
+
+bool
+OTextStreamBase::_CheckFmtChar(char fmtChar, unsigned long)
+{
+    return fmtChar == 'u' || fmtChar == 'o' || fmtChar == 'x' ||
+           fmtChar == 'X' || fmtChar == 'z';
+}
 
 bool
 OTextStreamBase::_CheckFmtChar(char fmtChar, char value UNUSED)
@@ -449,6 +458,7 @@ OTextStreamBase::_FormatInt(Context &ctx, unsigned long value, bool neg, char fm
         }
         break;
     case 'u':
+    case 'z':
         /* FALL THROUGH */
     case 'd':
         radix = 10;

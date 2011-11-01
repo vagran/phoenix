@@ -211,7 +211,7 @@ public:
             return _ptr.entryPage->global;
         }
         FAULT("Invalid flag specified: %d", flag);
-        return false; //XXX
+        return false;
     }
 
     /** Set or clear specified flag in PAT entry.

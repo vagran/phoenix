@@ -169,6 +169,7 @@ UT_TEST("Stringifying integer values")
     CHECK_FMT("Value (null) tail", "Value %s tail", static_cast<char *>(0));
     CHECK_FMT("Value 1 tail", "Value %c tail", '1');
     CHECK_FMT("Value 0x1234 tail", "Value %p tail", reinterpret_cast<void *>(0x1234));
+    CHECK_FMT("Value 12345678 tail", "Value %z tail", static_cast<size_t>(12345678));
 }
 UT_TEST_END
 

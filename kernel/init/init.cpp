@@ -193,5 +193,5 @@ Start(BootParam *bootParam)
     /* Zero bootstrap BSS section. */
     BootMemset(&::kernBootBss, 0, &::kernBootEnd - &::kernBootBss);
 
-    SwitchStack(Vaddr(::bsStack + sizeof(::bsStack)), Boot, bootParam);
+    SwitchStack(Vaddr(::bsStack + sizeof(::bsStack)), ::Boot, bootParam);
 }

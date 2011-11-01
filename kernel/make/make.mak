@@ -21,7 +21,7 @@ LINK_SCRIPT = $(KERNROOT)/make/link.lds
 LINK_MAP = $(OBJ_DIR)/kernel.map
 AR_FLAGS = rcs
 
-#PHOENIX_TARGET variable must be either DEBUG or RELEASE
+# PHOENIX_TARGET variable must be either DEBUG or RELEASE
 ifndef PHOENIX_TARGET
 TARGET = RELEASE
 export PHOENIX_TARGET
@@ -37,8 +37,12 @@ endif
 
 COMPILE_DIR = $(KERNROOT)/build
 OBJ_DIR = $(COMPILE_DIR)/$(PHOENIX_TARGET)
+ifeq ($(MAKEIMAGE),1)
+BOOTLOADER_DIR = boot
+BOOTLOADER_TARGET = $(BOOTLOADER_DIR).dir
+endif
 
-SUBDIRS_TARGET = $(foreach item,$(SUBDIRS),$(item).dir)
+SUBDIRS_TARGET = $(foreach item,$(filter-out $(BOOTLOADER_DIR), $(SUBDIRS)),$(item).dir)
 
 ifdef MAKELIB
 LIB_FILE = $(OBJ_DIR)/lib$(MAKELIB).a
@@ -69,9 +73,11 @@ BOOT_OBJ = $(OBJ_DIR)/boot.o
 BOOT_LINK_SCRIPT = $(KERNROOT)/make/boot_link.lds
 BOOT_LINK_MAP = $(OBJ_DIR)/boot.map
 
-.PHONY: all clean test FORCE $(SUBDIRS_TARGET)
+.PHONY: all all_kernel clean test FORCE $(SUBDIRS_TARGET) $(BOOTLOADER_TARGET)
 
-all: $(OBJ_DIR) $(OBJS) $(IMAGE) $(SUBDIRS_TARGET) $(LIB_FILE)
+all_kernel: $(OBJ_DIR) $(OBJS) $(IMAGE) $(SUBDIRS_TARGET) $(LIB_FILE)
+
+all: all_kernel $(BOOTLOADER_TARGET)
 
 # include dependencies if exist
 -include $(DEPS)
@@ -94,7 +100,7 @@ $(RAMDISK_FILE): FORCE
 	@$(MAKE) -C $(PHOENIX_ROOT)/mfs $(RAMDISK_FILE)
 endif
 
-$(SUBDIRS_TARGET):
+$(SUBDIRS_TARGET) $(BOOTLOADER_TARGET):
 	@$(MAKE) -C $(patsubst %.dir,%,$@) $(MAKECMDGOALS)
 
 $(COMPILE_DIR):

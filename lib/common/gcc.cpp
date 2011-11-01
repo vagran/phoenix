@@ -43,8 +43,7 @@ ASMCALL void
 __cxa_pure_virtual()
 {
 #ifdef KERNEL
-    //XXX
-    //panic("Pure virtual function called");
+    FAULT("Pure virtual function called");
 #else
     //notimpl
 #endif

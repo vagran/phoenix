@@ -211,30 +211,12 @@ SetFlags(u64 value)
     );
 }
 
-/** Disable CPU interrupt.
- *
- * @return Previous status of interrupts - @a true if the interrupts were
- *      enable, @a false otherwise.
- */
-inline bool
-DisableInterrupts()
-{
-    bool ret = GetFlags() & cpu_reg::EFLAGS_IF;
-    cli();
-    return ret;
-}
-
 inline void
 sti()
 {
     ASM("sti");
 }
 
-inline void
-EnableInterrupts()
-{
-    sti();
-}
 
 inline void
 lgdt(void *p)
@@ -378,7 +360,7 @@ mfence()
     ASM ("mfence");
 }
 
-/** Pseudo-instruction. Pause CPU for short time to use in spin loops. Should
+/** Pseudo-instruction - pause CPU for short time to use in spin loops. Should
  * be defined in all architectures.
  */
 inline void
@@ -387,7 +369,7 @@ Pause()
     pause();
 }
 
-/** Pseudo-instruction. Stop CPU completely. Should be defined in all
+/** Pseudo-instruction - stop CPU completely. Should be defined in all
  * architectures.
  */
 inline void Halt() __NORETURN;
@@ -398,6 +380,29 @@ Halt()
     while (true) {
         hlt();
     }
+}
+
+/** Pseudo-instruction - disable CPU interrupts. Should be defined in all
+ * architectures.
+ *
+ * @return Previous status of interrupts - @a true if the interrupts were
+ *      enabled, @a false otherwise.
+ */
+inline bool
+DisableInterrupts()
+{
+    bool ret = GetFlags() & cpu_reg::EFLAGS_IF;
+    cli();
+    return ret;
+}
+
+/** Pseudo-instruction - enable CPU interrupts. Should be defined in all
+ * architectures.
+ */
+inline void
+EnableInterrupts()
+{
+    sti();
 }
 
 } /* namespace cpu */

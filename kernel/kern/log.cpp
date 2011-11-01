@@ -15,7 +15,11 @@
 
 using namespace log;
 
-/** Serial console driver implementation in the kernel for debug logging purposes. */
+/** Serial console driver implementation in the kernel for debug logging
+ * purposes. It is very simple and runs in polling mode so it can be used only
+ * for debugging purposes. Normal serial port driver is implemented in the user
+ * space.
+ */
 class log::DbgSerialPort {
 public:
     enum UART {

@@ -107,31 +107,11 @@ ASMCALL unsigned long strtoul(const char *nptr, const char **endptr, unsigned ba
 ASMCALL i64 strtoq(const char *nptr, const char **endptr, unsigned base);
 ASMCALL u64 strtouq(const char *nptr, const char **endptr, unsigned base);
 
-u32 gethash32(const char *s);
-u32 gethash32(const void *data, size_t size);
-
-/** Callback function type for @ref _vprintf function.
- *
- * @param c Character to output.
- * @param arg Argument specified for @ref _vprintf function.
- */
-typedef void (*PutcFunc)(int c, void *arg);
-size_t _vprintf(const char *fmt, PutcFunc func, void *arg, int radix,
-                va_list ap, int maxOut = -1) __FORMAT(printf, 1, 0);
-
-size_t sprintf(char *buf, const char *fmt, ...) __FORMAT(printf, 2, 3);
-size_t snprintf(char *buf, size_t bufSize, const char *fmt, ...) __FORMAT(printf, 3, 4);
-size_t vsprintf(char *buf, const char *fmt, va_list arg) __FORMAT(printf, 2, 0);
-size_t vsnprintf(char *buf, size_t bufSize, const char *fmt, va_list arg) __FORMAT(printf, 3, 0);
+u32 GetHash32(const char *s);
+u32 GetHash32(const void *data, size_t size);
 
 int sscanf(const char *str, const char *fmt, ...) __FORMAT(scanf, 2, 3);
 int vsscanf(const char *str, char const *fmt, va_list ap) __FORMAT(scanf, 2, 0);
-
-#ifdef ENABLE_TRACING
-#define trace(fmt, ...) printf(fmt, ## __VA_ARGS__)
-#else
-#define trace(fmt, ...)
-#endif
 
 #include <common/OTextStream.h>
 

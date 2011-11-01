@@ -83,7 +83,7 @@ EOF
     for my $name (keys %wanted_syms) {
         my $readable_name = DemangleName($name);
         
-        print(RESULT "SYM_STUB($symIdx, \"$name\", \"$readable_name\", \"$wanted_syms{$name}\")\n");
+        print(RESULT "SYM_STUB($symIdx,\n\t\"$name\",\n\t \"$readable_name\",\n\t\"$wanted_syms{$name}\")\n");
         $symIdx++;
     }
 

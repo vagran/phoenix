@@ -28,12 +28,10 @@
 
 #include <sys.h>
 #include <boot.h>
+#include <efi.h>
 
-namespace boot {
+boot::BootParam *boot::kernBootParam;
 
-BootParam *kernBootParam;
-
-}
 
 void
 Main(void *arg)
@@ -46,6 +44,16 @@ Main(void *arg)
     boot::kernBootParam = boot::BootToMapped(param->bootParam);
     boot::kernBootParam->cmdLine = boot::BootToMapped(boot::kernBootParam->cmdLine);
     boot::kernBootParam->memMap = boot::BootToMapped(boot::kernBootParam->memMap);
+
+    /* Memory allocations are possible after this call. */
+    vm::MM::PreInitialize(param->heap,
+                          param->defaultPatRoot,
+                          param->quickMap,
+                          param->quickMapPte,
+                          boot::kernBootParam->memMap,
+                          boot::kernBootParam->memMapNumDesc,
+                          boot::kernBootParam->memMapDescSize,
+                          boot::kernBootParam->memMapDescVersion);
 
     /* Call constructors for all static objects. */
     Cxa::ConstructStaticObjects();
