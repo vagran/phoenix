@@ -34,6 +34,6 @@ MM::PreInitialize(vaddr_t heap UNUSED, paddr_t defaultPatRoot UNUSED, vaddr_t qu
                                        memMapDescVersion);
 
     for (efi::MemoryMap::MemDesc &d: mm) {
-
+        (void)d;
     }
 }

@@ -427,23 +427,41 @@ protected:
     /** These methods validate type against format character.
      *
      * @param fmtChar Format character which was specified for @a value.
-     * @param value Corresponding value from arguments list.
      * @return @a true if the specified format character is valid for the
      *      specified type.
      */
-    bool _CheckFmtChar(char fmtChar, short value);
-    bool _CheckFmtChar(char fmtChar, unsigned short value);
-    bool _CheckFmtChar(char fmtChar, int value);
-    bool _CheckFmtChar(char fmtChar, unsigned value);
-    bool _CheckFmtChar(char fmtChar, long value);
-    bool _CheckFmtChar(char fmtChar, unsigned long value);
+    inline bool _CheckFmtChar(char fmtChar, short) {
+        return fmtChar == 'd' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X';
+    }
+    inline bool _CheckFmtChar(char fmtChar, unsigned short) {
+        return fmtChar == 'u' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X';
+    }
+    inline bool _CheckFmtChar(char fmtChar, int) {
+        return fmtChar == 'd' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X';
+    }
+    inline bool _CheckFmtChar(char fmtChar, unsigned) {
+        return fmtChar == 'u' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X';
+    }
+    inline bool _CheckFmtChar(char fmtChar, long) {
+        return fmtChar == 'd' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X';
+    }
+    inline bool _CheckFmtChar(char fmtChar, unsigned long) {
+        return fmtChar == 'd' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X' ||
+               fmtChar == 'z';
+    }
 
-    bool _CheckFmtChar(char fmtChar, char value);
-    bool _CheckFmtChar(char fmtChar, char *value UNUSED);
-    bool _CheckFmtChar(char fmtChar, const char *value UNUSED);
+    inline bool _CheckFmtChar(char fmtChar, char) {
+        return fmtChar == 'c';
+    }
+    inline bool _CheckFmtChar(char fmtChar, char *) {
+        return fmtChar == 's';
+    }
+    inline bool _CheckFmtChar(char fmtChar, const char *) {
+        return fmtChar == 's';
+    }
 
     template <typename T>
-    inline bool _CheckFmtChar(char fmtChar, T *value UNUSED) {
+    inline bool _CheckFmtChar(char fmtChar, T *) {
         return fmtChar == 'p';
     }
 
