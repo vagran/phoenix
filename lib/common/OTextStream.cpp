@@ -313,6 +313,9 @@ OTextStreamBase::FormatV(Context &ctx, const char *fmt, va_list args)
         case 'p':
             _FormatValue(_ctx, va_arg(args, void *), fmtChar);
             break;
+        case 'n':
+            _FormatValue(_ctx, va_arg(args, size_t *), fmtChar);
+            break;
         default:
             FAULT("Unknown format character specified: '%c'", fmtChar);
             break;
@@ -323,43 +326,6 @@ OTextStreamBase::FormatV(Context &ctx, const char *fmt, va_list args)
         }
     }
     return ctx;
-}
-
-#define CHECK_FMT_CHAR_SIGNED(type) \
-    bool OTextStreamBase::_CheckFmtChar(char fmtChar, type value UNUSED) \
-    { \
-        return fmtChar == 'd' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X'; \
-    }
-
-#define CHECK_FMT_CHAR_UNSIGNED(type) \
-    bool OTextStreamBase::_CheckFmtChar(char fmtChar, unsigned type value UNUSED) \
-    { \
-        return fmtChar == 'u' || fmtChar == 'o' || fmtChar == 'x' || fmtChar == 'X'; \
-    }
-
-CHECK_FMT_CHAR_SIGNED(short)
-CHECK_FMT_CHAR_SIGNED(int)
-CHECK_FMT_CHAR_SIGNED(long)
-CHECK_FMT_CHAR_UNSIGNED(short)
-CHECK_FMT_CHAR_UNSIGNED(int)
-CHECK_FMT_CHAR_UNSIGNED(long)
-
-bool
-OTextStreamBase::_CheckFmtChar(char fmtChar, char value UNUSED)
-{
-    return fmtChar == 'c';
-}
-
-bool
-OTextStreamBase::_CheckFmtChar(char fmtChar, char *value UNUSED)
-{
-    return fmtChar == 's';
-}
-
-bool
-OTextStreamBase::_CheckFmtChar(char fmtChar, const char *value UNUSED)
-{
-    return fmtChar == 's';
 }
 
 bool

@@ -67,7 +67,8 @@ CheckFormatV(const char *result, utStringStream &stream, const char *fmt, ...)
 /* Verify string and size. */
 #define CHECK_FMT_NOV(result, fmt, ...) \
 do {\
-    size_t size = stream.Format(fmt, ## __VA_ARGS__); \
+    size_t size2 = 0; \
+    size_t size = stream.Format(fmt "%n", ## __VA_ARGS__, &size2); \
     UT(size) == UT(sizeof(result) - 1); \
     UT(stream.Get()) == UT_CSTR(result); \
     stream.Erase(); \
@@ -77,8 +78,10 @@ do {\
 /* Verify string and size. */
 #define CHECK_FMT(result, fmt, ...) \
 do {\
+    size_t size = 0; \
     CHECK_FMT_NOV(result, fmt, ## __VA_ARGS__); \
-    UT(CheckFormatV(result, stream, fmt, ## __VA_ARGS__)) == UT(true); \
+    UT(CheckFormatV(result, stream, fmt "%n", ## __VA_ARGS__, &size)) == UT(true); \
+    UT(size) == UT(sizeof(result) - 1); \
     stream.Erase(); \
     stream.ClearOptions(); \
 } while (0)
@@ -116,6 +119,7 @@ UT_TEST("Stringifying integer values")
 {
     char buf[1024];
     utStringStream stream(buf, sizeof(buf));
+    size_t size;
 
     stream << 12345678;
     CHECK_STR("12345678");
@@ -129,6 +133,10 @@ UT_TEST("Stringifying integer values")
     stream << OtsOpt(OtsOpt::O_RADIX, 2l) << BIN(0x11001101);
     CHECK_STR("11001101");
     stream.ClearOptions();
+
+    size = 0;
+    stream.Format("Value %d %ntail", 12345678, &size);
+    UT(size) == UT(sizeof("Value 12345678 ") - 1);
 
     CHECK_FMT("Value 12345678 tail", "Value %d tail", 12345678);
     CHECK_FMT("Value -12345678 tail", "Value %d tail", -12345678);
