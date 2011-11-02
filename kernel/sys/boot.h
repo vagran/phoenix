@@ -33,8 +33,6 @@ enum {
      * phase.
      */
     BOOT_STACK_SIZE =       0x8000,
-    /** Number of quick map entries. */
-    NUM_QUICK_MAP =         4,
 };
 
 /** The kernel gets a pointer to this structure as its entry point argument. */
@@ -61,7 +59,7 @@ struct BootstrapParam {
     vaddr_t heap; /**< Current heap pointer. */
     paddr_t defaultPatRoot; /**< Default PAT root table. */
     vaddr_t quickMap; /**< Quick map pages. They are allocated consequentially. */
-    void *quickMapPte[NUM_QUICK_MAP]; /**< Quick map PTEs. */
+    void *quickMapPte[vm::NUM_QUICK_MAP]; /**< Quick map PTEs. */
 };
 
 /** Convert bootstrap identity mapped address to kernel virtual address. */

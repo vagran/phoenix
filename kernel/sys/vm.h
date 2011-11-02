@@ -111,6 +111,8 @@ namespace vm {
 enum {
     /** Memory page size in bytes. */
     PAGE_SIZE =     (1 << PAGE_SHIFT),
+    /** Number of quick map entries. */
+    NUM_QUICK_MAP =         4,
 };
 
 /** Class representing generic address of the VM subsystem. */

@@ -47,6 +47,17 @@ void *operator new[](size_t size, size_t align, bool nonRec = false);
 void *operator new(size_t size, const char *file, int line,
                    size_t align = 0, bool nonRec = false);
 
+/** @a new operator for tracked arrays allocations with options.
+ *
+ * @param size Allocation size.
+ * @param file Source file name where from the operator is invoked.
+ * @param line Line number in the source file where from the operator is invoked.
+ * @param align Alignment value. Zero indicates that no specific alignment required.
+ * @param nonRec Memory allocation failure is not recoverable if @a true.
+ */
+void *operator new[](size_t size, const char *file, int line,
+                   size_t align = 0, bool nonRec = false);
+
 /** @a delete operator for non-arrays allocations. */
 void operator delete(void *ptr);
 /** @a delete operator for arrays allocations. */

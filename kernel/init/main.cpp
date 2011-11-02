@@ -46,14 +46,14 @@ Main(void *arg)
     boot::kernBootParam->memMap = boot::BootToMapped(boot::kernBootParam->memMap);
 
     /* Memory allocations are possible after this call. */
-    vm::MM::PreInitialize(param->heap,
-                          param->defaultPatRoot,
-                          param->quickMap,
-                          param->quickMapPte,
-                          boot::kernBootParam->memMap,
-                          boot::kernBootParam->memMapNumDesc,
-                          boot::kernBootParam->memMapDescSize,
-                          boot::kernBootParam->memMapDescVersion);
+    vm::MM::Initialize(param->heap,
+                       param->defaultPatRoot,
+                       param->quickMap,
+                       param->quickMapPte,
+                       boot::kernBootParam->memMap,
+                       boot::kernBootParam->memMapNumDesc,
+                       boot::kernBootParam->memMapDescSize,
+                       boot::kernBootParam->memMapDescVersion);
 
     /* Call constructors for all static objects. */
     Cxa::ConstructStaticObjects();

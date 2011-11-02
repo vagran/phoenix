@@ -99,6 +99,11 @@ private:
 /** Class representing PAT table entry. */
 class PatEntry {
 public:
+    inline PatEntry() {
+        _ptr.raw = 0;
+        _tableLvl = 0;
+    }
+
     /** Create entry by a table and virtual address. The entry in the table
      * selected accordingly to virtual address provided.
      * @param va Virtual address.
@@ -107,10 +112,7 @@ public:
      *      (e.g. page table, page directory, ...).
      */
     inline PatEntry(vaddr_t va, void *table, u32 tableLvl = 0) {
-        _tableLvl = tableLvl;
-        _ptr.ptr = table;
-        VaddrDecoder dec(va);
-        _ptr.raw += dec.GetEntryIndex(tableLvl);
+        Set(va, table, tableLvl);
     }
 
     /** Create entry by direct pointer.
@@ -119,6 +121,30 @@ public:
      * @param tableLvl Level of the table which contains the entry.
      */
     inline PatEntry(void *entry, u32 tableLvl = 0) {
+        Set(entry, tableLvl);
+    }
+
+    /** Set entry by a table and virtual address. The entry in the table
+     * selected accordingly to virtual address provided.
+     * @param va Virtual address.
+     * @param table Pointer to the table.
+     * @param tableLvl Null-based table level starting from least significant
+     *      (e.g. page table, page directory, ...).
+     */
+    inline void Set(vaddr_t va, void *table, u32 tableLvl = 0) {
+        ASSERT(tableLvl <= NUM_PAT_TABLES);
+        _tableLvl = tableLvl;
+        _ptr.ptr = table;
+        VaddrDecoder dec(va);
+        _ptr.raw += dec.GetEntryIndex(tableLvl);
+    }
+
+    /** Set entry by direct pointer.
+     *
+     * @param entry Pointer to the entry.
+     * @param tableLvl Level of the table which contains the entry.
+     */
+    inline void Set(void *entry, u32 tableLvl = 0) {
         ASSERT(tableLvl <= NUM_PAT_TABLES);
         _tableLvl = tableLvl;
         _ptr.ptr = entry;
