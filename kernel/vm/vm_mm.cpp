@@ -75,6 +75,7 @@ struct KmemDebugOverhead {
     enum Flags {
         F_ARRAY =       0x1, /**< Array allocation. */
     };
+
     u32 magic; /**< Magic value. */
     u32 line; /**< Source file line number. */
     const char *file; /** Source file name. */
@@ -104,14 +105,52 @@ void *
 KmemDebugOverhead::Allocate(size_t size, bool isArray, size_t align,
                             const char *file, int line)
 {
-    //notimpl
-    return 0;
+    KmemDebugOverhead *oh;
+
+    if (align) {
+        /* Client data must be properly aligned. */
+        size_t numOhBlocks = sizeof(KmemDebugOverhead) / align + 1;
+        vm::Vaddr mem = KmemAllocate(size + align * numOhBlocks);
+        mem += align * numOhBlocks - sizeof(KmemDebugOverhead);
+        oh = mem;
+    } else {
+        oh = vm::Vaddr(KmemAllocate(size + sizeof(KmemDebugOverhead)));
+    }
+    if (!oh) {
+        return 0;
+    }
+
+    oh->magic = MAGIC;
+    oh->size = size;
+    oh->align = align;
+    oh->file = file;
+    oh->line = line;
+    oh->flags = 0;
+    if (isArray) {
+        oh->flags |= F_ARRAY;
+    }
+
+    return oh + 1;
 }
 
 void
 KmemDebugOverhead::Free(void *ptr, bool isArray)
 {
-    //notimpl
+    KmemDebugOverhead *oh = static_cast<KmemDebugOverhead *>(ptr) - 1;
+
+    ENSURE(oh->magic == MAGIC);
+    if (isArray != !!(oh->flags & F_ARRAY)) {
+        FAULT("Array and non-array allocation and freeing mixed.");
+    }
+
+    if (oh->align) {
+        size_t numOhBlocks = sizeof(KmemDebugOverhead) / oh->align + 1;
+        Vaddr mem = ptr;
+        mem -= oh->align * numOhBlocks;
+        KmemFree(mem);
+    } else {
+        KmemFree(oh);
+    }
 }
 
 void *
