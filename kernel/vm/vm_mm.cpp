@@ -28,6 +28,10 @@ static vaddr_t tmpQuickMap;
 static void **tmpQuickMapPte;
 /** Temporal location for default PAT root table (during @ref vm::MM::IS_INITIAL phase). */
 static paddr_t tmpDefaultPatRoot;
+/** Temporal location for last mapped heap address. Heap is mapped up to this
+ * address. The value is valid during @ref vm::MM::IS_INITIAL phase.
+ */
+static vaddr_t tmpLastMappedHeap;
 
 /** Kernel dynamic memory allocation. This function can be used only by @a new
  * operators. All the rest code must use @a new operators for all dynamic
@@ -41,7 +45,11 @@ static inline void *
 KmemAllocate(size_t size, size_t align = 0)
 {
     ASSERT(!align || IsPowerOf2(align));
-    if (UNLIKELY(MM::GetInitState() != MM::IS_PREINITIALIZED)) {
+    if (UNLIKELY(MM::GetInitState() == MM::IS_PREINITIALIZED)) {
+
+    } else if (LIKELY(MM::GetInitState() == MM::IS_INITIALIZED)) {
+
+    } else {
         FAULT("Memory allocation is not permitted in current state: %d",
               MM::GetInitState());
     }
@@ -258,21 +266,6 @@ operator delete[](void *ptr)
 MM::MM(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
        u32 memMapDescVersion)
 {
-
-}
-
-void
-MM::Initialize(vaddr_t heap UNUSED, paddr_t defaultPatRoot UNUSED, vaddr_t quickMap UNUSED,
-               void **quickMapPte UNUSED, void *memMap, size_t memMapNumDesc,
-               size_t memMapDescSize, u32 memMapDescVersion)
-{
-    ::tmpHeap = heap;
-    ::tmpQuickMap = quickMap;
-    ::tmpQuickMapPte = quickMapPte;
-    ::tmpDefaultPatRoot = defaultPatRoot;
-
-    _initState = IS_PREINITIALIZED;
-
     //temp
     efi::MemoryMap mm = efi::MemoryMap(memMap,
                                        memMapNumDesc,
@@ -282,4 +275,24 @@ MM::Initialize(vaddr_t heap UNUSED, paddr_t defaultPatRoot UNUSED, vaddr_t quick
     for (efi::MemoryMap::MemDesc &d: mm) {
         (void)d;
     }
+}
+
+void
+MM::PreInitialize(vaddr_t heap UNUSED, paddr_t defaultPatRoot UNUSED, vaddr_t quickMap UNUSED,
+                  void **quickMapPte UNUSED)
+{
+    ::tmpHeap = heap;
+    ::tmpLastMappedHeap = Vaddr(heap).RoundUp();
+    ::tmpQuickMap = quickMap;
+    ::tmpQuickMapPte = quickMapPte;
+    ::tmpDefaultPatRoot = defaultPatRoot;
+
+    _initState = IS_PREINITIALIZED;
+}
+
+void
+MM::Initialize(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
+               u32 memMapDescVersion)
+{
+    ::mm = NEW_NONREC MM(memMap, memMapNumDesc, memMapDescSize, memMapDescVersion);
 }

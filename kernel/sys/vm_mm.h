@@ -29,6 +29,10 @@ public:
          * memory allocations are already possible.
          */
         IS_PREINITIALIZED,
+        /** Initialized state, memory manager object is created and fully
+         * functional.
+         */
+        IS_INITIALIZED,
     };
 
     /** Get current initialization state. */
@@ -43,16 +47,20 @@ public:
      * @param defaultPatRoot Default PAT root table.
      * @param quickMap Quick map pages. They are allocated consequentially.
      * @param quickMapPte Quick map PTEs.
+     */
+    static void PreInitialize(vaddr_t heap,
+                              paddr_t defaultPatRoot,
+                              vaddr_t quickMap,
+                              void **quickMapPte);
+
+    /** Finalize kernel memory management initialization.
+     *
      * @param memMap EFI memory map which describes all available memory.
      * @param memMapNumDesc Number of descriptors in @a memMap.
      * @param memMapDescSize One descriptor size in @a memMap.
      * @param memMapDescVersion Descriptor version in @a memMap.
      */
-    static void Initialize(vaddr_t heap,
-                           paddr_t defaultPatRoot,
-                           vaddr_t quickMap,
-                           void **quickMapPte,
-                           void *memMap,
+    static void Initialize(void *memMap,
                            size_t memMapNumDesc,
                            size_t memMapDescSize,
                            u32 memMapDescVersion);
