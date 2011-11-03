@@ -12,11 +12,14 @@
  */
 
 #include <sys.h>
+#include <boot.h>
 #include <efi.h>
 
 using namespace vm;
 
 MM *vm::mm;
+
+VmCaps vm::vmCaps;
 
 MM::InitState MM::_initState = MM::IS_INITIAL;
 
@@ -33,6 +36,43 @@ static paddr_t tmpDefaultPatRoot;
  */
 static vaddr_t tmpLastMappedHeap;
 
+/** Map all pages starting from last mapped heap address till current heap
+ * pointer. This function is used only during @ref vm::MM::IS_INITIAL phase. */
+static void
+MapHeap()
+{
+    QuickMap qm(tmpQuickMap, NUM_QUICK_MAP, tmpQuickMapPte);
+    while (tmpLastMappedHeap < tmpHeap) {
+        Vaddr va = Vaddr(tmpLastMappedHeap);
+        Vaddr table = qm.Map(Paddr(tmpDefaultPatRoot));
+        for (int tableLvl = NUM_PAT_TABLES - 1; tableLvl >= 0; tableLvl--) {
+            PatEntry e(va, table, tableLvl);
+            Paddr pa;
+            if (e.CheckFlag(PAT_EF_PRESENT)) {
+                /* Page or table is mapped, skip level. */
+                qm.Unmap(table);
+                table = qm.Map(Paddr(e.GetAddress()));
+            } else if (tableLvl) {
+                /* Unmapped table, allocate and enter. */
+                pa = boot::MappedToBoot(Vaddr(tmpHeap).RoundUp()).IdentityPaddr();
+                tmpHeap = Vaddr(tmpHeap).RoundUp() + PAGE_SIZE;
+                memset(Vaddr(pa.IdentityVaddr()), 0, PAGE_SIZE);
+                e = pa;
+                e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
+                qm.Unmap(table);
+                table = qm.Map(pa);
+            } else {
+                /* Unmapped page, map it. */
+                e = boot::MappedToBoot(va).IdentityPaddr();
+                e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
+                           PAT_EF_GLOBAL);
+                InvalidateVaddr(va);
+            }
+        }
+        tmpLastMappedHeap += PAGE_SIZE;
+    }
+}
+
 /** Kernel dynamic memory allocation. This function can be used only by @a new
  * operators. All the rest code must use @a new operators for all dynamic
  * memory allocations.
@@ -44,16 +84,19 @@ static vaddr_t tmpLastMappedHeap;
 static inline void *
 KmemAllocate(size_t size, size_t align = 0)
 {
+    Vaddr va;
     ASSERT(!align || IsPowerOf2(align));
     if (UNLIKELY(MM::GetInitState() == MM::IS_PREINITIALIZED)) {
-
+        va = Vaddr(tmpHeap).RoundUp(align ? align : sizeof(uintptr_t));
+        tmpHeap = va + size;
+        MapHeap();
     } else if (LIKELY(MM::GetInitState() == MM::IS_INITIALIZED)) {
 
     } else {
         FAULT("Memory allocation is not permitted in current state: %d",
               MM::GetInitState());
     }
-    return 0;
+    return va;
 }
 
 /** Kernel dynamic memory freeing. This function can be used only by @a delete
@@ -263,6 +306,49 @@ operator delete[](void *ptr)
 #endif /* DEBUG */
 }
 
+QuickMap::QuickMap(Vaddr mapBase, size_t numPages, void **mapPte) :
+    _mapBase(mapBase), _numPages(numPages), _mapPte(mapPte)
+{
+    ASSERT(mapBase.IsAligned());
+    ENSURE(numPages && numPages <= MAX_PAGES);
+}
+
+QuickMap::~QuickMap()
+{
+    for (size_t idx = 0; idx < _numPages; idx++) {
+        if (_mapped[idx]) {
+            Unmap(_mapBase + PAGE_SIZE * idx);
+        }
+    }
+}
+
+Vaddr
+QuickMap::Map(Paddr pa)
+{
+    int idx = _mapped.FirstClear();
+    if (idx == -1 || idx >= MAX_PAGES) {
+        return 0;
+    }
+    Vaddr va = _mapBase + idx * PAGE_SIZE;
+    PatEntry e(_mapPte[idx]);
+    e = pa;
+    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
+    InvalidateVaddr(va);
+    return va;
+}
+
+void
+QuickMap::Unmap(Vaddr va)
+{
+    ASSERT(IsPowerOf2(va));
+    ASSERT(va >= _mapBase && va < _mapBase + _numPages * PAGE_SIZE);
+    size_t idx = (va - _mapBase) / PAGE_SIZE;
+    ASSERT(_mapped[idx]);
+    PatEntry e(_mapPte[idx]);
+    e.Clear();
+    InvalidateVaddr(va);
+}
+
 MM::MM(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
        u32 memMapDescVersion)
 {
@@ -278,8 +364,8 @@ MM::MM(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
 }
 
 void
-MM::PreInitialize(vaddr_t heap UNUSED, paddr_t defaultPatRoot UNUSED, vaddr_t quickMap UNUSED,
-                  void **quickMapPte UNUSED)
+MM::PreInitialize(vaddr_t heap, paddr_t defaultPatRoot, vaddr_t quickMap,
+                  void **quickMapPte)
 {
     ::tmpHeap = heap;
     ::tmpLastMappedHeap = Vaddr(heap).RoundUp();

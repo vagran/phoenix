@@ -32,6 +32,21 @@
 
 boot::BootParam *boot::kernBootParam;
 
+#ifdef MODULE_TESTS
+
+static bool
+MT_AllocOnPreinitialized()
+{
+    const size_t size = 10 * 1024 * 1024;
+    u8 *buf = NEW u8[size];
+    if (!buf) {
+        return false;
+    }
+    memset(buf, 0x42, size);
+    return true;
+}
+
+#endif /* MODULE_TESTS */
 
 void
 Main(void *arg)
@@ -49,21 +64,15 @@ Main(void *arg)
     vm::MM::PreInitialize(param->heap,
                           param->defaultPatRoot,
                           param->quickMap,
-                          param->quickMapPte,
-                          boot::kernBootParam->memMap,
-                          boot::kernBootParam->memMapNumDesc,
-                          boot::kernBootParam->memMapDescSize,
-                          boot::kernBootParam->memMapDescVersion);
+                          param->quickMapPte);
+
+    MODULE_TEST(MT_AllocOnPreinitialized);
 
     /* Call constructors for all static objects. */
     Cxa::ConstructStaticObjects();
 
     /* Finalize kernel memory management initialization. */
-    vm::MM::Initialize(param->heap,
-                       param->defaultPatRoot,
-                       param->quickMap,
-                       param->quickMapPte,
-                       boot::kernBootParam->memMap,
+    vm::MM::Initialize(boot::kernBootParam->memMap,
                        boot::kernBootParam->memMapNumDesc,
                        boot::kernBootParam->memMapDescSize,
                        boot::kernBootParam->memMapDescVersion);

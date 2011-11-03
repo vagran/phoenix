@@ -16,6 +16,46 @@
 
 namespace vm {
 
+/** Class for creating short temporal mappings for separate pages. */
+class QuickMap {
+public:
+    enum {
+        /** Maximal number of pages which can be used for quick map. */
+        MAX_PAGES = 64,
+    };
+
+    /** Construct quick map helper object.
+     *
+     * @param mapBase Virtual address of the first page in the VAS region
+     *      reserved for quick maps. The region must be a continuous range of
+     *      one or more pages.
+     * @param numPages Number of pages available in provided VAS region.
+     * @param mapPte Array of PTEs which correspond to virtual addresses
+     *      provided in @a mapBase.
+     */
+    QuickMap(Vaddr mapBase, size_t numPages, void **mapPte);
+    ~QuickMap();
+
+    /** Map physical address.
+     *
+     * @param pa Physical address to map. One page is mapped.
+     * @return Virtual address of mapped page.
+     */
+    Vaddr Map(Paddr pa);
+
+    /** Unmap page which was previously mapped by @ref Map method.
+     *
+     * @param va Virtual address returned by @ref Map method.
+     */
+    void Unmap(Vaddr va);
+
+private:
+    BitString<MAX_PAGES> _mapped; /**< Mapped pages bitmap. */
+    Vaddr _mapBase;
+    size_t _numPages;
+    void **_mapPte;
+};
+
 /** This class represents kernel virtual memory manager. */
 class MM {
 public:

@@ -159,6 +159,24 @@ public:
     /** Compare VM addresses. */
     inline bool operator!=(int addr) { return _addr.addr != static_cast<AddrType>(addr); }
 
+    /** Compare VM addresses. */
+    inline bool operator <(Addr &addr) { return _addr.addr < addr._addr.addr; }
+    /** Compare VM addresses. */
+    inline bool operator <=(Addr &addr) { return _addr.addr <= addr._addr.addr; }
+    /** Compare VM addresses. */
+    inline bool operator >(Addr &addr) { return _addr.addr > addr._addr.addr; }
+    /** Compare VM addresses. */
+    inline bool operator >=(Addr &addr) { return _addr.addr >= addr._addr.addr; }
+
+    /** Sum VM addresses. */
+    inline Addr operator +(Addr &addr) {
+        return Addr(_addr.addr + addr._addr.addr);
+    }
+    /** Subtract VM addresses. */
+    inline Addr operator -(Addr &addr) {
+        return Addr(_addr.addr - addr._addr.addr);
+    }
+
     /** Cast VM address value to base address type. */
     inline operator AddrType() { return _addr.addr; }
     /** Return VM address base type value. */
@@ -189,6 +207,16 @@ public:
     inline Addr &RoundDown(AddrType alignment = PAGE_SIZE) {
         _addr.addr = ::RoundDown2(_addr.addr, alignment);
         return *this;
+    }
+
+    /** Check if the address aligned to specified alignment value.
+     *
+     * @param alignment Alignment value, must be power of two.
+     * @return @a true if address  if aligned, @a false otherwise.
+     */
+    inline bool IsAligned(AddrType alignment = PAGE_SIZE) {
+        ASSERT(IsPowerOf2(alignment));
+        return !(_addr.addr & (alignment - 1));
     }
 
     /** Get page index which corresponds to a given virtual address. */

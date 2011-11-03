@@ -334,7 +334,7 @@ public:
     }
 
     /** Get physical address pointed by the entry. */
-    paddr_t GetAddress() {
+    inline paddr_t GetAddress() {
         return _ptr.entryPage->pa << PAGE_SHIFT;
     }
 
@@ -342,12 +342,15 @@ public:
      * @param pa Physical address to set.
      * @return Previous value of physical address in the entry.
      */
-    paddr_t SetAddress(paddr_t pa) {
+    inline paddr_t SetAddress(paddr_t pa) {
         ASSERT((pa & ((1 << PAGE_SHIFT) - 1)) == 0);
         paddr_t prevPa = _ptr.entryPage->pa << PAGE_SHIFT;
         _ptr.entryPage->pa = pa >> PAGE_SHIFT;
         return prevPa;
     }
+
+    /** Clear mapping provided by the entry. */
+    inline void Clear() { *_ptr.raw = 0; }
 
     /** Cast entry to physical address. The same effect as from @ref GetAddress.
      * @return Physical address pointed by the entry.
@@ -371,7 +374,7 @@ public:
      * be PAT tables root entry.
      * @return Process context identifier associated with the given root entry.
      */
-    ProcCtxId GetProcCtxId() {
+    inline ProcCtxId GetProcCtxId() {
         ENSURE(_tableLvl == NUM_PAT_TABLES);
         return _ptr.cr3->pcid;
     }
@@ -381,7 +384,7 @@ public:
      * must be PAT tables root entry.
      * @return Process context identifier associated with the given root entry.
      */
-    ProcCtxId SetProcCtxId(ProcCtxId pcid) {
+    inline ProcCtxId SetProcCtxId(ProcCtxId pcid) {
         ENSURE(_tableLvl == NUM_PAT_TABLES);
         ProcCtxId oldPcid = _ptr.cr3->pcid;
         if (vmCaps.IsValid() && vmCaps.pcid) {
@@ -393,7 +396,7 @@ public:
     /** Switches current address space to the specified root. Entry must be
      * new address space root entry.
      */
-    void Activate() {
+    inline void Activate() {
         ENSURE(_tableLvl == NUM_PAT_TABLES);
         cpu::wcr3(*_ptr.raw);
     }

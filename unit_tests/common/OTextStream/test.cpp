@@ -62,7 +62,7 @@ CheckFormatV(const char *result, utStringStream &stream, const char *fmt, ...)
     do {\
         UT(stream.Get()) == UT_CSTR(value); \
         stream.Erase(); \
-    } while (0)
+    } while (false)
 
 /* Verify string and size. */
 #define CHECK_FMT_NOV(result, fmt, ...) \
@@ -72,7 +72,7 @@ do {\
     UT(stream.Get()) == UT_CSTR(result); \
     stream.Erase(); \
     stream.ClearOptions(); \
-} while (0)
+} while (false)
 
 /* Verify string and size. */
 #define CHECK_FMT(result, fmt, ...) \
@@ -81,7 +81,7 @@ do {\
     UT(CheckFormatV(result, stream, fmt, ## __VA_ARGS__)) == UT(true); \
     stream.Erase(); \
     stream.ClearOptions(); \
-} while (0)
+} while (false)
 
 UT_TEST("Stringifying boolean values")
 {

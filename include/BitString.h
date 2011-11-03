@@ -68,6 +68,16 @@ public:
         return !IsSet(idx);
     }
 
+    /** Check if  bit is set at specified position. Equivalent of @ref IsSet
+     * method.
+     *
+     * @param idx Null based bit index.
+     * @return @a true if the bit is set, @a false otherwise.
+     */
+    inline bool operator[](size_t idx) {
+        return IsSet(idx);
+    }
+
     /** Find first set bit.
      *
      * @return Index of first bit set. -1 if no bits set.

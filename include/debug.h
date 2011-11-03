@@ -19,7 +19,7 @@ namespace {}
     if (UNLIKELY(!(x))) { \
         FAULT("Assertion failed: '%s'", __STR(x)); \
     } \
-} while (0)
+} while (false)
 
 /** @def ASSERT(x)
  * Macro for assertions implementations.
@@ -63,5 +63,24 @@ namespace {}
  */
 void __Fault(const char *file, int line, const char *msg, ...)
     __FORMAT(printf, 3, 4) __NORETURN;
+
+#ifdef MODULE_TESTS
+
+/** Invoke a module test.
+ * @param funcName Name of the function to invoke. It is followed by its
+ *      arguments. The function should return boolean value - @a true if test
+ *      succeeded, @a false otherwise.
+ */
+#define MODULE_TEST(funcName, ...) do { \
+    if (!funcName(__VA_ARGS__)) { \
+        FAULT("Module test failed: " __STR(funcName)); \
+    } \
+} while (false)
+
+#else /* MODULE_TESTS */
+
+#define MODULE_TEST(funcName, ...)
+
+#endif /* MODULE_TESTS */
 
 #endif /* DEBUG_H_ */
