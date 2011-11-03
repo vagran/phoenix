@@ -17,11 +17,13 @@
 void
 __Fault(const char *file, int line, const char *msg, ...)
 {
-    log::sysLog.Alert("System fault occurred: %s:%d: ", file, line);
-    va_list args;
-    va_start(args, msg);
-    log::sysLog.FormatV(msg, args) << '\n';
-    va_end(args);
+    if (&LOG) {
+        LOG.Alert("System fault occurred: %s:%d: ", file, line);
+        va_list args;
+        va_start(args, msg);
+        LOG.FormatV(msg, args) << '\n';
+        va_end(args);
+    }
 
     cpu::Halt();
 }

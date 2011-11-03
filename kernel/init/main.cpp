@@ -61,10 +61,12 @@ Main(void *arg)
     boot::kernBootParam->memMap = boot::BootToMapped(boot::kernBootParam->memMap);
 
     /* Memory allocations are possible after this call. */
-    vm::MM::PreInitialize(param->heap,
+    vm::MM::PreInitialize(boot::BootToMapped(param->heap),
                           param->defaultPatRoot,
-                          param->quickMap,
-                          param->quickMapPte);
+                          boot::BootToMapped(param->quickMap),
+                          boot::BootToMapped(param->quickMapPte));
+
+    log::InitLog();
 
     MODULE_TEST(MT_AllocOnPreinitialized);
 

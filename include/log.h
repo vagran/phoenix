@@ -19,12 +19,12 @@
 namespace log {
 
 class DbgSerialPort;
-extern DbgSerialPort dbgSerialPort;
-extern text_stream::OTextStream<DbgSerialPort> dbgStream;
+extern DbgSerialPort *dbgSerialPort;
+extern text_stream::OTextStream<DbgSerialPort> *dbgStream;
 
 } /* namespace log */
 
-#define TRACE_FMT log::dbgStream.Format
+#define TRACE_FMT log::dbgStream->Format
 
 #endif /* KERNEL */
 
@@ -206,6 +206,21 @@ private:
 /** Global system log class. */
 typedef KSysLog SysLog;
 
+extern SysLog *sysLog;
+
+/** Global system log object. It should be defined in each component. It has
+ * @ref text_stream::OTextStream interface so it can be used as in this example:
+ * @code
+ * LOG << LL(WARNING) << "Some warning message\n";
+ * LOG.Format("Some additional info on warning %d", 100);
+ * LOG.Notice("Some notice message here %d", 1000);
+ * @endcode
+ */
+#define LOG     (*log::sysLog)
+
+/** Initialize logging functionality. */
+void InitLog();
+
 #elif defined(EFI_APP) /* KERNEL */
 
 /* Stub for EFI environment. */
@@ -217,20 +232,12 @@ typedef void *SysLog;
 
 #endif /* KERNEL/EFI_APP */
 
-/** Global system log object. It should be defined in each component. It has
- * OTextStream interface so it can be used as in this example:
- * @code
- * sysLog << LL(WARNING) << "Some warning message\n";
- * sysLog.Format("Some additional info on warning %d", 100);
- * sysLog.Notice("Some notice message here %d", 1000);
- * @endcode
- */
-extern SysLog sysLog;
-
 /** Macro for short reference to system log levels. Usage example:
  * @code
  * sysLog << LL(WARNING) << "Some warning message";
  * @endcode
+ *
+ * @see log::SysLogBase::Level
  */
 #define LL(level) __CONCAT(log::SysLogBase::LOG_, level)
 

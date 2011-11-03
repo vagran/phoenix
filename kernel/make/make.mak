@@ -136,7 +136,7 @@ $(LIB_FILE): $(OBJS)
 	$(AR) $(AR_FLAGS) $@ $^
 endif
 
-clean: $(SUBDIRS_TARGET)
+clean: $(SUBDIRS_TARGET) $(BOOTLOADER_TARGET)
 	$(RMBUILD)
 
 install:

@@ -50,17 +50,19 @@ MapHeap()
             Paddr pa;
             if (e.CheckFlag(PAT_EF_PRESENT)) {
                 /* Page or table is mapped, skip level. */
+                pa = e.GetAddress();
                 qm.Unmap(table);
-                table = qm.Map(Paddr(e.GetAddress()));
+                table = qm.Map(pa);
             } else if (tableLvl) {
                 /* Unmapped table, allocate and enter. */
                 pa = boot::MappedToBoot(Vaddr(tmpHeap).RoundUp()).IdentityPaddr();
                 tmpHeap = Vaddr(tmpHeap).RoundUp() + PAGE_SIZE;
-                memset(Vaddr(pa.IdentityVaddr()), 0, PAGE_SIZE);
+                Vaddr tableVa = qm.Map(pa);
+                memset(tableVa, 0, PAGE_SIZE);
                 e = pa;
                 e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
                 qm.Unmap(table);
-                table = qm.Map(pa);
+                table = tableVa;
             } else {
                 /* Unmapped page, map it. */
                 e = boot::MappedToBoot(va).IdentityPaddr();
@@ -69,6 +71,7 @@ MapHeap()
                 InvalidateVaddr(va);
             }
         }
+        qm.Unmap(table);
         tmpLastMappedHeap += PAGE_SIZE;
     }
 }
@@ -326,26 +329,28 @@ Vaddr
 QuickMap::Map(Paddr pa)
 {
     int idx = _mapped.FirstClear();
-    if (idx == -1 || idx >= MAX_PAGES) {
-        return 0;
+    if (idx == -1 || idx >= static_cast<int>(_numPages)) {
+        FAULT("Quick map slots exhausted");
     }
     Vaddr va = _mapBase + idx * PAGE_SIZE;
     PatEntry e(_mapPte[idx]);
     e = pa;
     e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
     InvalidateVaddr(va);
+    _mapped.Set(idx);
     return va;
 }
 
 void
 QuickMap::Unmap(Vaddr va)
 {
-    ASSERT(IsPowerOf2(va));
+    ASSERT(va.IsAligned());
     ASSERT(va >= _mapBase && va < _mapBase + _numPages * PAGE_SIZE);
     size_t idx = (va - _mapBase) / PAGE_SIZE;
     ASSERT(_mapped[idx]);
     PatEntry e(_mapPte[idx]);
     e.Clear();
+    _mapped.Clear(idx);
     InvalidateVaddr(va);
 }
 

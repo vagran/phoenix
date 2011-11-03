@@ -626,6 +626,8 @@ typedef OTextStreamBase::Opt OtsOpt;
  *      this template.
  * @param T_arg Type of optional argument pointer to which is passed to the
  *      @a Putc method of a back-end class.
+ *
+ * @see OTextStreamBase
  */
 template <class T_backend, typename T_arg = void>
 class OTextStream : public OTextStreamBase {

@@ -130,7 +130,7 @@ MapHeap()
                                PAT_EF_GLOBAL);
 
                     if (quickMapIdx < NUM_QUICK_MAP &&
-                        va == bsQuickMap + quickMapIdx * PAGE_SIZE) {
+                        va == BootToMapped(bsQuickMap) + quickMapIdx * PAGE_SIZE) {
 
                         bsQuickMapPte[quickMapIdx] = e;
                         quickMapIdx++;

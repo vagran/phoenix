@@ -212,13 +212,13 @@ DbgSerialPort::Putc(u8 c, void *arg UNUSED)
     return true;
 }
 
-DbgSerialPort log::dbgSerialPort;
+DbgSerialPort *log::dbgSerialPort;
 
-text_stream::OTextStream<DbgSerialPort> log::dbgStream(&dbgSerialPort);
+text_stream::OTextStream<DbgSerialPort> *log::dbgStream;
 
 /* Implementation of the kernel interface to the system log. */
 
-SysLog log::sysLog;
+SysLog *log::sysLog;
 
 KSysLog::KSysLog()
 {
@@ -275,5 +275,13 @@ KSysLog::Putc(char c, void *)
 {
     lastNewLine = c == '\n';
     /* XXX Just use debug console on the first phase. */
-    return dbgSerialPort.Putc(c);
+    return dbgSerialPort->Putc(c);
+}
+
+void
+log::InitLog()
+{
+    ::dbgSerialPort = NEW_NONREC DbgSerialPort;
+    ::dbgStream = NEW_NONREC text_stream::OTextStream<DbgSerialPort>(::dbgSerialPort);
+    ::sysLog = NEW_NONREC SysLog;
 }
