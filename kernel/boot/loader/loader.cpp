@@ -13,6 +13,11 @@
 
 #include "loader.h"
 
+/* Amount of memory to reserve for initial kernel heap which is used until
+ * kernel memory manager is initialized.
+ */
+#define INITIAL_HEAP_RESERVE (15 * 1024 * 1024)
+
 void
 __Fault(const char *file, int line, const char *msg, ...)
 {
@@ -78,7 +83,7 @@ LoadElfImage(Elf_File *file, Elf *elf, vaddr_t *entry_addr)
 
         if (LoaderGetMemory(start_pa, mem_size.RoundUp().GetPageIdx())) {
             LoaderPrint(L"Failed to get memory for a segment: %d bytes at %x\n",
-                        mem_size, start_pa);
+                        mem_size + INITIAL_HEAP_RESERVE, start_pa);
             return -1;
         }
 

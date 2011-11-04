@@ -32,7 +32,7 @@ namespace {
 u8 bsStack[BOOT_STACK_SIZE];
 
 vaddr_t bsHeap; /* Current heap pointer. */
-paddr_t bsDefaultPatRoot; /* Default PAT root table. */
+paddr_t bsDefaultLatRoot; /* Default LAT root table. */
 vaddr_t bsLastMapped; /* Highest mapped virtual address. */
 vaddr_t bsQuickMap; /* Quick map pages. */
 void *bsQuickMapPte[NUM_QUICK_MAP]; /* Quick map page PTE. */
@@ -96,22 +96,22 @@ MapHeap()
 {
     static int quickMapIdx = 0;
 
-    if (!bsDefaultPatRoot) {
+    if (!bsDefaultLatRoot) {
         /* Initialize of the first call. */
         bsLastMapped = LOAD_ADDRESS;
-        bsDefaultPatRoot = BootAlloc(PAGE_SIZE, PAGE_SIZE).IdentityPaddr();
-        BootMemset(Paddr(bsDefaultPatRoot).IdentityVaddr(), 0, PAGE_SIZE);
+        bsDefaultLatRoot = BootAlloc(PAGE_SIZE, PAGE_SIZE).IdentityPaddr();
+        BootMemset(Paddr(bsDefaultLatRoot).IdentityVaddr(), 0, PAGE_SIZE);
         bsQuickMap = BootAlloc(NUM_QUICK_MAP * PAGE_SIZE, PAGE_SIZE);
     }
 
     while (bsLastMapped < bsHeap) {
         /* Map to both bootstrap and kernel VAS regions. */
         for (Vaddr va: { Vaddr(bsLastMapped), BootToMapped(bsLastMapped) }) {
-            void *table = Paddr(bsDefaultPatRoot);
-            for (int tableLvl = NUM_PAT_TABLES - 1; tableLvl >= 0; tableLvl--) {
-                PatEntry e(va, table, tableLvl);
+            void *table = Paddr(bsDefaultLatRoot);
+            for (int tableLvl = NUM_LAT_TABLES - 1; tableLvl >= 0; tableLvl--) {
+                LatEntry e(va, table, tableLvl);
                 Paddr pa;
-                if (e.CheckFlag(PAT_EF_PRESENT)) {
+                if (e.CheckFlag(LAT_EF_PRESENT)) {
                     /* Page or table is mapped, skip level. */
                     table = Paddr(e.GetAddress());
                 } else if (tableLvl) {
@@ -119,15 +119,15 @@ MapHeap()
                     pa = BootAlloc(PAGE_SIZE, PAGE_SIZE).IdentityPaddr();
                     BootMemset(pa.IdentityVaddr(), 0, PAGE_SIZE);
                     e = pa;
-                    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
+                    e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE);
                     table = pa;
                 } else {
                     /* Unmapped page, map it. */
                     e = va == bsLastMapped ?
                         va.IdentityPaddr() :
                         MappedToBoot(va).IdentityPaddr();
-                    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
-                               PAT_EF_GLOBAL);
+                    e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE |
+                               LAT_EF_GLOBAL);
 
                     if (quickMapIdx < NUM_QUICK_MAP &&
                         va == BootToMapped(bsQuickMap) + quickMapIdx * PAGE_SIZE) {
@@ -171,13 +171,13 @@ Boot(void *arg)
      * paging if it was not yet enabled.
      */
     InitPaging(false);
-    PatEntry(&bsDefaultPatRoot, NUM_PAT_TABLES).Activate();
+    LatEntry(&bsDefaultLatRoot, NUM_LAT_TABLES).Activate();
     InitPaging(true);
 
     static BootstrapParam param;
     param.bootParam = ::bsBootParam;
     param.heap = ::bsHeap;
-    param.defaultPatRoot = ::bsDefaultPatRoot;
+    param.defaultLatRoot = ::bsDefaultLatRoot;
     param.quickMap = ::bsQuickMap;
     BootMemcpy(param.quickMapPte, ::bsQuickMapPte, sizeof(::bsQuickMapPte));
 

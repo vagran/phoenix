@@ -29,26 +29,26 @@ static vaddr_t tmpHeap;
 static vaddr_t tmpQuickMap;
 /** Temporal location for quick map PTEs (during @ref vm::MM::IS_INITIAL phase). */
 static void **tmpQuickMapPte;
-/** Temporal location for default PAT root table (during @ref vm::MM::IS_INITIAL phase). */
-static paddr_t tmpDefaultPatRoot;
+/** Temporal location for defaultLatEntryroot table (during @ref vm::MM::IS_INITIAL phase). */
+static paddr_t tmpDefaultLatRoot;
 /** Temporal location for last mapped heap address. Heap is mapped up to this
  * address. The value is valid during @ref vm::MM::IS_INITIAL phase.
  */
 static vaddr_t tmpLastMappedHeap;
 
-/** Map all pages starting from last mapped heap address till current heap
- * pointer. This function is used only during @ref vm::MM::IS_INITIAL phase. */
+/** Map all pages starting from the last mapped heap address till the current
+ * heap pointer. This function is used only during @ref vm::MM::IS_INITIAL phase. */
 static void
 MapHeap()
 {
     QuickMap qm(tmpQuickMap, NUM_QUICK_MAP, tmpQuickMapPte);
     while (tmpLastMappedHeap < tmpHeap) {
         Vaddr va = Vaddr(tmpLastMappedHeap);
-        Vaddr table = qm.Map(Paddr(tmpDefaultPatRoot));
-        for (int tableLvl = NUM_PAT_TABLES - 1; tableLvl >= 0; tableLvl--) {
-            PatEntry e(va, table, tableLvl);
+        Vaddr table = qm.Map(Paddr(tmpDefaultLatRoot));
+        for (int tableLvl = NUM_LAT_TABLES - 1; tableLvl >= 0; tableLvl--) {
+            LatEntry e(va, table, tableLvl);
             Paddr pa;
-            if (e.CheckFlag(PAT_EF_PRESENT)) {
+            if (e.CheckFlag(LAT_EF_PRESENT)) {
                 /* Page or table is mapped, skip level. */
                 pa = e.GetAddress();
                 qm.Unmap(table);
@@ -60,14 +60,14 @@ MapHeap()
                 Vaddr tableVa = qm.Map(pa);
                 memset(tableVa, 0, PAGE_SIZE);
                 e = pa;
-                e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
+                e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE);
                 qm.Unmap(table);
                 table = tableVa;
             } else {
                 /* Unmapped page, map it. */
                 e = boot::MappedToBoot(va).IdentityPaddr();
-                e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE |
-                           PAT_EF_GLOBAL);
+                e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE |
+                           LAT_EF_GLOBAL);
                 InvalidateVaddr(va);
             }
         }
@@ -333,9 +333,9 @@ QuickMap::Map(Paddr pa)
         FAULT("Quick map slots exhausted");
     }
     Vaddr va = _mapBase + idx * PAGE_SIZE;
-    PatEntry e(_mapPte[idx]);
+    LatEntry e(_mapPte[idx]);
     e = pa;
-    e.SetFlags(PAT_EF_PRESENT | PAT_EF_WRITE | PAT_EF_EXECUTE);
+    e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE);
     InvalidateVaddr(va);
     _mapped.Set(idx);
     return va;
@@ -348,7 +348,7 @@ QuickMap::Unmap(Vaddr va)
     ASSERT(va >= _mapBase && va < _mapBase + _numPages * PAGE_SIZE);
     size_t idx = (va - _mapBase) / PAGE_SIZE;
     ASSERT(_mapped[idx]);
-    PatEntry e(_mapPte[idx]);
+    LatEntry e(_mapPte[idx]);
     e.Clear();
     _mapped.Clear(idx);
     InvalidateVaddr(va);
@@ -369,14 +369,14 @@ MM::MM(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
 }
 
 void
-MM::PreInitialize(vaddr_t heap, paddr_t defaultPatRoot, vaddr_t quickMap,
+MM::PreInitialize(vaddr_t heap, paddr_t defaultLatRoot, vaddr_t quickMap,
                   void **quickMapPte)
 {
     ::tmpHeap = heap;
     ::tmpLastMappedHeap = Vaddr(heap).RoundUp();
     ::tmpQuickMap = quickMap;
     ::tmpQuickMapPte = quickMapPte;
-    ::tmpDefaultPatRoot = defaultPatRoot;
+    ::tmpDefaultLatRoot = defaultLatRoot;
 
     _initState = IS_PREINITIALIZED;
 }

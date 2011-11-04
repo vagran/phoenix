@@ -62,7 +62,7 @@ Main(void *arg)
 
     /* Memory allocations are possible after this call. */
     vm::MM::PreInitialize(boot::BootToMapped(param->heap),
-                          param->defaultPatRoot,
+                          param->defaultLatRoot,
                           boot::BootToMapped(param->quickMap),
                           boot::BootToMapped(param->quickMapPte));
 

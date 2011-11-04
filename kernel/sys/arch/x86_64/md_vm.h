@@ -20,21 +20,21 @@ enum {
     /** Number of bits to shift to get a memory page frame. */
     PAGE_SHIFT =            12,
 
-    /** Number of physical address translation tables in the hierarchy. */
-    NUM_PAT_TABLES =        4,
+    /** Number of linear address translation tables in the hierarchy. */
+    NUM_LAT_TABLES =        4,
 };
 
 /** Memory page index. */
 typedef u64 PageIdx;
 
-/** Index of an entry in a physical address translation table. */
-typedef u32 PatEntryIdx;
+/** Index of an entry in a linear address translation table. */
+typedef u32 LatEntryIdx;
 
 /** Process context identifier. */
 typedef u32 ProcCtxId;
 
-/** Helper class to extract components (PAT tables entries indices and offset
- * in a page) from a virtual address. Defines the layout of PAT tables
+/** Helper class to extract components (LAT tables entries indices and offset
+ * in a page) from a virtual address. Defines the layout of LAT tables
  * hierarchy and virtual address fields layout.
  */
 class VaddrDecoder {
@@ -42,25 +42,25 @@ public:
     /** Construct decoder object from virtual address. */
     inline VaddrDecoder(vaddr_t va = 0) { _va.va = va; }
 
-    /** Get size of specified PAT table.
+    /** Get size of specifiedLatEntrytable.
      *
      * @param tableLvl Null-based table level starting from least significant
      *      (e.g. page table, page directory, ...).
      * @return Number of entries in a specified table.
      */
     static inline u32 GetTableSize(u32 UNUSED tableLvl) {
-        ASSERT(tableLvl < NUM_PAT_TABLES);
-        /* 512 entries in each PAT table. */
+        ASSERT(tableLvl < NUM_LAT_TABLES);
+        /* 512 entries in eachLatEntrytable. */
         return 512;
     }
 
-    /** Get entry index in a specified PAT table of the given virtual address.
+    /** Get entry index in a specifiedLatEntrytable of the given virtual address.
      *
-     * @param tableLvl PAT table level.
-     * @return Index of the entry in the specified PAT table corresponding to
+     * @param tableLvl LAT table level.
+     * @return Index of the entry in the specifiedLatEntrytable corresponding to
      *      the given virtual address.
      */
-    inline PatEntryIdx GetEntryIndex(u32 tableLvl) {
+    inline LatEntryIdx GetEntryIndex(u32 tableLvl) {
         switch (tableLvl) {
         case 0:
             return _va.fields.tblIdx0;
@@ -96,10 +96,10 @@ private:
     } _va;
 };
 
-/** Class representing PAT table entry. */
-class PatEntry {
+/** Class representingLatEntrytable entry. */
+class LatEntry {
 public:
-    inline PatEntry() {
+    inline LatEntry() {
         _ptr.raw = 0;
         _tableLvl = 0;
     }
@@ -111,7 +111,7 @@ public:
      * @param tableLvl Null-based table level starting from least significant
      *      (e.g. page table, page directory, ...).
      */
-    inline PatEntry(vaddr_t va, void *table, u32 tableLvl = 0) {
+    inline LatEntry(vaddr_t va, void *table, u32 tableLvl = 0) {
         Set(va, table, tableLvl);
     }
 
@@ -120,7 +120,7 @@ public:
      * @param entry Pointer to the entry.
      * @param tableLvl Level of the table which contains the entry.
      */
-    inline PatEntry(void *entry, u32 tableLvl = 0) {
+    inline LatEntry(void *entry, u32 tableLvl = 0) {
         Set(entry, tableLvl);
     }
 
@@ -132,7 +132,7 @@ public:
      *      (e.g. page table, page directory, ...).
      */
     inline void Set(vaddr_t va, void *table, u32 tableLvl = 0) {
-        ASSERT(tableLvl <= NUM_PAT_TABLES);
+        ASSERT(tableLvl <= NUM_LAT_TABLES);
         _tableLvl = tableLvl;
         _ptr.ptr = table;
         VaddrDecoder dec(va);
@@ -145,7 +145,7 @@ public:
      * @param tableLvl Level of the table which contains the entry.
      */
     inline void Set(void *entry, u32 tableLvl = 0) {
-        ASSERT(tableLvl <= NUM_PAT_TABLES);
+        ASSERT(tableLvl <= NUM_LAT_TABLES);
         _tableLvl = tableLvl;
         _ptr.ptr = entry;
     }
@@ -155,7 +155,7 @@ public:
      * @return @a true if the page was accessed.
      */
     inline bool IsAccessed() {
-        if (_tableLvl == NUM_PAT_TABLES) {
+        if (_tableLvl == NUM_LAT_TABLES) {
             /* CR3 does not have the flag. */
             return false;
         }
@@ -168,7 +168,7 @@ public:
      * @return Previous value.
      */
     inline bool SetAccessed(bool flag = true) {
-        if (_tableLvl == NUM_PAT_TABLES) {
+        if (_tableLvl == NUM_LAT_TABLES) {
             /* CR3 does not have the flag. */
             return false;
         }
@@ -182,7 +182,7 @@ public:
      * @return @a true if the page was modified.
      */
     inline bool IsDirty() {
-        if (_tableLvl == NUM_PAT_TABLES) {
+        if (_tableLvl == NUM_LAT_TABLES) {
             /* CR3 does not have the flag. */
             return false;
         }
@@ -195,7 +195,7 @@ public:
      * @return Previous value.
      */
     inline bool SetDirty(bool flag = true) {
-        if (_tableLvl == NUM_PAT_TABLES) {
+        if (_tableLvl == NUM_LAT_TABLES) {
             /* CR3 does not have the flag. */
             return false;
         }
@@ -204,59 +204,59 @@ public:
         return curFlag;
     }
 
-    /** Check specified flag in PAT entry.
+    /** Check specified flag inLatEntryentry.
      * @param flag Flag to check.
      * @return Specified flag value.
      */
-    bool CheckFlag(PatEntryFlags flag) {
-        ASSERT(_tableLvl <= NUM_PAT_TABLES);
-        if (_tableLvl == NUM_PAT_TABLES) {
+    bool CheckFlag(LatEntryFlags flag) {
+        ASSERT(_tableLvl <= NUM_LAT_TABLES);
+        if (_tableLvl == NUM_LAT_TABLES) {
             switch (flag) {
-            case PAT_EF_WRITE_THROUGH:
+            case LAT_EF_WRITE_THROUGH:
                 return _ptr.cr3->pwt;
-            case PAT_EF_CACHE_DISABLE:
+            case LAT_EF_CACHE_DISABLE:
                 return _ptr.cr3->pcd;
             default:
                 return false;
             }
         }
         switch (flag) {
-        case PAT_EF_PRESENT:
+        case LAT_EF_PRESENT:
             return _ptr.entryPage->present;
-        case PAT_EF_WRITE:
+        case LAT_EF_WRITE:
             return _ptr.entryPage->write;
-        case PAT_EF_USER:
+        case LAT_EF_USER:
             return _ptr.entryPage->user;
-        case PAT_EF_WRITE_THROUGH:
+        case LAT_EF_WRITE_THROUGH:
             return _ptr.entryPage->writeThrough;
-        case PAT_EF_CACHE_DISABLE:
+        case LAT_EF_CACHE_DISABLE:
             return _ptr.entryPage->cacheDisable;
-        case PAT_EF_EXECUTE:
+        case LAT_EF_EXECUTE:
             return !_ptr.entryPage->executeDisable;
-        case PAT_EF_GLOBAL:
+        case LAT_EF_GLOBAL:
             return _ptr.entryPage->global;
         }
         FAULT("Invalid flag specified: %d", flag);
         return false;
     }
 
-    /** Set or clear specified flag in PAT entry.
+    /** Set or clear specified flag inLatEntryentry.
      *
      * @param flag Flag to set or clear. Corresponding machine-dependent flag
      *      will be affected.
      * @param setIt Set the flag if @a true, clear otherwise.
      * @return Previous flag state.
      */
-    bool SetFlag(PatEntryFlags flag, bool setIt = true) {
+    bool SetFlag(LatEntryFlags flag, bool setIt = true) {
         bool prev;
-        ASSERT(_tableLvl <= NUM_PAT_TABLES);
-        if (_tableLvl == NUM_PAT_TABLES) {
+        ASSERT(_tableLvl <= NUM_LAT_TABLES);
+        if (_tableLvl == NUM_LAT_TABLES) {
             switch (flag) {
-            case PAT_EF_WRITE_THROUGH:
+            case LAT_EF_WRITE_THROUGH:
                 prev = _ptr.cr3->pwt;
                 _ptr.cr3->pwt = setIt ? 1 : 0;
                 break;
-            case PAT_EF_CACHE_DISABLE:
+            case LAT_EF_CACHE_DISABLE:
                 prev = _ptr.cr3->pcd;
                 _ptr.cr3->pcd = setIt ? 1 : 0;
                 break;
@@ -267,33 +267,33 @@ public:
             return prev;
         }
         switch (flag) {
-        case PAT_EF_PRESENT:
+        case LAT_EF_PRESENT:
             prev = _ptr.entryPage->present;
             _ptr.entryPage->present = setIt ? 1 : 0;
             break;
-        case PAT_EF_WRITE:
+        case LAT_EF_WRITE:
             prev = _ptr.entryPage->write;
             _ptr.entryPage->write = setIt ? 1 : 0;
             break;
-        case PAT_EF_USER:
+        case LAT_EF_USER:
             prev = _ptr.entryPage->user;
             _ptr.entryPage->user = setIt ? 1 : 0;
             break;
-        case PAT_EF_WRITE_THROUGH:
+        case LAT_EF_WRITE_THROUGH:
             prev = _ptr.entryPage->writeThrough;
             _ptr.entryPage->writeThrough = setIt ? 1 : 0;
             break;
-        case PAT_EF_CACHE_DISABLE:
+        case LAT_EF_CACHE_DISABLE:
             prev = _ptr.entryPage->cacheDisable;
             _ptr.entryPage->cacheDisable = setIt ? 1 : 0;
             break;
-        case PAT_EF_EXECUTE:
+        case LAT_EF_EXECUTE:
             prev = !_ptr.entryPage->executeDisable;
             if (vmCaps.IsValid() && vmCaps.nx) {
                 _ptr.entryPage->executeDisable = setIt ? 0 : 1;
             }
             break;
-        case PAT_EF_GLOBAL:
+        case LAT_EF_GLOBAL:
             prev = _ptr.entryPage->global;
             if (_tableLvl == 0 && vmCaps.IsValid() && vmCaps.pge) {
                 _ptr.entryPage->global = setIt ? 1 : 0;
@@ -306,22 +306,22 @@ public:
         return prev;
     }
 
-    /** Set PAT entry flags.
+    /** SetLatEntryentry flags.
      *
      * @param flags Flags which must be set. Any number of flags defined by
-     *      @ref PatEntryFlags can be specified. Corresponding machine-dependent
+     *      @ref LatEntryFlags can be specified. Corresponding machine-dependent
      *      flags will be set, flags which were not specified will be cleared.
      * @return Previous combination of the flags.
      */
     long SetFlags(long flags) {
-        static const PatEntryFlags allFlags[] = {
-            PAT_EF_PRESENT,
-            PAT_EF_WRITE,
-            PAT_EF_USER,
-            PAT_EF_WRITE_THROUGH,
-            PAT_EF_CACHE_DISABLE,
-            PAT_EF_EXECUTE,
-            PAT_EF_GLOBAL
+        static const LatEntryFlags allFlags[] = {
+            LAT_EF_PRESENT,
+            LAT_EF_WRITE,
+            LAT_EF_USER,
+            LAT_EF_WRITE_THROUGH,
+            LAT_EF_CACHE_DISABLE,
+            LAT_EF_EXECUTE,
+            LAT_EF_GLOBAL
         };
         long prev;
 
@@ -362,7 +362,7 @@ public:
      * @param pa Physical address to set.
      * @return Reference to itself.
      */
-    inline PatEntry &operator=(paddr_t pa) { SetAddress(pa); return *this; }
+    inline LatEntry &operator=(paddr_t pa) { SetAddress(pa); return *this; }
 
     /** Cast entry to pointer.
      * @return Pointer to the entry in a table.
@@ -371,21 +371,21 @@ public:
 
     /** Get process context identifier. Not all architectures support this
      * parameter. Zero returned on unsupported architectures. The entry must
-     * be PAT tables root entry.
+     * beLatEntrytables root entry.
      * @return Process context identifier associated with the given root entry.
      */
     inline ProcCtxId GetProcCtxId() {
-        ENSURE(_tableLvl == NUM_PAT_TABLES);
+        ENSURE(_tableLvl == NUM_LAT_TABLES);
         return _ptr.cr3->pcid;
     }
 
     /** Set process context identifier. Not all architectures support this
      * parameter. The value is ignored on unsupported architectures. The entry
-     * must be PAT tables root entry.
+     * must beLatEntrytables root entry.
      * @return Process context identifier associated with the given root entry.
      */
     inline ProcCtxId SetProcCtxId(ProcCtxId pcid) {
-        ENSURE(_tableLvl == NUM_PAT_TABLES);
+        ENSURE(_tableLvl == NUM_LAT_TABLES);
         ProcCtxId oldPcid = _ptr.cr3->pcid;
         if (vmCaps.IsValid() && vmCaps.pcid) {
             _ptr.cr3->pcid = pcid;
@@ -397,7 +397,7 @@ public:
      * new address space root entry.
      */
     inline void Activate() {
-        ENSURE(_tableLvl == NUM_PAT_TABLES);
+        ENSURE(_tableLvl == NUM_LAT_TABLES);
         cpu::wcr3(*_ptr.raw);
     }
 
@@ -418,7 +418,7 @@ private:
         };
     };
 
-    /** PAT table entry which maps page. */
+    /**LatEntrytable entry which maps page. */
     struct EntryPage {
         paddr_t     /** Page is present. */
                     present:1,
@@ -452,7 +452,7 @@ private:
                     executeDisable:1;
     };
 
-    /** PAT table entry which maps another table. */
+    /**LatEntrytable entry which maps another table. */
     struct EntryTable {
         paddr_t     /** Page is present. */
                     present:1,
@@ -470,7 +470,7 @@ private:
                     accessed:1,
                     :1,
                      /** Page Size - the entry maps the data page, bypassing
-                      * all the rest PAT tables in the hierarchy. Size of
+                      * all the restLatEntrytables in the hierarchy. Size of
                       * the page is equal to the size of the region
                       * controlled by the entry. Should be zero for this
                       * structure. @ref EntryPage describes the structure

@@ -2,6 +2,50 @@
 
 VM subsystem is one of the most important subsystems in the Phoenix OS which reflects whole the system design.
 
+===== Physical memory mapping =====
+
+There are two commonly used approaches for mapping the physical memory in the OS:
+  - Straight-forward simple way -- map all available physical memory persistently to continuous virtual address space region and use it to access physical pages. The mapping is visible to the kernel only, user space maps are constructed separately. Linux is utilizing this approach.
+  - More advanced and elegant way -- map LAT((Linear Address Translation)) tables hierarchy using recursive mapping, allocate and map physical pages on demand. BSD-based UNIX systems use this approach.
+
+Both methods have pros and cons, one of them should be selected for Phoenix OS.
+
+==== Persistent PM mapping ====
+
+Pros:
+
+  - Simple physical memory management. It is reflected as virtual address space region.
+  - One allocator can be used to allocate kernel dynamical memory. Allocating some range in PM mapping region in the same time allocates physical memory range.
+  - All dynamical memory ranges allocated by the kernel are automatically mapped to **continuous** physical memory pages. It is often required for memory regions used in DMA transactions.
+  - Any physical memory page is instantly accessible by the kernel. It is never required to make some new persistent or temporary mapping for a page.
+
+Cons:
+  - Overhead of memory usage by LAT tables which are required to map all physical memory. Often the kernel does not need access to the most of physical pages (e.g. these which contain user space processes data) but they are still mapped to the PM mapping region and consume physical pages for LAT tables. FIXME //calculate exact numbers of required memory consumption overhead//
+  - On 32-bits architectures virtual address space is too small to hold the whole PM mapping. On Linux it became a problem when typical RAM size became greater than 768MB. The workaround was mapping directly only 768MB of PM, and the rest is mapped dynamically on demand. The cost for this workaround is performance degradation when accessing dynamically mapped PM. This con can be accounted with low importance level since Phoenix is designed for 64-bits architectures.
+  - PTE lookup for a given virtual address must be done by software which should traverse all LAT tables hierarchy.
+
+==== Recursive mapping ====
+
+Pros:
+  - Reduced memory consumption by LAT tables because of two factors:
+    * Only really used PM is mapped to the kernel address space. 
+    * Mapping for LAT tables themselves is done automatically by recursive LAT root table entries. It ensures that all LAT tables map themselves with zero additional tables required.
+  - Easier PTE access by a given virtual address. This is ensured by recursive LAT tables mapping so the PTE lookup is assisted by CPU hardware LAT capabilities (on the architectures where LAT tables traversal is done by hardware).
+
+
+Cons:
+  - Only current address space PTEs can be accessed using recursive LAT mapping. If other address space mapping must be modified, it is needed to have one or several alternative address spaces recursively mapped in the current address space. However other address spaces modifications are not often required.
+  - In order to access some arbitrary physical page content, a temporal mapping of that page must be created and released after the access.
+  - Special measures must be taken in order to be able to allocate continuous physical memory (e.g. some separate allocator for physical address space).
+
+==== Conclusion ====
+
+Both methods also require additional array of pages descriptors which store additional page attributes required by the system (reference counters, mapping associations, lists/trees entries, swapping-related information etc.).
+
+Both methods can be partially combined to have their benefits merged. It is possible to have persistent PM mapping with recursive mapping for LAT tables at the same time. It will give some benefits to the first approach with almost zero cost.
+
+FIXME //Still need to make decision.//
+
 ===== Virtual address space distribution =====
 
 The lower 2GB is a space for all executable binaries linking. So all executables are built with an assumption that all sections and symbols will be located in lower 2GB of VM space. This is required to allow compiler to use 32 bits offsets when referencing program symbols. Each container has its own private virtual address space in the lowest 2GB where its executable image and all required shared libraries are mapped.
@@ -26,7 +70,7 @@ The following objects are fundamental bricks of Phoenix VM subsystem model.
 
 Page object represents physical memory page. In Phoenix it always has 4KB size.
 
-Page can **wired** -- locked into physical memory and will not be paged out until wiring counter is not zero.
+Page can be **wired** -- locked into physical memory and will not be paged out until wiring counter is not zero.
 
 During system start-up all available physical memory is revised and page descriptors array is created. Array size correspond to range of managed pages. In order to eliminate additional pages wasting for the array itself, the physical memory for the array is taken from the top of available physical memory.
 
@@ -46,7 +90,7 @@ Map stores only machine-independent part of mapping information. A map has point
 
 ==== Physical map ====
 
-Physical map represents machine-dependent part of virtual address space. Typically it contains physical address translation (PAT) tables and have methods to activate address space in hardware (e.g. write PAT tables root pointer to a corresponding CPU register).
+Physical map represents machine-dependent part of virtual address space. Typically it contains linear address translation (LAT) tables and have methods to activate address space in hardware (e.g. write LAT tables root pointer to a corresponding CPU register).
 
 ==== Map entry ====
 
@@ -76,3 +120,5 @@ The kernel has a simple mechanism for allocating own dynamic memory. It uses sca
 ===== Memory allocations =====
 
 Buddy allocator is used for allocating space in the global address space. It is used for allocating large blocks (staring from one page and greater) which are passed to scalable slab allocator which splits these large blocks to smaller well fitted units. This approach ensures optimal memory utilization.
+
+Memory allocation API does not provide any functions to the front-end code other than C++ "''new''" and "''delete''" operators which are the only way to allocate and free dynamical memory.

@@ -218,9 +218,6 @@ extern SysLog *sysLog;
  */
 #define LOG     (*log::sysLog)
 
-/** Initialize logging functionality. */
-void InitLog();
-
 #elif defined(EFI_APP) /* KERNEL */
 
 /* Stub for EFI environment. */
@@ -231,6 +228,9 @@ typedef void *SysLog;
 // XXX user space log
 
 #endif /* KERNEL/EFI_APP */
+
+/** Initialize logging functionality. */
+void InitLog();
 
 /** Macro for short reference to system log levels. Usage example:
  * @code

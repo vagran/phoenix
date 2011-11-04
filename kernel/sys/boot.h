@@ -57,7 +57,7 @@ extern BootParam *kernBootParam;
 struct BootstrapParam {
     BootParam *bootParam; /**< Boot parameters from the boot loader. */
     vaddr_t heap; /**< Current heap pointer. */
-    paddr_t defaultPatRoot; /**< Default PAT root table. */
+    paddr_t defaultLatRoot; /**< Default LAT root table. */
     vaddr_t quickMap; /**< Quick map pages. They are allocated consequentially. */
     void *quickMapPte[vm::NUM_QUICK_MAP]; /**< Quick map PTEs. */
 };

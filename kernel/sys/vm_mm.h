@@ -84,12 +84,12 @@ public:
      * in case of failure.
      *
      * @param heap Current heap pointer.
-     * @param defaultPatRoot Default PAT root table.
+     * @param defaultLatRoot Default LAT root table.
      * @param quickMap Quick map pages. They are allocated consequentially.
      * @param quickMapPte Quick map PTEs.
      */
     static void PreInitialize(vaddr_t heap,
-                              paddr_t defaultPatRoot,
+                              paddr_t defaultLatRoot,
                               vaddr_t quickMap,
                               void **quickMapPte);
 
@@ -124,7 +124,7 @@ private:
     /** Quick map first page virtual address. */
     Vaddr _quickMap;
     /** PTEs for quick map pages. */
-    PatEntry _quickMapPte[NUM_QUICK_MAP];
+    LatEntry _quickMapPte[NUM_QUICK_MAP];
 };
 
 /** Global memory manager singleton. */

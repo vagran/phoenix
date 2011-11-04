@@ -21,40 +21,40 @@ namespace {
 /** Namespace with virtual memory subsystem components. */
 namespace vm {
 
-/** Machine-independent flags for each PAT table entry.
+/** Machine-independent flags for eachLatEntrytable entry.
  * Underlying machine-dependent implementation translates them to real
  * machine-dependent values for each table in the hierarchy. Some tables (and/or
  * some architectures) may not support some flags, so they are ignored.
  */
-enum PatEntryFlags {
+enum LatEntryFlags {
     /** Indicates that a page is resident. If not set the rest
      * parameters are not valid; access to this page will cause page fault or
      * TLB miss fault depending on architecture.
      */
-    PAT_EF_PRESENT =        0x1,
+    LAT_EF_PRESENT =        0x1,
     /** Indicates that a page is writable. If not set then the page is read-only
      * and write access will produce page fault.
      */
-    PAT_EF_WRITE =          0x2,
+    LAT_EF_WRITE =          0x2,
     /** Indicates that a page is accessible by user-land. If not set then the
      * page is accessible by system only.
      */
-    PAT_EF_USER =           0x4,
+    LAT_EF_USER =           0x4,
     /** Indicates that writing to a page is not cached and causes immediate
      * writing to physical memory.
      */
-    PAT_EF_WRITE_THROUGH =  0x8,
+    LAT_EF_WRITE_THROUGH =  0x8,
     /** Indicates that this page is never cached. Can be useful for memory
      * mapped devices.
      */
-    PAT_EF_CACHE_DISABLE =  0x10,
+    LAT_EF_CACHE_DISABLE =  0x10,
     /** Indicates that this is accessible for instructions fetches. */
-    PAT_EF_EXECUTE =        0x20,
+    LAT_EF_EXECUTE =        0x20,
     /** Indicates that this page is global. It could provide a hint for
-     * underlying PAT implementation to preserve cached entries for such pages
+     * underlyingLatEntryimplementation to preserve cached entries for such pages
      * when switching virtual address spaces.
      */
-    PAT_EF_GLOBAL =         0x40,
+    LAT_EF_GLOBAL =         0x40,
 };
 
 /** Virtual memory subsystem capabilities. @ref IsValid method should be called

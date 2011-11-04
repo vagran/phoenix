@@ -283,7 +283,7 @@ enum ApicBaseBits {
     APICBASE_ADDRESS =      0xffffff000ul,
 };
 
-/** x86 PAT modes. */
+/** x86LatEntrymodes. */
 enum PatModes {
     PAT_UNCACHEABLE =       0x00,
     PAT_WRITE_COMBINING =   0x01,

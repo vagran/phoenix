@@ -293,8 +293,8 @@ class t_paddr_printer:
     
 add_pretty_printer(t_paddr_printer)
 
-class c_PatEntry_printer:
-    name = 'class PatEntry'
+class c_LatEntry_printer:
+    name = 'class LatEntry'
     flags = { 'present':    'PRESENT',
               'write':      'WRITE',
               'user':       'USER',
@@ -312,19 +312,19 @@ class c_PatEntry_printer:
         
     def to_string(self):
         e = self.val['_ptr']['entryPage'].dereference();
-        s = 'vm::PatEntry: pa = 0x%016x; ' % (e['pa'] << 12)
-        s += str_bitfield_flags(e, c_PatEntry_printer.flags)
+        s = 'vm::LatEntry: pa = 0x%016x; ' % (e['pa'] << 12)
+        s += str_bitfield_flags(e, c_LatEntry_printer.flags)
         return s
     
     def display_hint(self):
-        return c_PatEntry_printer.name
+        return c_LatEntry_printer.name
     
     @staticmethod
     def lookup(val):
         if val.type.code != gdb.TYPE_CODE_STRUCT or \
-            (val.type.tag != '(anonymous namespace)::vm::PatEntry' and \
-             val.type.tag != 'vm::PatEntry'):
+            (val.type.tag != '(anonymous namespace)::vm::LatEntry' and \
+             val.type.tag != 'vm::LatEntry'):
             return None
-        return c_PatEntry_printer(val)
+        return c_LatEntry_printer(val)
     
-add_pretty_printer(c_PatEntry_printer)
+add_pretty_printer(c_LatEntry_printer)
