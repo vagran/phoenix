@@ -42,7 +42,7 @@ OTextStreamBase::_Puts(Context &ctx, const char *str)
 }
 
 OTextStreamBase &
-OTextStreamBase::operator << (Opt &&opt)
+OTextStreamBase::operator << (const Opt &opt)
 {
     if (opt._enable) {
         _globalCtx.SetOpt(opt._option, opt._param);
@@ -55,7 +55,7 @@ OTextStreamBase::operator << (Opt &&opt)
 OTextStreamBase &
 OTextStreamBase::operator << (bool value)
 {
-    _FormatValue(_globalCtx, value);
+    FormatValue(_globalCtx, value);
     return *this;
 }
 
@@ -69,42 +69,42 @@ OTextStreamBase::operator << (char value)
 OTextStreamBase &
 OTextStreamBase::operator << (short value)
 {
-    _FormatValue(_globalCtx, value);
+    FormatValue(_globalCtx, value);
     return *this;
 }
 
 OTextStreamBase &
 OTextStreamBase::operator << (unsigned short value)
 {
-    _FormatValue(_globalCtx, value);
+    FormatValue(_globalCtx, value);
     return *this;
 }
 
 OTextStreamBase &
 OTextStreamBase::operator << (int value)
 {
-    _FormatValue(_globalCtx, value);
+    FormatValue(_globalCtx, value);
     return *this;
 }
 
 OTextStreamBase &
 OTextStreamBase::operator << (unsigned int value)
 {
-    _FormatValue(_globalCtx, value);
+    FormatValue(_globalCtx, value);
     return *this;
 }
 
 OTextStreamBase &
 OTextStreamBase::operator << (long value)
 {
-    _FormatValue(_globalCtx, value);
+    FormatValue(_globalCtx, value);
     return *this;
 }
 
 OTextStreamBase &
 OTextStreamBase::operator << (unsigned long value)
 {
-    _FormatValue(_globalCtx, value);
+    FormatValue(_globalCtx, value);
     return *this;
 }
 
@@ -305,16 +305,16 @@ OTextStreamBase::FormatV(Context &ctx, const char *fmt, va_list args)
             _FormatIntValue(_ctx, va_arg(args, size_t), fmtChar);
             break;
         case 's':
-            _FormatValue(_ctx, va_arg(args, char *), fmtChar);
+            FormatValue(_ctx, va_arg(args, char *), fmtChar);
             break;
         case 'c':
             {
                 char c = va_arg(args, int);
-                _FormatValue(_ctx, c, fmtChar);
+                FormatValue(_ctx, c, fmtChar);
             }
             break;
         case 'p':
-            _FormatValue(_ctx, va_arg(args, void *), fmtChar);
+            FormatValue(_ctx, va_arg(args, void *), fmtChar);
             break;
         default:
             FAULT("Unknown format character specified: '%c'", fmtChar);
@@ -329,7 +329,7 @@ OTextStreamBase::FormatV(Context &ctx, const char *fmt, va_list args)
 }
 
 bool
-OTextStreamBase::_FormatValue(Context &ctx, bool value, char fmt UNUSED)
+OTextStreamBase::FormatValue(Context &ctx, bool value, char fmt UNUSED)
 {
     const char *s;
     if (ctx.Opt(Opt::O_NUM_BOOL)) {
@@ -342,7 +342,7 @@ OTextStreamBase::_FormatValue(Context &ctx, bool value, char fmt UNUSED)
 }
 
 bool
-OTextStreamBase::_FormatValue(Context &ctx, char value, char fmt UNUSED)
+OTextStreamBase::FormatValue(Context &ctx, char value, char fmt UNUSED)
 {
     return _FormatField(ctx, &value, 1);
 }

@@ -23,3 +23,27 @@ MemoryMap::MemoryMap(void *memMap, size_t numDesc, size_t descSize, u32 descVers
     _descSize = descSize;
     _descVersion = descVersion;
 }
+
+const char *
+MemoryMap::GetTypeName(MemType type)
+{
+    static const char *names[] = {
+        "Reserved",
+        "Loader code",
+        "Loader data",
+        "Boot services code",
+        "Boot services data",
+        "Runtime services code",
+        "Runtime services data",
+        "Conventional",
+        "Unusable",
+        "ACPI reclaim",
+        "ACPI NVS",
+        "Memory mapped I/O",
+        "Memory mapped I/O port space",
+        "PAL code"
+    };
+
+    ASSERT(type < EfiMaxMemoryType);
+    return names[type];
+}

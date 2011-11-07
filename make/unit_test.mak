@@ -34,7 +34,7 @@ OBJS = $(foreach obj,$(SRCS:.cpp=.o),$(OBJ_DIR)/$(obj))
 
 INCLUDE_FLAGS += -I$(UT_DIR)
 
-COMMON_FLAGS = -pipe -Wall -Werror
+COMMON_FLAGS = -pipe -Wall -Werror -DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
 
 ifeq ($(PHOENIX_TARGET),RELEASE)
 COMMON_FLAGS += -O2

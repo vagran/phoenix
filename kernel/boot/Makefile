@@ -34,7 +34,8 @@ CPP_FLAGS = $(GLOBAL_CXX_FLAGS) $(CXX_STANDARD) $(CXX_RESTRICTIONS) \
 
 COMMON_FLAGS = $(GLOBAL_FLAGS) -fpic -Wall -Werror -fshort-wchar \
 	-fno-strict-aliasing -fno-merge-constants -DEFI_FUNCTION_WRAPPER \
-	-mno-red-zone -DCONFIG_x86_64 -DBOOT_LOADER -DEFI_APP
+	-mno-red-zone -DCONFIG_x86_64 -DBOOT_LOADER -DEFI_APP \
+	-DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
 
 SECTIONS = .text .sdata .data .dynamic .dynsym .rel .rela .reloc
 DEBUG_SECTIONS = .debug_info .debug_abbrev .debug_loc .debug_aranges \

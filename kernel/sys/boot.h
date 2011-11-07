@@ -66,7 +66,7 @@ struct BootstrapParam {
 static inline vm::Vaddr
 BootToMapped(vm::Vaddr va)
 {
-    return va - LOAD_ADDRESS + KERNEL_ADDRESS;
+    return va - LOAD_ADDRESS + vm::VMA_KERNEL_TEXT;
 }
 
 /** Convert  kernel virtual address to bootstrap identity mapped address. */

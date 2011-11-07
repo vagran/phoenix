@@ -96,7 +96,7 @@ private:
     } _va;
 };
 
-/** Class representingLatEntrytable entry. */
+/** Class representing LAT table entry. */
 class LatEntry {
 public:
     inline LatEntry() {
@@ -165,7 +165,7 @@ public:
     /** Set or clear @a accessed flag for an entry.
      * @param flag Value to set in the flag.
      *
-     * @return Previous value.
+     * @return Previous value of the flag.
      */
     inline bool SetAccessed(bool flag = true) {
         if (_tableLvl == NUM_LAT_TABLES) {
@@ -192,7 +192,7 @@ public:
     /** Set or clear @a dirty flag for an entry.
      * @param flag Value to set in the flag.
      *
-     * @return Previous value.
+     * @return Previous value of the flag.
      */
     inline bool SetDirty(bool flag = true) {
         if (_tableLvl == NUM_LAT_TABLES) {

@@ -21,7 +21,7 @@ namespace {
 /** Namespace with virtual memory subsystem components. */
 namespace vm {
 
-/** Machine-independent flags for eachLatEntrytable entry.
+/** Machine-independent flags for each LatEntrytable entry.
  * Underlying machine-dependent implementation translates them to real
  * machine-dependent values for each table in the hierarchy. Some tables (and/or
  * some architectures) may not support some flags, so they are ignored.
@@ -51,8 +51,8 @@ enum LatEntryFlags {
     /** Indicates that this is accessible for instructions fetches. */
     LAT_EF_EXECUTE =        0x20,
     /** Indicates that this page is global. It could provide a hint for
-     * underlyingLatEntryimplementation to preserve cached entries for such pages
-     * when switching virtual address spaces.
+     * underlying LAT entry (see @ref LatEntry) implementation to preserve
+     * cached entries for such pages when switching virtual address spaces.
      */
     LAT_EF_GLOBAL =         0x40,
 };
@@ -110,9 +110,27 @@ namespace vm {
 
 enum {
     /** Memory page size in bytes. */
-    PAGE_SIZE =     (1 << PAGE_SHIFT),
+    PAGE_SIZE =             (1 << PAGE_SHIFT),
     /** Number of quick map entries. */
     NUM_QUICK_MAP =         4,
+
+    /** System data space region size. */
+    SYS_DATA_SIZE =         4ul * 1024ul * 1024ul * 1024ul,
+    /** Size of of gate area region. Code for the kernel mode entry points is
+     * placed in this area.
+     */
+    GATE_AREA_SIZE =        64 * 1024,
+
+    /** Container code first address. */
+    VMA_CNTR_TEXT =         PAGE_SIZE,
+    /** Kernel code first address. */
+    VMA_KERNEL_TEXT =       KERNEL_ADDRESS,
+    /** System data space start address. */
+    VMA_SYS_DATA =          2ul * 1024ul * 1024ul * 1024ul,
+    /** Kernel gate area start address. */
+    VMA_KERNEL_PUBLIC =     VMA_SYS_DATA - GATE_AREA_SIZE,
+    /** Start address of global data space. */
+    VMA_GLOBAL_DATA =       VMA_SYS_DATA + SYS_DATA_SIZE
 };
 
 /** Class representing generic address of the VM subsystem. */
@@ -121,10 +139,12 @@ class Addr {
 public:
     /** Construct VM address from VM address integer type. */
     inline Addr(AddrType addr = 0) { _addr.addr = addr; }
-    /** Construct VM address from integer type. */
-    inline Addr(int addr) { _addr.addr = addr; }
+    /** Construct VM address from any integer type. */
+    template <typename T>
+    inline Addr(T addr) { _addr.addr = addr; }
     /** Construct VM address from pointer type. */
-    inline Addr(void *ptr) { _addr.ptr = ptr; }
+    template <typename T>
+    inline Addr(T *ptr) { _addr.ptr = ptr; }
 
     /** Assign address value to VM address. */
     inline Addr &operator=(AddrType addr) { _addr.addr = addr; return *this; }
@@ -162,19 +182,41 @@ public:
     /** Compare VM addresses. */
     inline bool operator <(Addr &addr) { return _addr.addr < addr._addr.addr; }
     /** Compare VM addresses. */
+    template <typename T>
+    inline bool operator <(T addr) { return _addr.addr < addr; }
+    /** Compare VM addresses. */
     inline bool operator <=(Addr &addr) { return _addr.addr <= addr._addr.addr; }
+    /** Compare VM addresses. */
+    template <typename T>
+    inline bool operator <=(T addr) { return _addr.addr <= addr; }
     /** Compare VM addresses. */
     inline bool operator >(Addr &addr) { return _addr.addr > addr._addr.addr; }
     /** Compare VM addresses. */
+    template <typename T>
+    inline bool operator >(T addr) { return _addr.addr > addr; }
+    /** Compare VM addresses. */
     inline bool operator >=(Addr &addr) { return _addr.addr >= addr._addr.addr; }
+    /** Compare VM addresses. */
+    template <typename T>
+    inline bool operator >=(T addr) { return _addr.addr >= addr; }
 
     /** Sum VM addresses. */
     inline Addr operator +(Addr &addr) {
         return Addr(_addr.addr + addr._addr.addr);
     }
+    /** Sum VM addresses. */
+    template <typename T>
+    inline Addr operator +(T addr) {
+        return Addr(_addr.addr + addr);
+    }
     /** Subtract VM addresses. */
     inline Addr operator -(Addr &addr) {
         return Addr(_addr.addr - addr._addr.addr);
+    }
+    /** Subtract VM addresses. */
+    template <typename T>
+    inline Addr operator -(T addr) {
+        return Addr(_addr.addr - addr);
     }
 
     /** Cast VM address value to base address type. */
@@ -228,6 +270,25 @@ public:
         return dec.GetPageOffset();
     }
 
+    /** Support for converting this class to string via @ref text_stream::OTextStream. */
+    inline bool CheckFmtChar(char fmtChar) {
+        return !fmtChar || fmtChar == 'd' ||  fmtChar == 'u' || fmtChar == 'p' ||
+               fmtChar == 'x' || fmtChar == 'X' || fmtChar == 'o';
+    }
+
+    /** Support for converting this class to string via @ref text_stream::OTextStream. */
+    inline bool ToString(text_stream::OTextStreamBase &stream,
+                         text_stream::OTextStreamBase::Context &ctx,
+                         char fmtChar = 0) {
+
+        if (fmtChar == 'p') {
+            return stream.FormatValue(ctx,  _addr.ptr, fmtChar);
+        } else if (!fmtChar) {
+            fmtChar = 'x';
+        }
+        return stream.FormatValue(ctx, _addr.addr, fmtChar);
+    }
+
 protected:
     union {
         AddrType addr;
@@ -240,10 +301,12 @@ class Vaddr : public Addr<vaddr_t> {
 public:
     /** Construct virtual address from virtual address integer type. */
     inline Vaddr(vaddr_t addr = 0) : Addr(addr) { }
-    /** Construct virtual address from integer type. */
-    inline Vaddr(int addr) : Addr(addr) { }
+    /** Construct virtual address from any integer type. */
+    template <typename T>
+    inline Vaddr(T addr) : Addr(addr) { }
     /** Construct virtual address from pointer type. */
-    inline Vaddr(void *ptr) : Addr(ptr) { }
+    template <typename T>
+    inline Vaddr(T *ptr) : Addr(ptr) { }
     /** Construct virtual address from the base class. */
     inline Vaddr(Addr<vaddr_t> addr) : Addr(addr) { }
 
@@ -256,10 +319,12 @@ class Paddr : public Addr<paddr_t> {
 public:
     /** Construct physical address from physical address integer type. */
     inline Paddr(paddr_t addr = 0) : Addr(addr) { }
-    /** Construct physical address from integer type. */
-    inline Paddr(int addr) : Addr(addr) { }
+    /** Construct physical address from any integer type. */
+    template <typename T>
+    inline Paddr(T addr) : Addr(addr) { }
     /** Construct physical address from pointer type. */
-    inline Paddr(void *ptr) : Addr(ptr) { }
+    template <typename T>
+    inline Paddr(T *ptr) : Addr(ptr) { }
     /** Construct physical address from the base class. */
     inline Paddr(Addr<paddr_t> addr) : Addr(addr) { }
 

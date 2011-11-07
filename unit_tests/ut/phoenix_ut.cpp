@@ -128,8 +128,10 @@ TestMan::Run()
         }
     }
 
-    printf("======== Testing complete ========\n"
-           "%lu of %lu tests passed\n", numPassed, numTests);
+    printf("======== Testing complete [%s] ========\n"
+           "%lu of %lu tests passed\n",
+           numPassed == numTests ? "SUCCEED" : "FAILED",
+           numPassed, numTests);
     PrintStat(true);
     return numPassed == numTests;
 }

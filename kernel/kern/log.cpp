@@ -233,6 +233,7 @@ KSysLog::operator << (Level level)
         Putc('\n');
         lastNewLine = true;
     }
+    ClearOptions();
 
     _curLevel = level;
     if (_curLevel > _maxLevel) {

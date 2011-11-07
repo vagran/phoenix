@@ -132,6 +132,7 @@ MapHeap()
                     if (quickMapIdx < NUM_QUICK_MAP &&
                         va == BootToMapped(bsQuickMap) + quickMapIdx * PAGE_SIZE) {
 
+                        e.Clear();
                         bsQuickMapPte[quickMapIdx] = e;
                         quickMapIdx++;
                     }

@@ -98,6 +98,19 @@ public:
         vaddr_t vaStart;
         u64 numPages;
         u64 attr;
+
+        /** Check if the region is available for using by an OS needs. */
+        bool IsAvailable() {
+            return type == EfiLoaderCode || type == EfiLoaderData ||
+                   type == EfiBootServicesCode || type == EfiBootServicesData ||
+                   type == EfiConventionalMemory;
+        }
+
+        /** Check if the region requires management by an OS. */
+        bool NeedsManagement() {
+            return !(type == EfiReservedMemoryType || type == EfiUnusableMemory ||
+                     type == EfiMemoryMappedIO || type == EfiMemoryMappedIOPortSpace);
+        }
     };
 
     /** Iterator class for memory regions descriptors iteration. */
@@ -118,6 +131,9 @@ public:
 
     MemoryMap(void *memMap, size_t numDesc, size_t descSize, u32 descVersion);
 
+    const char *GetTypeName(MemType type);
+
+    /* Iterator interface */
     inline size_t size() { return _numDesc; }
     inline MemDescIterator begin() { return MemDescIterator(_memMap, _descSize, 0); }
     inline MemDescIterator end() { return MemDescIterator(_memMap, _descSize, _numDesc); }

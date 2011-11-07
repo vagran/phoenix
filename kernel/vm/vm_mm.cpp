@@ -314,6 +314,13 @@ QuickMap::QuickMap(Vaddr mapBase, size_t numPages, void **mapPte) :
 {
     ASSERT(mapBase.IsAligned());
     ENSURE(numPages && numPages <= MAX_PAGES);
+
+    for (size_t i = 0; i < numPages; i++) {
+        LatEntry e(mapPte[i]);
+        if (e.CheckFlag(LAT_EF_PRESENT)) {
+            _mapped.Set(i);
+        }
+    }
 }
 
 QuickMap::~QuickMap()
@@ -326,7 +333,7 @@ QuickMap::~QuickMap()
 }
 
 Vaddr
-QuickMap::Map(Paddr pa)
+QuickMap::Map(Paddr pa, long flags)
 {
     int idx = _mapped.FirstClear();
     if (idx == -1 || idx >= static_cast<int>(_numPages)) {
@@ -335,7 +342,7 @@ QuickMap::Map(Paddr pa)
     Vaddr va = _mapBase + idx * PAGE_SIZE;
     LatEntry e(_mapPte[idx]);
     e = pa;
-    e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE);
+    e.SetFlags(flags);
     InvalidateVaddr(va);
     _mapped.Set(idx);
     return va;
@@ -355,17 +362,12 @@ QuickMap::Unmap(Vaddr va)
 }
 
 MM::MM(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
-       u32 memMapDescVersion)
-{
-    //temp
-    efi::MemoryMap mm = efi::MemoryMap(memMap,
-                                       memMapNumDesc,
-                                       memMapDescSize,
-                                       memMapDescVersion);
+       u32 memMapDescVersion) :
 
-    for (efi::MemoryMap::MemDesc &d: mm) {
-        (void)d;
-    }
+       _quickMap(tmpQuickMap, NUM_QUICK_MAP, tmpQuickMapPte),
+       _defLatRoot(::tmpDefaultLatRoot)
+{
+    _InitializePhysMem(memMap, memMapNumDesc, memMapDescSize, memMapDescVersion);
 }
 
 void
@@ -385,5 +387,224 @@ void
 MM::Initialize(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
                u32 memMapDescVersion)
 {
+    ASSERT(!::mm);
     ::mm = NEW_NONREC MM(memMap, memMapNumDesc, memMapDescSize, memMapDescVersion);
+}
+
+void
+MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
+                       size_t memMapDescSize, u32 memMapDescVersion)
+{
+    _initState = IS_INITIALIZING;
+
+    efi::MemoryMap map = efi::MemoryMap(memMap,
+                                        memMapNumDesc,
+                                        memMapDescSize,
+                                        memMapDescVersion);
+
+    /* Memory occupied by the kernel image and its initial heap. */
+    _initialStart = boot::MappedToBoot(VMA_KERNEL_TEXT).IdentityPaddr();
+    _initialEnd = boot::MappedToBoot(::tmpHeap).IdentityPaddr();
+
+    /* Local allocator of physical pages. It allocates pages for LAT tables
+     * when mapping PM range. The pages are taken from available physical
+     * memory reported by the firmware.
+     */
+    class PageAllocator {
+    public:
+        inline PageAllocator(efi::MemoryMap &map, Paddr initialStart,
+                             Paddr initialEnd) :
+            _map(map), _initialStart(initialStart), _initialEnd(initialEnd) {
+
+            _availSize = 0;
+            _nextAvailSize = 0;
+
+            if (!_GetNextAvailable()) {
+                FAULT("No available physical memory found");
+            }
+        }
+
+        inline psize_t GetSize() {
+            return _availSize;
+        }
+
+        /* Allocate one page. */
+        Paddr AllocPage() {
+            if (!_availSize) {
+                FAULT("No more physical memory available");
+            }
+            Paddr pa = _avail;
+            _avail += PAGE_SIZE;
+            _availSize -= PAGE_SIZE;
+            if (!_availSize) {
+                _GetNextAvailable();
+            }
+            return pa;
+        }
+
+    private:
+        efi::MemoryMap &_map;
+        /* First available address. */
+        Paddr _avail;
+        /* Size of current available chunk. */
+        psize_t _availSize;
+        /* Memory occupied by the kernel image and its initial heap. */
+        Paddr _initialStart, _initialEnd;
+
+        /* Next available chunk if was split by initial area. */
+        Paddr _nextAvail;
+        psize_t _nextAvailSize;
+
+        /* Advance current available pointer to the next available area. */
+        psize_t _GetNextAvailable()
+        {
+            if (_availSize) {
+                return _availSize;
+            }
+
+            if (_nextAvailSize) {
+                _avail = _nextAvail;
+                _availSize = _nextAvailSize;
+                _nextAvailSize = 0;
+                return _availSize;
+            }
+
+            for (efi::MemoryMap::MemDesc &d: _map) {
+                if (!d.IsAvailable()) {
+                    continue;
+                }
+                if (_avail > d.paStart) {
+                    /* _avail stores last used chunk. */
+                    continue;
+                }
+                _avail = d.paStart;
+                _availSize = d.numPages * PAGE_SIZE;
+                _CheckInitialOverlap();
+                if (_availSize) {
+                    break;
+                }
+                if (!_availSize && _nextAvailSize) {
+                    _avail = _nextAvail;
+                    _availSize = _nextAvailSize;
+                    _nextAvailSize = 0;
+                    break;
+                }
+            }
+            return _availSize;
+        }
+
+        /* Check if the current chunk overlaps initial memory area. Adjust the
+         * chunk accordingly.
+         */
+        void _CheckInitialOverlap()
+        {
+            if (!_availSize) {
+                return;
+            }
+            if (_avail >= _initialStart) {
+                /* Possible start trimming. */
+                if (_avail + _availSize <= _initialEnd) {
+                    /* Fully overlapped. */
+                    _availSize = 0;
+                    return;
+                }
+                if (_avail >= _initialEnd) {
+                    /* No overlapping. */
+                    return;
+                }
+                /* Partial overlapping. */
+                _availSize = _avail + _availSize - _initialEnd;
+                _avail = _initialEnd;
+            } else {
+                /* Possible end trimming. */
+                if (_avail + _availSize <= _initialStart) {
+                    /* No overlapping. */
+                    return;
+                }
+                /* Overlapping, either with splitting or without it. */
+                if (_avail + _availSize > _initialEnd) {
+                    /* Splitting. */
+                    _nextAvail = _initialEnd;
+                    _nextAvailSize = _avail + _availSize - _initialEnd;
+                }
+                _availSize = _initialStart - _avail;
+            }
+        }
+    } pageAlloc(map, _initialStart, _initialEnd);
+
+    /* Firstly find the lowest and the highest available physical addresses. */
+    Paddr paMin, paMax;
+    _physMemSize = 0;
+    LOG << LL(INFO) << "System memory map:\n";
+    for (efi::MemoryMap::MemDesc &d: map) {
+        LOG.Format("[%016x - %016x] %s\n",
+                   d.paStart, d.paStart + d.numPages * PAGE_SIZE,
+                   map.GetTypeName(static_cast<efi::MemoryMap::MemType>(d.type)));
+
+        if (!d.NeedsManagement()) {
+            continue;
+        }
+
+        if (!paMax) {
+            paMin = d.paStart;
+            paMax = d.paStart + d.numPages * PAGE_SIZE;
+        } else if (d.paStart < paMin) {
+            paMin = d.paStart;
+        } else if (d.paStart + d.numPages * PAGE_SIZE > paMax) {
+            paMax = d.paStart + d.numPages * PAGE_SIZE;
+        }
+
+        if (d.IsAvailable()) {
+            _physMemSize += d.numPages * PAGE_SIZE;
+        }
+    }
+    _physFirst = paMin;
+    _physRange = paMax - paMin;
+    LOG.Info("Managed physical memory range: [%016x - %016x]", paMin, paMax);
+    LOG.Info("%dMB of physical memory available", _physMemSize / (1024 * 1024));
+
+    /* Calculate the PM mapping address. */
+    cpu::CpuCaps caps;
+    _physMemMap = static_cast<vaddr_t>(1) << (caps.GetCapability(cpu::CPU_CAP_PG_WIDTH_LIN) - 1);
+    _physMemMap -= _physRange;
+
+    /* Map all managed physical memory. */
+    for (efi::MemoryMap::MemDesc &d: map) {
+        if (!d.NeedsManagement()) {
+            continue;
+        }
+        for (size_t pageIdx = 0; pageIdx < d.numPages; pageIdx++) {
+            Paddr page = d.paStart + pageIdx * PAGE_SIZE;
+            Vaddr va = PhysToVirt(page);
+            Vaddr table = _quickMap.Map(Paddr(_defLatRoot));
+            for (int tableLvl = NUM_LAT_TABLES - 1; tableLvl >= 0; tableLvl--) {
+                LatEntry e(va, table, tableLvl);
+                Paddr pa;
+                if (e.CheckFlag(LAT_EF_PRESENT)) {
+                    /* Page or table is mapped, skip level. */
+                    pa = e.GetAddress();
+                    _quickMap.Unmap(table);
+                    table = _quickMap.Map(pa);
+                } else if (tableLvl) {
+                    /* Unmapped table, allocate and enter. */
+                    pa = pageAlloc.AllocPage();
+                    Vaddr tableVa = _quickMap.Map(pa);
+                    memset(tableVa, 0, PAGE_SIZE);
+                    e = pa;
+                    e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE);
+                    _quickMap.Unmap(table);
+                    table = tableVa;
+                } else {
+                    /* Unmapped page, map it. */
+                    e = page;
+                    e.SetFlags(LAT_EF_PRESENT | LAT_EF_WRITE | LAT_EF_EXECUTE |
+                               LAT_EF_GLOBAL);
+                    InvalidateVaddr(va);
+                }
+            }
+            _quickMap.Unmap(table);
+        }
+    }
+
+    //XXX the rest not yet implemented
 }

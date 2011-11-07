@@ -37,10 +37,10 @@ namespace text_stream {
  * @a fmtChar has value of format character specified for this object if it was
  * converted by @a Format method, or can be zero if it was converted by @a <<
  * operator. @a ctx is a conversion context which can be used to get formatting
- * options. @a Format method should be used by the object to output all string
- * data. Number of printed characters via @a Format method should be accounted
- * in @a ctx. The method should return @a true if all @a Format calls returned
- * @a true, and @a false otherwise.
+ * options. @a Format or FormatValue methods should be used by the object to
+ * output all string data. Number of printed characters via @a Format method
+ * should be accounted in @a ctx. The method should return @a true if all
+ * @a Format (or @a FormatValue) calls returned @a true, and @a false otherwise.
  */
 class OTextStreamBase {
 public:
@@ -241,7 +241,7 @@ public:
      * @return @a true if end of stream is not yet reached, @a false otherwise.
      */
     template <typename T, typename... Args>
-    bool Format(Context &ctx, const char *fmt, T &&value, Args... args) {
+    bool Format(Context &ctx, const char *fmt, T &value, Args... args) {
         char fmtChar;
         long _fmtChar;
         Context __ctx, *pCtx;
@@ -290,7 +290,7 @@ public:
         }
 
         /* Output value. */
-        bool ret = _FormatValue(*pCtx, value, fmtChar);
+        bool ret = FormatValue(*pCtx, value, fmtChar);
         if (pCtx != &ctx) {
             ctx += *pCtx;
         }
@@ -338,7 +338,7 @@ public:
      * @param opt Option to switch.
      * @return Reference to itself.
      */
-    OTextStreamBase &operator << (Opt &&opt);
+    OTextStreamBase &operator << (const Opt &opt);
 
     /** Convert the provided value to string. This operator is overloaded for
      * all supported types. For the types which are not supported here, the
@@ -372,7 +372,7 @@ public:
 
     /** Default conversion operator for user defined classes. */
     template <class T>
-    inline OTextStreamBase &operator << (T &&value) {
+    inline OTextStreamBase &operator << (T &value) {
         value.ToString(*this, _globalCtx, '\0');
         return *this;
     }
@@ -382,6 +382,63 @@ public:
      */
     inline void ClearOptions() {
         _globalCtx.ClearAllOpts();
+    }
+
+    /** @a FormatValue methods family converts value of specific type into string.
+     * @param ctx Conversion context.
+     * @param value Value of specific type to convert to string. @a FormatValue
+     *      method should call @ref _Putc method for each character it wants to
+     *      output.
+     * @param fmt Format letter. When format letter is searched the first
+     *      alphabetical symbol except 'l', 'L', 'h' and 'H' is considered
+     *      to be format letter. All preceding symbols are considered to be
+     *      options.
+     * @return @a true if end of stream is not yet reached and @a false
+     *      otherwise.
+     */
+    inline bool FormatValue(Context &ctx, short value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_SIGNED);
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    inline bool FormatValue(Context &ctx, unsigned short value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    inline bool FormatValue(Context &ctx, int value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_SIGNED);
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    inline bool FormatValue(Context &ctx, unsigned int value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    inline bool FormatValue(Context &ctx, long value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_SIGNED);
+        return _FormatIntValue(ctx, value, fmt);
+    }
+    inline bool FormatValue(Context &ctx, unsigned long value, char fmt = 0) {
+        return _FormatIntValue(ctx, value, fmt);
+    }
+
+    bool FormatValue(Context &ctx, bool value, char fmt = 0);
+    bool FormatValue(Context &ctx, char value, char fmt = 0);
+
+    inline bool FormatValue(Context &ctx, char *value, char fmt UNUSED) {
+        return _FormatString(ctx, value);
+    }
+    inline bool FormatValue(Context &ctx, const char *value, char fmt UNUSED) {
+        return _FormatString(ctx, value);
+    }
+
+    template <typename T>
+    inline bool FormatValue(Context &ctx, T *value, char fmt = 0) {
+        ctx.SetOpt(Opt::O_RADIX, 16);
+        ctx.SetOpt(Opt::O_SHARP);
+        return _FormatIntValue(ctx, reinterpret_cast<uintptr_t>(value), fmt);
+    }
+
+    /** Format user defined class object. */
+    template <class T>
+    inline bool FormatValue(Context &ctx, T &value, char fmt = 0) {
+        return value.ToString(*this, ctx, fmt);
     }
 
 protected:
@@ -466,7 +523,7 @@ protected:
     }
 
     template <class T>
-    inline bool _CheckFmtChar(char fmtChar, T &&value) {
+    inline bool _CheckFmtChar(char fmtChar, T &value) {
         return value.CheckFmtChar(fmtChar);
     }
 
@@ -484,63 +541,6 @@ protected:
      *      output, @a false otherwise.
      */
     bool _ParseFormat(Context &ctx, const char **fmt, char *fmtChar);
-
-    /** @a _FormatValue methods family converts value of specific type into string.
-     * @param ctx Conversion context.
-     * @param value Value of specific type to convert to string. @a _FormatValue
-     *      method should call @ref _Putc method for each character it wants to
-     *      output.
-     * @param fmt Format letter. When format letter is searched the first
-     *      alphabetical symbol except 'l', 'L', 'h' and 'H' is considered
-     *      to be format letter. All preceding symbols are considered to be
-     *      options.
-     * @return @a true if end of stream is not yet reached and @a false
-     *      otherwise.
-     */
-    inline bool _FormatValue(Context &ctx, short value, char fmt = 0) {
-        ctx.SetOpt(Opt::O_SIGNED);
-        return _FormatIntValue(ctx, value, fmt);
-    }
-    inline bool _FormatValue(Context &ctx, unsigned short value, char fmt = 0) {
-        return _FormatIntValue(ctx, value, fmt);
-    }
-    inline bool _FormatValue(Context &ctx, int value, char fmt = 0) {
-        ctx.SetOpt(Opt::O_SIGNED);
-        return _FormatIntValue(ctx, value, fmt);
-    }
-    inline bool _FormatValue(Context &ctx, unsigned int value, char fmt = 0) {
-        return _FormatIntValue(ctx, value, fmt);
-    }
-    inline bool _FormatValue(Context &ctx, long value, char fmt = 0) {
-        ctx.SetOpt(Opt::O_SIGNED);
-        return _FormatIntValue(ctx, value, fmt);
-    }
-    inline bool _FormatValue(Context &ctx, unsigned long value, char fmt = 0) {
-        return _FormatIntValue(ctx, value, fmt);
-    }
-
-    bool _FormatValue(Context &ctx, bool value, char fmt = 0);
-    bool _FormatValue(Context &ctx, char value, char fmt = 0);
-
-    inline bool _FormatValue(Context &ctx, char *value, char fmt UNUSED) {
-        return _FormatString(ctx, value);
-    }
-    inline bool _FormatValue(Context &ctx, const char *value, char fmt UNUSED) {
-        return _FormatString(ctx, value);
-    }
-
-    template <typename T>
-    inline bool _FormatValue(Context &ctx, T *value, char fmt = 0) {
-        ctx.SetOpt(Opt::O_RADIX, 16);
-        ctx.SetOpt(Opt::O_SHARP);
-        return _FormatIntValue(ctx, reinterpret_cast<uintptr_t>(value), fmt);
-    }
-
-    /** Format user defined class object. */
-    template <class T>
-    inline bool _FormatValue(Context &ctx, T &&value, char fmt = 0) {
-        return value.ToString(*this, ctx, fmt);
-    }
 
     template <typename T>
     bool _FormatIntValue(Context &ctx, T value, char fmt = 0) {
@@ -582,7 +582,7 @@ protected:
     inline void _SetOpt(Context &ctx, Opt::Option opt, unsigned short value) { ctx.SetOpt(opt, value); }
 
     template <typename T>
-    inline void _SetOpt(Context &ctx UNUSED, Opt::Option opt UNUSED, T &&value UNUSED) {
+    inline void _SetOpt(Context &ctx UNUSED, Opt::Option opt UNUSED, T &value UNUSED) {
         FAULT("Invalid argument type used for initializing format option");
     }
 

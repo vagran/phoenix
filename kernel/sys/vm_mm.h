@@ -39,9 +39,10 @@ public:
     /** Map physical address.
      *
      * @param pa Physical address to map. One page is mapped.
+     * @param flags Mapping flags for the entry, see @ref LatEntryFlags.
      * @return Virtual address of mapped page.
      */
-    Vaddr Map(Paddr pa);
+    Vaddr Map(Paddr pa, long flags = LAT_EF_PRESENT | LAT_EF_WRITE);
 
     /** Unmap page which was previously mapped by @ref Map method.
      *
@@ -69,6 +70,10 @@ public:
          * memory allocations are already possible.
          */
         IS_PREINITIALIZED,
+        /** Memory manager initialization is in progress. Memory allocations are
+         * not permitted during this state.
+         */
+        IS_INITIALIZING,
         /** Initialized state, memory manager object is created and fully
          * functional.
          */
@@ -105,6 +110,19 @@ public:
                            size_t memMapDescSize,
                            u32 memMapDescVersion);
 
+    /** Convert physical address to corresponding virtual address in persistent
+     * physical memory mapping.
+     *
+     * @param pa Physical address to convert.
+     * @return Virtual address which can be used to access data on physical
+     *      address @a pa.
+     */
+    inline Vaddr PhysToVirt(Paddr pa) {
+        ASSERT(pa >= _physFirst && pa < _physFirst + _physRange);
+        pa -= _physFirst;
+        return _physMemMap + pa.IdentityVaddr();
+    }
+
 private:
     static InitState _initState;
 
@@ -118,13 +136,37 @@ private:
     MM(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
        u32 memMapDescVersion);
 
-    /** Current heap pointer. */
-    Vaddr _heap;
+    /** Quick map for short temporal mappings. */
+    QuickMap _quickMap;
 
-    /** Quick map first page virtual address. */
-    Vaddr _quickMap;
-    /** PTEs for quick map pages. */
-    LatEntry _quickMapPte[NUM_QUICK_MAP];
+    /** Persistent physical memory map start address. */
+    Vaddr _physMemMap;
+    /** First managed physical address. */
+    Paddr _physFirst;
+    /** Range of managed physical memory addresses. */
+    psize_t _physRange;
+
+    /** Amount of physical memory available. */
+    psize_t _physMemSize;
+
+    /** Start address of the memory occupied by the kernel image and its initial heap. */
+    Paddr _initialStart;
+    /** End address of the memory occupied by the kernel image and its initial heap. */
+    Paddr _initialEnd;
+
+    /** Default LAT root table. */
+    Paddr _defLatRoot;
+
+    /** Initialize physical memory. It will create persistent PM map and page
+     * descriptors array.
+     *
+     * @param memMap EFI memory map which describes all available memory.
+     * @param memMapNumDesc Number of descriptors in @a memMap.
+     * @param memMapDescSize One descriptor size in @a memMap.
+     * @param memMapDescVersion Descriptor version in @a memMap.
+     */
+    void _InitializePhysMem(void *memMap, size_t memMapNumDesc,
+                            size_t memMapDescSize, u32 memMapDescVersion);
 };
 
 /** Global memory manager singleton. */

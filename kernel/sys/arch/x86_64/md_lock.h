@@ -91,16 +91,28 @@ public:
 
 /**
  * Read/write spin lock. It allows several simultaneous reads but doesn't allow
- * write simultaneously with another read or write.
+ * write simultaneously with another read or write. @n
+ *
+ * Several fields are defined:
+ * @li Pending write (PWR) - this flag indicates that write lock is pending.
+ *      The flag can be set only if there are no WR flag set.
+ * @li Write locked (WR) - this flag indicates that write lock is currently
+ *      acquired. It can be set only if RD field is zero and PWR is set. PWR
+ *      is cleared when write lock is acquired.
+ * @li Read lock (RD) - field which is a counter either of currently acquired
+ *      read locks (if WR is not set) or currently pending read locks (if WR is
+ *      set). This field can be incremented only if PWR is not set.
+ *
  */
 class RWSpinLock {
 private:
-    /* Higher bit indicates write lock. Lower bits store number of read locks
-     * acquired or pending.
+    /* Higher bits indicate write lock acquisition and pending. Lower bits store
+     * number of read locks acquired or pending.
      */
     enum {
         WRITE_LOCK =    0x80000000,
-        READ_LOCK =     0x7fffffff
+        WRITE_PENDING = 0x40000000,
+        READ_LOCK =     0x3fffffff
     };
 
     volatile u32 _state;
@@ -111,11 +123,26 @@ public:
     /** Acquire read lock. Several simultaneous read locks can be acquired. */
     inline void ReadLock() {
         ASM(
-            "lock incl %[state]\n" /* Create pending read. */
+            /* Wait until PWR is not set. */
+            "movl %[state], %%eax\n"
+            "1:\n"
+            "andl %[notPwr], %%eax\n"
+            "movl %%eax, %%edx\n"
+            "incl %%edx\n" /* Increment pending or acquired reads counter */
+            "lock cmpxchgl %%edx, %[state]\n"
+            "jz 2f\n" /* Reads counter incremented */
+            "pause\n"
+            "jmp 1b\n"
+            "2:\n"
             :
-            : [state]"m"(_state)
-            : "cc");
-        /* Wait until write lock released. */
+            : [state]"m"(_state),
+              [notPwr]"i"(~WRITE_PENDING)
+            : "cc", "eax", "edx");
+
+        /* Wait until write lock released. No atomicity required because
+         * pending read is non-zero so new write lock can not be acquired
+         * until read locks are released.
+         */
         while (_state & WRITE_LOCK) {
             cpu::Pause();
         }
@@ -124,8 +151,9 @@ public:
     /** Release read lock. */
     inline void ReadUnlock() {
         ASSERT(_state & READ_LOCK);
+        ASSERT(!(_state & WRITE_LOCK));
         ASM(
-            "lock decl %[state]\n" /* Decrement pending read. */
+            "lock decl %[state]\n" /* Decrement acquired read. */
             :
             : [state]"m"(_state)
             : "cc");
@@ -136,27 +164,52 @@ public:
      * locks.
      */
     inline void WriteLock() {
-        u32 cur_state;
         ASM(
-            /* Wait until there are no pending reads and write lock is not acquired. */
-            "1: xorl %%eax, %%eax\n"
-            "lock cmpxchgl %[write_lock], %[state]\n"
-            "jz 2f\n"
+            /* Set PWR flag. This can be done only if WR is cleared. */
+            "movl %[state], %%eax\n"
+            "jmp 3f\n"
+            "1:\n"
+            "andl %[notWr], %%eax\n" /* WR should be cleared */
+            "movl %%eax, %%edx\n"
+            "orl %[pwr], %%edx\n"
+            "lock cmpxchgl %%edx, %[state]\n"
+            "jz 2f\n" /* PWR was set */
             "pause\n"
             "jmp 1b\n"
             "2:\n"
-            : "=a"(cur_state)
-            : [state]"m"(_state), [write_lock]"r"(WRITE_LOCK)
-            : "cc"
+            /* Wait until there are no pending reads and check that PWR is set. */
+            "movl %%edx, %%eax\n"
+            "3:\n"
+            "testl %[pwr], %%eax\n"
+            "jz 1b\n" /* PWR is not set (other CPU acquired write lock), roll back to the previous loop */
+            "andl %[notRd], %%eax\n" /* Read locks counter should be zero */
+            "movl %%eax, %%edx\n"
+            "orl %[wr], %%edx\n" /* Set WR */
+            "andl %[notPwr], %%edx\n" /* Clear PWR */
+            "lock cmpxchgl %%edx, %[state]\n"
+            "jz 4f\n"
+            "pause\n"
+            "jmp 3b\n"
+            "4:\n"
+            :
+            : [state]"m"(_state),
+              [wr]"i"(WRITE_LOCK),
+              [notWr]"i"(~WRITE_LOCK),
+              [pwr]"i"(WRITE_PENDING),
+              [notPwr]"i"(~WRITE_PENDING),
+              [notRd]"i"(~READ_LOCK)
+            : "cc", "eax", "edx"
             );
     }
 
     /** Release write lock. */
     inline void WriteUnlock() {
+        ASSERT(_state & WRITE_LOCK);
         ASM(
-            "lock andl %[write_lock], %[state]\n"
+            "lock andl %[notWr], %[state]\n"
             :
-            : [state]"m"(_state), [write_lock]"r"(~WRITE_LOCK)
+            : [state]"m"(_state),
+              [notWr]"r"(~WRITE_LOCK)
             : "cc");
     }
 };

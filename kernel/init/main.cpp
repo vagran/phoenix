@@ -46,6 +46,41 @@ MT_AllocOnPreinitialized()
     return true;
 }
 
+static bool
+MT_AllocOnInitialized()
+{
+    const size_t size = 10 * 1024 * 1024;
+    u8 *buf = NEW u8[size];
+    if (!buf) {
+        return false;
+    }
+    memset(buf, 0x42, size);
+    return true;
+}
+
+static bool
+MT_RwLocks()
+{
+    /* Cannot test too much on one CPU, check at least that this will not hang
+     * and asserts will not fire.
+     */
+    RWSpinLock rwl;
+
+    rwl.ReadLock();
+    rwl.ReadLock();
+    rwl.ReadUnlock();
+    rwl.ReadUnlock();
+    rwl.WriteLock();
+    rwl.WriteUnlock();
+    rwl.ReadLock();
+    rwl.ReadLock();
+    rwl.ReadUnlock();
+    rwl.ReadUnlock();
+    rwl.WriteLock();
+    rwl.WriteUnlock();
+    return true;
+}
+
 #endif /* MODULE_TESTS */
 
 void
@@ -70,14 +105,17 @@ Main(void *arg)
 
     MODULE_TEST(MT_AllocOnPreinitialized);
 
-    /* Call constructors for all static objects. */
-    Cxa::ConstructStaticObjects();
-
     /* Finalize kernel memory management initialization. */
     vm::MM::Initialize(boot::kernBootParam->memMap,
                        boot::kernBootParam->memMapNumDesc,
                        boot::kernBootParam->memMapDescSize,
                        boot::kernBootParam->memMapDescVersion);
+
+    MODULE_TEST(MT_AllocOnInitialized);
+    MODULE_TEST(MT_RwLocks);
+
+    /* Call constructors for all static objects. */
+    Cxa::ConstructStaticObjects();
 
     NOT_REACHED();
 }
