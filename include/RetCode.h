@@ -44,7 +44,23 @@ public:
     /** Check if the status indicates failure. */
     inline bool IsFailed() { return code != SUCCESS; }
 
-    //XXX string conversions
+    const char *GetName() {
+        switch (code) {
+        case SUCCESS:
+            return "SUCCESS";
+        case FAIL:
+            return "FAIL";
+        case INV_PARAM:
+            return "INV_PARAM";
+        case NOT_FOUND:
+            return "NOT_FOUND";
+        }
+        return "UNKNOWN";
+    }
+
+    inline operator const char *() {
+        return GetName();
+    }
 
     Code code;
 };
@@ -52,30 +68,45 @@ public:
 #ifdef DEBUG
 
 /** Macro for constructing return code object. This should be used instead of
- * direct calling of direct calls to @ref RetCode class constructor in order to
- * have additional troubleshooting functionality in debug builds.
+ * of direct calls to @ref RetCode class constructor in order to have additional
+ * troubleshooting functionality in debug builds.
  * @param __code Return code - unqualified name of @ref RetCode::Code enum member.
  * @return @ref RetCode class object.
  */
 #define RC(__code)      ({ \
-    if (RetCode::__code != RetCode::SUCCESS && \
-        RetCode::__code != RetCode::NOT_FOUND) { \
+    if (RetCode::__code != RetCode::SUCCESS) { \
         TRACE("Function '%s' at %s:%d failed: %s", \
               __func__, __FILE__, __LINE__, __STR(__code)); \
     } \
     RetCode::__code; \
 })
 
+/** Check if the return code is successful. */
+#define OK(__rc)        ({ \
+    if ((__rc).IsFailed()) { \
+        TRACE("Failed return code received in '%s' at %s:%d: %s", \
+              __func__, __FILE__, __LINE__, (__code).GetName()); \
+    } \
+    (__rc).IsOK(); \
+})
+
+/** Check if the return code indicates failure. */
+#define NOK(__rc)       ({ \
+    if ((__rc).IsFailed()) { \
+        TRACE("Failed return code received in '%s' at %s:%d: %s", \
+              __func__, __FILE__, __LINE__, (__code).GetName()); \
+    } \
+    (__rc).IsFailed(); \
+})
+
 #else /* DEBUG */
 
 #define RC(__code)      RetCode(RetCode::__code)
 
-#endif /* DEBUG */
-
-/** Check if the return code is successful. */
 #define OK(__rc)        (LIKELY((__rc).IsOk()))
 
-/** Check if the return code indicates failure. */
 #define NOK(__rc)       (UNLIKELY((__rc).IsFailed()))
+
+#endif /* DEBUG */
 
 #endif /* RETCODE_H_ */
