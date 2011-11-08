@@ -36,6 +36,7 @@
 #include <cpu_caps.h>
 
 /* Run-time support */
+#include <RetCode.h>
 #include <new.h>
 #include <common/gcc.h>
 #include <common/stdlib.h>

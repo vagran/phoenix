@@ -109,7 +109,8 @@ public:
         /** Check if the region requires management by an OS. */
         bool NeedsManagement() {
             return !(type == EfiReservedMemoryType || type == EfiUnusableMemory ||
-                     type == EfiMemoryMappedIO || type == EfiMemoryMappedIOPortSpace);
+                     type == EfiMemoryMappedIO || type == EfiMemoryMappedIOPortSpace) ||
+                   (attr & EFI_MEMORY_RUNTIME);
         }
     };
 
@@ -132,6 +133,11 @@ public:
     MemoryMap(void *memMap, size_t numDesc, size_t descSize, u32 descVersion);
 
     const char *GetTypeName(MemType type);
+
+    /** Apply new virtual address map for the required areas to the firmware.
+     * @return @a true if EFI call succeed, @a false otherwise.
+     */
+    RetCode SetVirtualAddressMap();
 
     /* Iterator interface */
     inline size_t size() { return _numDesc; }

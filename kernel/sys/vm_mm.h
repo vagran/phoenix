@@ -14,6 +14,8 @@
 #ifndef VM_MM_H_
 #define VM_MM_H_
 
+#include <vm_page.h>
+
 namespace vm {
 
 /** Class for creating short temporal mappings for separate pages. */
@@ -123,7 +125,27 @@ public:
         return _physMemMap + pa.IdentityVaddr();
     }
 
+    /** Get physical page descriptor by the page physical address.
+     *
+     * @param pa Physical address of the page.
+     * @return Reference to the physical page descriptor.
+     */
+    inline Page &GetPage(Paddr pa) {
+        ASSERT(pa >= _physFirst && pa < _physFirst + _physRange);
+        return _pageDesc[(pa - _physFirst) / PAGE_SIZE];
+    }
+
+    inline bool IsPageManaged(Paddr pa) {
+        if (pa < _physFirst || pa >= _physFirst + _physRange) {
+            return false;
+        }
+        Page &page = GetPage(pa);
+        return page.GetFlags() & Page::F_MANAGED;
+    }
+
 private:
+    friend class Page;
+
     static InitState _initState;
 
     /** Kernel memory manager constructor.
@@ -145,6 +167,8 @@ private:
     Paddr _physFirst;
     /** Range of managed physical memory addresses. */
     psize_t _physRange;
+    /** Array of managed physical pages descriptors. */
+    Page *_pageDesc;
 
     /** Amount of physical memory available. */
     psize_t _physMemSize;

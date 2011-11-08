@@ -33,7 +33,6 @@
 /** Generate file-scope unique identifier with a given prefix. */
 #define __UID(str)                  __CONCAT(str, __COUNTER__)
 
-/* Branching hints for the compiler */
 /** Give a hint for the compiler that a given conditional statement is likely to
  * be true.
  *

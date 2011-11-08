@@ -61,7 +61,11 @@ public:
 
     inline SysLogBase() : text_stream::OTextStream<SysLogBase>(this) {
         _curLevel = LOG_DEBUG;
+#ifdef DEBUG
         _maxLevel = LOG_DEBUG;
+#else /* DEBUG */
+        _maxLevel = LOG_NOTICE;
+#endif /* DEBUG */
     }
 
     /** This operator must be overloaded in back-end derived class. This

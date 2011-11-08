@@ -47,3 +47,10 @@ MemoryMap::GetTypeName(MemType type)
     ASSERT(type < EfiMaxMemoryType);
     return names[type];
 }
+
+RetCode
+MemoryMap::SetVirtualAddressMap()
+{
+    //XXX
+    return RC(SUCCESS);
+}

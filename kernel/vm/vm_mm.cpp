@@ -365,6 +365,7 @@ MM::MM(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
        u32 memMapDescVersion) :
 
        _quickMap(tmpQuickMap, NUM_QUICK_MAP, tmpQuickMapPte),
+       _pageDesc(0),
        _defLatRoot(::tmpDefaultLatRoot)
 {
     _InitializePhysMem(memMap, memMapNumDesc, memMapDescSize, memMapDescVersion);
@@ -418,6 +419,7 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
 
             _availSize = 0;
             _nextAvailSize = 0;
+            _spaceAllocated = false;
 
             if (!_GetNextAvailable()) {
                 FAULT("No available physical memory found");
@@ -430,6 +432,7 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
 
         /* Allocate one page. */
         Paddr AllocPage() {
+            ASSERT(!_spaceAllocated);
             if (!_availSize) {
                 FAULT("No more physical memory available");
             }
@@ -441,6 +444,27 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
             }
             return pa;
         }
+
+        /* Allocate space of specified size. Should be called only once. */
+        Paddr AllocSpace(psize_t size) {
+            ASSERT(!_spaceAllocated);
+            _spaceAllocated = true;
+            do {
+                if (_availSize >= size) {
+                    return _avail;
+                }
+                if (_nextAvailSize >= size) {
+                    return _nextAvail;
+                }
+                _availSize = 0;
+                _nextAvailSize = 0;
+                _GetNextAvailable();
+            } while (_availSize);
+            return 0;
+        }
+
+        /* Get current heap pointer. */
+        inline Paddr GetHeap() { return _avail; }
 
     private:
         efi::MemoryMap &_map;
@@ -454,6 +478,9 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
         /* Next available chunk if was split by initial area. */
         Paddr _nextAvail;
         psize_t _nextAvailSize;
+
+        /* Indicates that AllocSpace was called so no new allocations permitted. */
+        bool _spaceAllocated;
 
         /* Advance current available pointer to the next available area. */
         psize_t _GetNextAvailable()
@@ -535,7 +562,7 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
     /* Firstly find the lowest and the highest available physical addresses. */
     Paddr paMin, paMax;
     _physMemSize = 0;
-    LOG << LL(INFO) << "System memory map:\n";
+    LOG.Info("System memory map:\n");
     for (efi::MemoryMap::MemDesc &d: map) {
         LOG.Format("[%016x - %016x] %s\n",
                    d.paStart, d.paStart + d.numPages * PAGE_SIZE,
@@ -606,5 +633,62 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
         }
     }
 
-    //XXX the rest not yet implemented
+    /* Create page descriptors array. */
+    Paddr pagesHeap = pageAlloc.GetHeap();
+    size_t numPages = _physRange / PAGE_SIZE;
+    LOG.Debug("%z managed physical pages range, initializing descriptors array...",
+              numPages);
+    Paddr pageDescPa = pageAlloc.AllocSpace(numPages * sizeof(Page));
+    _pageDesc = PhysToVirt(pageDescPa);
+    for (size_t i = 0; i < numPages; i++) {
+        Paddr pa = _physFirst + i * PAGE_SIZE;
+        long flags = 0;
+        /* Exclude all occupied areas. */
+        if (pa >= pagesHeap && /* LAT tables. */
+            /* Page descriptors array. */
+            (pa < pageDescPa || pa >= pageDescPa + numPages * PAGE_SIZE) &&
+            /* Kernel initial heap. */
+            (pa < _initialStart || pa >= _initialEnd)) {
+
+            flags |= Page::F_MANAGED | Page::F_AVAILABLE;
+        }
+        new(&_pageDesc[i]) Page(flags);
+    }
+
+    /* Exclude all pages in reserved areas reported by the firmware. */
+    for (efi::MemoryMap::MemDesc &d: map) {
+        /* Re-map required areas in the firmware. */
+        if (d.attr && efi::MemoryMap::EFI_MEMORY_RUNTIME) {
+            d.vaStart = PhysToVirt(d.paStart);
+        }
+
+        if (d.IsAvailable()) {
+            continue;
+        }
+        for (Paddr pa = d.paStart;
+             pa < d.paStart + d.numPages * PAGE_SIZE;
+             pa += PAGE_SIZE) {
+
+            Page &page = GetPage(pa);
+            long flags = page.GetFlags();
+            flags &= ~Page::F_AVAILABLE;
+            if (!d.NeedsManagement()) {
+                flags &= ~Page::F_MANAGED;
+            } else {
+                if (d.type == efi::MemoryMap::EfiACPIReclaimMemory) {
+                    flags |= Page::F_ACPI_RECLAIM;
+                } else if (d.type == efi::MemoryMap::EfiACPIMemoryNVS) {
+                    flags |= Page::F_ACPI_NVS;
+                }
+            }
+            page.SetFlags(flags);
+        }
+    }
+
+    /* Provide new virtual address map to the firmware. */
+    if (NOK(map.SetVirtualAddressMap())) {
+        FAULT("Failed to update the firmware virtual address map");
+    }
+
+    //XXX create allocator
 }
