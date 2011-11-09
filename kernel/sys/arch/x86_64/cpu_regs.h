@@ -277,10 +277,10 @@ enum Ia32eferBits {
 
 /** Bits in x86 IA32_APIC_BASE MSR. */
 enum ApicBaseBits {
-    APICBASE_RESERVED =     0x0000006fful,
-    APICBASE_BSP =          0x000000100ul,
-    APICBASE_ENABLED =      0x000000800ul,
-    APICBASE_ADDRESS =      0xffffff000ul,
+    APICBASE_RESERVED =     0x0000006ff,
+    APICBASE_BSP =          0x000000100,
+    APICBASE_ENABLED =      0x000000800,
+    APICBASE_ADDRESS =      0xffffff000,
 };
 
 /** x86LatEntrymodes. */

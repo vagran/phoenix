@@ -20,6 +20,27 @@
 namespace efi
 {
 
+/** EFI INTN type. */
+typedef intptr_t Intn;
+/** EFI UINTN type. */
+typedef uintptr_t Uintn;
+/** EFI_STATUS type. */
+typedef uintptr_t EfiStatus;
+/** EFI CHAR16 type. */
+typedef u16 Char16;
+/** EFI_HANDLE type. */
+typedef void *Handle;
+
+/** EFI_GUID type. */
+struct Guid {
+    u32 data1;
+    u16 data2;
+    u16 data3;
+    u8 data4[8];
+
+    //XXX initializer_list constructor
+};
+
 /** EFI memory map representation which is returned by EFI @a GetMemoryMap()
  * boot service.
  */
@@ -150,18 +171,76 @@ private:
 };
 
 /** EFI system table contains pointers to the runtime services and hardware
- * configuration tables.
+ * configuration tables. This class translates all runtime services calls to
+ * the required EFI-specific calling convention.
  */
 class SystemTable {
 public:
-    /** Construct object from identity-map pointer to the system table.
-     * @param ptr Identity-map pointer (treated as physical address).
+    /** Construct object from physical pointer to the system table.
+     * @param ptr Physical address of EFI system table passed to the kernel by
+     *      the boot loader.
+     * @param memMap EFI memory map which describes all available memory.
+     * @param memMapNumDesc Number of descriptors in @a memMap.
+     * @param memMapDescSize One descriptor size in @a memMap.
+     * @param memMapDescVersion Descriptor version in @a memMap.
      */
-    SystemTable(void *ptr) { _sysTable = ptr; }
+    SystemTable(vm::Paddr ptr,
+                void *memMap,
+                size_t memMapNumDesc,
+                size_t memMapDescSize,
+                u32 memMapDescVersion);
 
 private:
-    vm::Paddr _sysTable;
+    /** EFI system table header. */
+    struct TableHeader {
+        u64 signature;
+        u32 revision;
+        u32 headerSize;
+        u32 crc32;
+        u32 reserved;
+    };
+
+    /** EFI system table. */
+    struct Table {
+        TableHeader hdr;
+        Char16 *fwVendor;
+        u32 fwRevision;
+        Handle consoleInHandle;
+        void *conIn;
+        Handle consoleOutHandle;
+        void *conOut;
+        Handle stdErrHandle;
+        void *stdErr;
+        void *runtimeServices;
+        void *bootServices;
+        Uintn numTableEntries;
+        void *configTable;
+    };
+
+    /** EFI configuration table. */
+    struct ConfigTable {
+        Guid vendorGuid;
+        void *vendorTable;
+    };
+
+    /** EFI runtime services table. */
+    struct RuntimeServicesTable {
+        TableHeader hdr;
+        void *getTime;//XXX
+        //XXX
+    };
+
+    enum {
+        EFI_SYSTEM_TABLE_SIGNATURE = 0x5453595320494249,
+        EFI_RUNTIME_SERVICES_SIGNATURE = 0x56524553544e5552,
+    };
+
+    Table *_sysTable;
+    ConfigTable *_configTable;
+    RuntimeServicesTable *_runtimeServices;
 };
+
+extern SystemTable *sysTable;
 
 static inline MemoryMap::MemDescIterator
 begin(MemoryMap &memMap)

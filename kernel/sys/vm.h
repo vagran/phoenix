@@ -115,7 +115,7 @@ enum {
     NUM_QUICK_MAP =         4,
 
     /** System data space region size. */
-    SYS_DATA_SIZE =         4ul * 1024ul * 1024ul * 1024ul,
+    SYS_DATA_SIZE =         static_cast<vaddr_t>(4) * 1024 * 1024 * 1024,
     /** Size of of gate area region. Code for the kernel mode entry points is
      * placed in this area.
      */
@@ -126,7 +126,7 @@ enum {
     /** Kernel code first address. */
     VMA_KERNEL_TEXT =       KERNEL_ADDRESS,
     /** System data space start address. */
-    VMA_SYS_DATA =          2ul * 1024ul * 1024ul * 1024ul,
+    VMA_SYS_DATA =          static_cast<vaddr_t>(2) * 1024 * 1024 * 1024,
     /** Kernel gate area start address. */
     VMA_KERNEL_PUBLIC =     VMA_SYS_DATA - GATE_AREA_SIZE,
     /** Start address of global data space. */

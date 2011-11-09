@@ -636,8 +636,6 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
     /* Create page descriptors array. */
     Paddr pagesHeap = pageAlloc.GetHeap();
     size_t numPages = _physRange / PAGE_SIZE;
-    LOG.Debug("%z managed physical pages range, initializing descriptors array...",
-              numPages);
     Paddr pageDescPa = pageAlloc.AllocSpace(numPages * sizeof(Page));
     _pageDesc = PhysToVirt(pageDescPa);
     for (size_t i = 0; i < numPages; i++) {
