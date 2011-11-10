@@ -113,6 +113,8 @@
 #define ROUND_DOWN2(size, align)   ((size) & (~((align) - 1)))
 
 //XXX should be removed after Eclipse will have 'constexpr' keyword recognized.
+#ifdef __CDT_PARSER__
 #define constexpr
+#endif /* __CDT_PARSER__ */
 
 #endif /* DEFS_H_ */

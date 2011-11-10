@@ -26,7 +26,11 @@
 
 /** Get unique identifier. */
 //XXX should use __COUNTER__ after Eclipse will recognize it.
+#ifdef __CDT_PARSER__
 #define __UT_UID(str)           __UT_CONCAT(str, __LINE__)
+#else /* __CDT_PARSER__ */
+#define __UT_UID(str)           __UT_CONCAT(str, __COUNTER__)
+#endif /* __CDT_PARSER__ */
 
 #define __UT_TEST_DESC          __UT_CONCAT(UtTestDesc_, __LINE__)
 

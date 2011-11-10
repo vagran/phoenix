@@ -81,6 +81,23 @@ MT_RwLocks()
     return true;
 }
 
+static bool
+MT_Efi()
+{
+    //XXX
+#if 0
+    efi::EfiTime time;
+    efi::EfiStatus status = efi::sysTable->GetTime(&time);
+    if (status != efi::EFI_SUCCESS) {
+        LOG.Debug("GetTime failed: %d", status);
+        return false;
+    }
+    LOG.Debug("%d-%d-%d %d:%02d:%02d.%09d", time.year, time.month, time.day,
+              time.hour, time.minute, time.second, time.nanosecond);
+#endif
+    return true;
+}
+
 #endif /* MODULE_TESTS */
 
 void
@@ -120,6 +137,7 @@ Main(void *arg)
 
     MODULE_TEST(MT_AllocOnInitialized);
     MODULE_TEST(MT_RwLocks);
+    MODULE_TEST(MT_Efi);
 
     /* Call constructors for all static objects. */
     Cxa::ConstructStaticObjects();

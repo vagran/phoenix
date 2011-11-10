@@ -689,4 +689,5 @@ MM::_InitializePhysMem(void *memMap, size_t memMapNumDesc,
     }
 
     //XXX create allocator
+    _initState = IS_PREINITIALIZED;//XXX
 }

@@ -20,6 +20,8 @@
 namespace efi
 {
 
+/** EFI BOOLEAN type. */
+typedef u8 Boolean;
 /** EFI INTN type. */
 typedef intptr_t Intn;
 /** EFI UINTN type. */
@@ -30,6 +32,42 @@ typedef uintptr_t EfiStatus;
 typedef u16 Char16;
 /** EFI_HANDLE type. */
 typedef void *Handle;
+/** EFI_PHYSICAL_ADDRESS type. */
+typedef u64 PhysAddr;
+/** EFI_VIRTUAL_ADDRESS type. */
+typedef u64 VirtAddr;
+
+constexpr EfiStatus EfiErr(const int num) {
+    return 0x8000000000000000 | num;
+}
+
+enum EfiStatusCode {
+    EFI_SUCCESS = 0,
+    EFI_LOAD_ERROR = EfiErr(1),
+    EFI_INVALID_PARAMETER = EfiErr(2),
+    EFI_UNSUPPORTED = EfiErr(3),
+    EFI_BAD_BUFFER_SIZE = EfiErr(4),
+    EFI_BUFFER_TOO_SMALL = EfiErr(5),
+    EFI_NOT_READY = EfiErr(6),
+    EFI_DEVICE_ERROR = EfiErr(7),
+    EFI_WRITE_PROTECTED = EfiErr(8),
+    EFI_OUT_OF_RESOURCES = EfiErr(9),
+    EFI_VOLUME_CORRUPTED = EfiErr(10),
+    EFI_VOLUME_FULL = EfiErr(11),
+    EFI_NO_MEDIA = EfiErr(12),
+    EFI_MEDIA_CHANGED = EfiErr(13),
+    EFI_NOT_FOUND = EfiErr(14),
+    EFI_ACCESS_DENIED = EfiErr(15),
+    EFI_NO_RESPONSE = EfiErr(16),
+    EFI_NO_MAPPING = EfiErr(17),
+    EFI_TIMEOUT = EfiErr(18),
+    EFI_NOT_STARTED = EfiErr(19),
+    EFI_ALREADY_STARTED = EfiErr(20),
+    EFI_ABORTED = EfiErr(21),
+    EFI_ICMP_ERROR = EfiErr(22),
+    EFI_TFTP_ERROR = EfiErr(23),
+    EFI_PROTOCOL_ERROR = EfiErr(24),
+};
 
 /** EFI_GUID type. */
 struct Guid {
@@ -40,6 +78,12 @@ struct Guid {
 
     //XXX initializer_list constructor
 };
+
+} /* namespace efi */
+
+#include <md_efi.h>
+
+namespace efi {
 
 /** EFI memory map representation which is returned by EFI @a GetMemoryMap()
  * boot service.
@@ -115,8 +159,8 @@ public:
     struct MemDesc {
         u32 type;
         u32 pad;
-        paddr_t paStart;
-        vaddr_t vaStart;
+        PhysAddr paStart;
+        VirtAddr vaStart;
         u64 numPages;
         u64 attr;
 
@@ -170,6 +214,28 @@ private:
     void *_memMap;
 };
 
+/** EFI_TIME type. */
+struct EfiTime {
+    u16 year;
+    u8 month;
+    u8 day;
+    u8 hour;
+    u8 minute;
+    u8 second;
+    u8 pad1;
+    u32 nanosecond;
+    i16 timeZone;
+    u8 daylight;
+    u8 pad2;
+};
+
+/** EFI_TIME_CAPABILITIES type. */
+struct EfiTimeCaps {
+    u32 resolution;
+    u32 accuracy;
+    Boolean setsToZero;
+};
+
 /** EFI system table contains pointers to the runtime services and hardware
  * configuration tables. This class translates all runtime services calls to
  * the required EFI-specific calling convention.
@@ -189,6 +255,24 @@ public:
                 size_t memMapNumDesc,
                 size_t memMapDescSize,
                 u32 memMapDescVersion);
+
+    /* Run-time services. */
+
+    /** Returns the current time and date information, and the time-keeping
+     * capabilities of the hardware platform.
+     */
+    EfiStatus GetTime(EfiTime *time, EfiTimeCaps *caps = 0) {
+        return _runtimeServices->getTime(time, caps);
+    }
+
+    // XXX add all runtime services
+
+    EfiStatus SetVirtualAddressMap(Uintn mapSize, Uintn descSize,
+                                   u32 descVersion, MemoryMap::MemDesc *virtualMap) {
+
+        return _runtimeServices->setVirtualAddressMap(mapSize, descSize,
+                                                      descVersion, virtualMap);
+    }
 
 private:
     /** EFI system table header. */
@@ -226,8 +310,26 @@ private:
     /** EFI runtime services table. */
     struct RuntimeServicesTable {
         TableHeader hdr;
-        void *getTime;//XXX
-        //XXX
+        EfiCall /* Time services. */
+                getTime,
+                setTime,
+                getWakeupTime,
+                setWakeupTime,
+                /* Virtual memory services. */
+                setVirtualAddressMap,
+                convertPointer,
+                /* Variable services. */
+                getVariable,
+                getNextVariableName,
+                setVariable,
+                /* Miscellaneous services. */
+                getNextHighMonotonicCount,
+                resetSystem,
+                /* UEFI 2.0 capsule services. */
+                updateCapsule,
+                queryCapsuleCapabilities,
+                /* UEFI 2.0 miscellaneous services. */
+                queryVariableInfo;
     };
 
     enum {

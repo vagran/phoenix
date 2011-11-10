@@ -30,4 +30,32 @@ SystemTable::SystemTable(vm::Paddr ptr,
     }
     _configTable =  vm::mm->PhysToVirt(_sysTable->configTable);
     _runtimeServices = vm::mm->PhysToVirt(_sysTable->runtimeServices);
+
+    /* Switch EFI to new virtual mapping. */
+    MemoryMap map = efi::MemoryMap(memMap,
+                                   memMapNumDesc,
+                                   memMapDescSize,
+                                   memMapDescVersion);
+    /* Find number of run-time regions. */
+    size_t numRuntime = 0;
+    for (MemoryMap::MemDesc &d: map) {
+        if (d.attr & MemoryMap::EFI_MEMORY_RUNTIME) {
+            numRuntime++;
+        }
+    }
+    /* Build new map. */
+    MemoryMap::MemDesc newMap[numRuntime];
+    size_t descIdx = 0;
+    for (MemoryMap::MemDesc &d: map) {
+        if (d.attr & MemoryMap::EFI_MEMORY_RUNTIME) {
+            ASSERT(descIdx < numRuntime);
+            newMap[descIdx] = d;
+            newMap[descIdx].vaStart = vm::mm->PhysToVirt(d.paStart);
+            descIdx++;
+        }
+    }
+    //XXX Identity mapping is required for EFI regions before this call!
+    /* Apply new map to the firmware. */
+    //SetVirtualAddressMap(memMapNumDesc * memMapDescSize, memMapDescSize,
+    //                     memMapDescVersion, newMap);
 }
