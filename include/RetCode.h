@@ -85,7 +85,7 @@ public:
 #define OK(__rc)        ({ \
     if ((__rc).IsFailed()) { \
         TRACE("Failed return code received in '%s' at %s:%d: %s", \
-              __func__, __FILE__, __LINE__, (__code).GetName()); \
+              __func__, __FILE__, __LINE__, (__rc).GetName()); \
     } \
     (__rc).IsOK(); \
 })
@@ -94,7 +94,7 @@ public:
 #define NOK(__rc)       ({ \
     if ((__rc).IsFailed()) { \
         TRACE("Failed return code received in '%s' at %s:%d: %s", \
-              __func__, __FILE__, __LINE__, (__code).GetName()); \
+              __func__, __FILE__, __LINE__, (__rc).GetName()); \
     } \
     (__rc).IsFailed(); \
 })
