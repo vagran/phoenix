@@ -38,7 +38,7 @@ Elf_Type _elf_scn_type(unsigned t)
     case SHT_SYMTAB:
         return ELF_T_SYM;
     case SHT_SYMTAB_SHNDX:
-        return ELF_T_WORD; /* XXX: really? */
+        return ELF_T_WORD; /* ELFXXX: really? */
 #if __LIBELF_SYMBOL_VERSIONS
 #if __LIBELF_SUN_SYMBOL_VERSIONS
         case SHT_SUNW_verdef: return ELF_T_VDEF;
@@ -434,7 +434,7 @@ static int _elf_cook_shdr(Elf *elf)
                     if (shdr->sh_offset % ELF64_FSZ_ADDR == 0) {
                         override++;
                     }
-                    /* XXX: also look at the data? */
+                    /* ELFXXX: also look at the data? */
                     /*
                      * Make a conservative decision...
                      */

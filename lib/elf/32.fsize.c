@@ -40,7 +40,7 @@ const size_t _elf_fmsize[2][EV_CURRENT - EV_NONE][ELF_T_NUM][2] = {
             {   sizeof(Elf32_Word), sizeof(__ext_Elf32_Word)},
             {   0, 0}, /* there is no Elf32_Sxword */
             {   0, 0}, /* there is no Elf32_Xword */
-            /* XXX: check Solaris values */
+            /* ELFXXX: check Solaris values */
             {   0, 0}, /* Elf32_Verdef/Verdaux size varies */
             {   0, 0}, /* Elf32_Verneed/Vernaux size varies */
         },
@@ -65,7 +65,7 @@ const size_t _elf_fmsize[2][EV_CURRENT - EV_NONE][ELF_T_NUM][2] = {
             {   sizeof(Elf64_Word), sizeof(__ext_Elf64_Word)},
             {   sizeof(Elf64_Sxword), sizeof(__ext_Elf64_Sxword)},
             {   sizeof(Elf64_Xword), sizeof(__ext_Elf64_Xword)},
-            /* XXX: check Solaris values */
+            /* ELFXXX: check Solaris values */
             {   0, 0}, /* Elf64_Verdef/Verdaux size varies */
             {   0, 0}, /* Elf64_Verneed/Vernaux size varies */
         },

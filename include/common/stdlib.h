@@ -114,5 +114,6 @@ int sscanf(const char *str, const char *fmt, ...) __FORMAT(scanf, 2, 3);
 int vsscanf(const char *str, char const *fmt, va_list ap) __FORMAT(scanf, 2, 0);
 
 #include <common/OTextStream.h>
+#include <common/RBTree.h>
 
 #endif /* STDLIB_H_ */

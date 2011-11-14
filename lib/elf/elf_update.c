@@ -666,7 +666,7 @@ static off_t _elf32_write(Elf *elf, char *outbuf, size_t len)
         if (shdr->sh_type == SHT_NULL || shdr->sh_type == SHT_NOBITS) {
             continue;
         }
-        /* XXX: this is probably no longer necessary */
+        /* ELFXXX: this is probably no longer necessary */
         if (scn->s_data_1 && !elf_getdata(scn, NULL)) {
             return -1;
         }
@@ -793,7 +793,7 @@ static off_t _elf64_write(Elf *elf, char *outbuf, size_t len)
         if (shdr->sh_type == SHT_NULL || shdr->sh_type == SHT_NOBITS) {
             continue;
         }
-        /* XXX: this is probably no longer necessary */
+        /* ELFXXX: this is probably no longer necessary */
         if (scn->s_data_1 && !elf_getdata(scn, NULL)) {
             return -1;
         }
