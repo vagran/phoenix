@@ -23,6 +23,8 @@ RBTreeBase::RBTreeBase()
 RBTreeBase::EntryBase *
 RBTreeBase::InsertNode(EntryBase *node)
 {
+    ASSERT(!node->isWired);
+
     node->child[0] = 0;
     node->child[1] = 0;
 
@@ -31,6 +33,7 @@ RBTreeBase::InsertNode(EntryBase *node)
         _root = node;
         node->parent = 0;
         node->isRed = false;
+        node->isWired = true;
         ASSERT(!_nodesCount);
         _nodesCount++;
         _generation++;
@@ -50,6 +53,7 @@ RBTreeBase::InsertNode(EntryBase *node)
             parent->child[cmp > 0] = node;
             node->parent = parent;
             node->isRed = true;
+            node->isWired = true;
             _nodesCount++;
             _generation++;
             break;
@@ -156,4 +160,37 @@ RBTreeBase::GetNextNode(EntryBase *node)
         node = node->parent;
     }
     return 0;
+}
+
+bool
+RBTreeBase::Validate()
+{
+    /* Iterate all nodes and check balancing rules validity for each node. */
+    EntryBase *node = 0;
+    int numBlackNodes = -1; /* Black nodes amount in a simple path. */
+    while ((node = GetNextNode(node))) {
+        /* Red node never can have red children. */
+        if (node->isRed && node->parent && node->parent->isRed) {
+            return false;
+        }
+        /* If this is a leaf node, check black nodes amount in ascendant path. */
+        if (!node->child[0] || !node->child[1]) {
+            int n = 0;
+            EntryBase *next = node;
+            do {
+                if (!next->isRed) {
+                    n++;
+                }
+                next = next->parent;
+            } while (next);
+            if (numBlackNodes != -1) {
+                if (numBlackNodes != n) {
+                    return false;
+                }
+            } else {
+                numBlackNodes = n;
+            }
+        }
+    }
+    return true;
 }

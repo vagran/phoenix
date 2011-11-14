@@ -17,13 +17,25 @@
 /** Base class for red-black tree implementation. */
 class RBTreeBase {
 public:
+    /** Tree node represented by this class. */
     class EntryBase {
     protected:
         friend class RBTreeBase;
 
-        u8 isRed:1;
+        u8 isRed:1, /**< The node is red. */
+           isWired:1; /**< The node is in a tree. */
         EntryBase *parent, *child[2];
+
+        EntryBase() { isWired = false; }
     };
+
+    /** Validate the tree. This method is intended for tree implementation
+     * troubleshooting and normally is not required to be used.
+     *
+     * @return @a true if the tree is valid red-black tree, @a false if there
+     *      are some rules violations.
+     */
+    bool Validate();
 
 protected:
 
@@ -52,7 +64,8 @@ protected:
      * @param node Previously visited node. Can be NULL to get the first node.
      * @return Next node. NULL if all nodes traversed.
      */
-    EntryBase *GetNextNode(EntryBase *node);
+    EntryBase *GetNextNode(EntryBase *node = 0);
+
 private:
     /** Root node. */
     EntryBase *_root;
@@ -110,8 +123,12 @@ private:
  *      compared. The method must return positive value if this object is
  *      greater than the provided one, negative value if it is less, and zero
  *      if they are equal.
+ * @param key_t Optional type for key. This parameter can be provided if look
+ *      up by key is required.
+ * @param KeyComparator Optional method to compare object with a key value.
  */
 template <class T, int (T::*Comparator)(T &obj)>
+          //typename key_t = int, int (T::*KeyComparator)(key_t &key) = 0>
 class RBTree : public RBTreeBase {
 public:
     class Entry : public EntryBase {
@@ -161,21 +178,39 @@ public:
         return obj;
     }
 
+    inline T *Lookup();
+
     /* Iteration interface. */
 
     class Iterator {
     public:
-        inline Iterator() {
-
+        inline Iterator(RBTree &tree, bool isStart) :
+            _tree(tree)
+        {
+            if (isStart) {
+                e = static_cast<Entry *>(_tree.GetNextNode());
+            } else {
+                e = 0;
+            }
         }
 
-        inline bool operator !=(Iterator &iter) { /*XXX*/ return false; }
-        inline void operator ++() { /*XXX*/ }
-        inline T *operator *() { /*XXX*/ return 0; }
+        inline bool operator !=(Iterator &iter) { return e != iter.e; }
+
+        inline void operator ++() {
+            if (e) {
+                e = static_cast<Entry *>(_tree.GetNextNode(e));
+            }
+        }
+
+        inline T &operator *() { return *e->obj; }
+
+    private:
+        RBTree &_tree;
+        Entry *e;
     };
 
-    inline Iterator begin() { return Iterator(); }
-    inline Iterator end() { return Iterator(); }
+    inline Iterator begin() { return Iterator(*this, true); }
+    inline Iterator end() { return Iterator(*this, false); }
 };
 
 template <class T, int (T::*Comparator)(T &obj)>

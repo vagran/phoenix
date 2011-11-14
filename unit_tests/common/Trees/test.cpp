@@ -47,6 +47,31 @@ UT_TEST("RB tree")
         item.inserted = true;
     }
 
+    /* The second insertion should not succeed. */
+    TestItem tmpItems[numItems];
+    for (size_t i = 0; i < numItems; i++) {
+        TestItem &item = tmpItems[i];
+        item.idx = i;
+        UT(tree.Insert(&item, &item._rbEntry)) == UT_NULL;
+        item.inserted = true;
+    }
+
+    /* Verify tree iteration. */
+    for (TestItem &item: tree) {
+        UT(item.visited) == UT(false);
+        item.visited = true;
+    }
+
+    for (size_t i = 0; i < numItems; i++) {
+        TestItem &item = items[i];
+        if (item.inserted) {
+            UT(item.visited) == UT(true);
+        }
+        item.visited = false;
+    }
+
+    UT(tree.Validate()) == UT(true);
+
     //notimpl
 }
 UT_TEST_END
