@@ -311,7 +311,7 @@ public:
 
     bool operator ==(const TestValue<const char *> &value2) {
         __ut_hit_assert();
-        if (!strcmp(value, value2.value)) {
+        if (!__ut_strcmp(value, value2.value)) {
             return true;
         }
         throw TestException("==", *this, value2);
@@ -319,7 +319,7 @@ public:
 
     bool operator !=(const TestValue<const char *> &value2) {
         __ut_hit_assert();
-        if (strcmp(value, value2.value)) {
+        if (__ut_strcmp(value, value2.value)) {
             return true;
         }
         throw TestException("!=", *this, value2);
@@ -327,7 +327,7 @@ public:
 
     bool operator ==(const TestValue<char *> &value2) {
         __ut_hit_assert();
-        if (!strcmp(value, value2.value)) {
+        if (!__ut_strcmp(value, value2.value)) {
             return true;
         }
         throw TestException("==", *this, value2);
@@ -335,7 +335,7 @@ public:
 
     bool operator !=(const TestValue<char *> &value2) {
         __ut_hit_assert();
-        if (strcmp(value, value2.value)) {
+        if (__ut_strcmp(value, value2.value)) {
             return true;
         }
         throw TestException("!=", *this, value2);

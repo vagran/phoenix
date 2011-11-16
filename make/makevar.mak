@@ -7,8 +7,9 @@
 
 TOOLS_BIN = $(PHOENIX_BUILD_TOOLS)/bin
 TOOLS_PREFIX = x86_64-phoenix-elf-
+TOOLS_SUFFIX = -4.7.0
 
-export CC = $(TOOLS_BIN)/$(TOOLS_PREFIX)gcc
+export CC = $(TOOLS_BIN)/$(TOOLS_PREFIX)gcc$(TOOLS_SUFFIX)
 export LD = $(TOOLS_BIN)/$(TOOLS_PREFIX)ld
 export STRIP = $(TOOLS_BIN)/$(TOOLS_PREFIX)strip
 export AR = $(TOOLS_BIN)/$(TOOLS_PREFIX)ar
