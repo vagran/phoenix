@@ -112,9 +112,10 @@
  */
 #define ROUND_DOWN2(size, align)   ((size) & (~((align) - 1)))
 
-//XXX should be removed after Eclipse will have 'constexpr' keyword recognized.
+//XXX should be removed after Eclipse will have 'constexpr' and 'nullptr' keyword recognized.
 #ifdef __CDT_PARSER__
 #define constexpr
+#define nullptr ((void *)0)
 #endif /* __CDT_PARSER__ */
 
 #endif /* DEFS_H_ */

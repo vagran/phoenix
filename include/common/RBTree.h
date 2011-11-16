@@ -50,6 +50,15 @@ protected:
      */
     virtual int Compare(EntryBase *e1, EntryBase *e2) = 0;
 
+    /** This method should be overloaded in derived class. It must compare a
+     * node with a key.
+     * @param e Node to compare.
+     * @param key Pointer to a key.
+     * @return Positive value if @a key is greater than @a e, negative value if
+     *      @a key is less than @a e, zero if @a key is equal to @a e.
+     */
+    virtual int Compare(EntryBase *e, void *key) = 0;
+
     /** Insert node in the tree. This method either inserts the node or finds
      * existing node with the same key.
      *
@@ -65,6 +74,13 @@ protected:
      * @return Next node. NULL if all nodes traversed.
      */
     EntryBase *GetNextNode(EntryBase *node = 0);
+
+    /** Lookup tree node by key.
+     *
+     * @param key Pointer to key.
+     * @return Pointer to found node, @a 0 if nothing is found.
+     */
+    EntryBase *Lookup(void *key);
 
 private:
     /** Root node. */
@@ -127,8 +143,8 @@ private:
  *      up by key is required.
  * @param KeyComparator Optional method to compare object with a key value.
  */
-template <class T, int (T::*Comparator)(T &obj)>
-          //typename key_t = int, int (T::*KeyComparator)(key_t &key) = 0>
+template <class T, int (T::*Comparator)(T &obj),
+          typename key_t = void *, int (T::*KeyComparator)(key_t &key) = nullptr>
 class RBTree : public RBTreeBase {
 public:
     class Entry : public EntryBase {
@@ -143,6 +159,14 @@ public:
     virtual int Compare(EntryBase *e1, EntryBase *e2)
     {
         return (static_cast<Entry *>(e1)->obj->*Comparator)(*static_cast<Entry *>(e2)->obj);
+    }
+
+    virtual int Compare(EntryBase *e, void *key)
+    {
+        if (!KeyComparator) {
+            FAULT("Key comparator not provided");
+        }
+        return (static_cast<Entry *>(e)->obj->*KeyComparator)(*static_cast<key_t *>(key));
     }
 
     /** Try to insert an object in the tree. The object is inserted only if
@@ -178,7 +202,19 @@ public:
         return obj;
     }
 
-    inline T *Lookup();
+    /** Lookup object by a key.
+     *
+     * @param key Key for lookup.
+     * @return Pointer to found object, 0 if not found.
+     */
+    inline T *Lookup(key_t &key)
+    {
+        EntryBase *e = RBTreeBase::Lookup(&key);
+        if (!e) {
+            return 0;
+        }
+        return static_cast<Entry *>(e)->obj;
+    }
 
     /* Iteration interface. */
 
@@ -213,16 +249,18 @@ public:
     inline Iterator end() { return Iterator(*this, false); }
 };
 
-template <class T, int (T::*Comparator)(T &obj)>
-static inline typename RBTree<T, Comparator>::Iterator
-begin(RBTree<T, Comparator> &tree)
+template <class T, int (T::*Comparator)(T &obj),
+          typename key_t = void *, int (T::*KeyComparator)(key_t &key) = nullptr>
+static inline typename RBTree<T, Comparator, key_t, KeyComparator>::Iterator
+begin(RBTree<T, Comparator, key_t, KeyComparator> &tree)
 {
     return tree.begin();
 }
 
-template <class T, int (T::*Comparator)(T &obj)>
-static inline typename RBTree<T, Comparator>::Iterator
-end(RBTree<T, Comparator> &tree)
+template <class T, int (T::*Comparator)(T &obj),
+          typename key_t = void *, int (T::*KeyComparator)(key_t &key) = nullptr>
+static inline typename RBTree<T, Comparator, key_t, KeyComparator>::Iterator
+end(RBTree<T, Comparator, key_t, KeyComparator> &tree)
 {
     return tree.end();
 }

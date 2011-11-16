@@ -13,11 +13,11 @@
 
 class TestItem {
 public:
-    int idx;
+    size_t idx;
     bool inserted;
     bool visited;
 
-    TestItem(int idx = 0) {
+    TestItem(size_t idx = 0) {
         this->idx = idx;
         inserted = false;
         visited = false;
@@ -28,7 +28,12 @@ public:
         return idx - item.idx;
     }
 
-    typedef class RBTree<TestItem, &TestItem::Compare> TestTree;
+    int Compare(size_t &key)
+    {
+        return key - idx;
+    }
+
+    typedef class RBTree<TestItem, &TestItem::Compare, size_t, &TestItem::Compare> TestTree;
 
     TestTree::Entry _rbEntry;
 };
@@ -71,6 +76,13 @@ UT_TEST("RB tree")
     }
 
     UT(tree.Validate()) == UT(true);
+
+    /* Verify lookups */
+    for (size_t i = 0; i < numItems; i++) {
+        TestItem *item = tree.Lookup(i);
+        UT(item) != UT_NULL;
+        UT(item->idx) == UT(i);
+    }
 
     //notimpl
 }

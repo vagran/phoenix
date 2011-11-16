@@ -141,6 +141,20 @@ RBTreeBase::_RebalanceInsertion(EntryBase *node)
 }
 
 RBTreeBase::EntryBase *
+RBTreeBase::Lookup(void *key)
+{
+    EntryBase *node = _root;
+    while (node) {
+        int cmp = Compare(node, key);
+        if (!cmp) {
+            return node;
+        }
+        node = node->child[cmp > 0];
+    }
+    return 0;
+}
+
+RBTreeBase::EntryBase *
 RBTreeBase::GetNextNode(EntryBase *node)
 {
     if (!node) {
