@@ -68,7 +68,7 @@ GLOBAL_C_FLAGS =
 GLOBAL_CXX_FLAGS =
 
 C_STANDARD = -std=c99
-CXX_STANDARD = -std=c++0x
+CXX_STANDARD = -std=c++11
 
 CXX_RESTRICTIONS = -Wold-style-cast -Woverloaded-virtual
 

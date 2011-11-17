@@ -30,7 +30,7 @@ sub ParseFile {
             if ($1 eq "T" or $1 eq "D") {
                 $defined_syms{$2} = $filename;
             } elsif ($1 eq "U" and $isTest) {
-                if ($2 !~ /__cxa|__cxx/) {
+                if ($2 !~ /__cxa|__cxx|__gxx|_Unwind_/) {
                     $wanted_syms{$2} = $filename;
                 }
             }

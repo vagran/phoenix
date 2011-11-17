@@ -17,6 +17,15 @@
 /** Base class for red-black tree implementation. */
 class RBTreeBase {
 public:
+    /** Validate the tree. This method is intended for tree implementation
+     * troubleshooting and normally is not required to be used.
+     *
+     * @return @a true if the tree is valid red-black tree, @a false if there
+     *      are some rules violations.
+     */
+    bool Validate();
+
+protected:
     /** Tree node represented by this class. */
     class EntryBase {
     protected:
@@ -28,16 +37,6 @@ public:
 
         EntryBase() { isWired = false; }
     };
-
-    /** Validate the tree. This method is intended for tree implementation
-     * troubleshooting and normally is not required to be used.
-     *
-     * @return @a true if the tree is valid red-black tree, @a false if there
-     *      are some rules violations.
-     */
-    bool Validate();
-
-protected:
 
     RBTreeBase();
 
@@ -81,6 +80,12 @@ protected:
      * @return Pointer to found node, @a 0 if nothing is found.
      */
     EntryBase *Lookup(void *key);
+
+    /** Delete a node from the tree.
+     *
+     * @param entry Node to delete.
+     */
+    void Delete(EntryBase *entry);
 
 private:
     /** Root node. */
@@ -213,6 +218,30 @@ public:
         if (!e) {
             return 0;
         }
+        return static_cast<Entry *>(e)->obj;
+    }
+
+    /** Delete a node by its entry in user object.
+     *
+     * @param e Tree entry of a node to delete.
+     */
+    inline void Delete(Entry *e)
+    {
+        RBTreeBase::Delete(static_cast<EntryBase *>(e));
+    }
+
+    /** Delete a node by its key.
+     *
+     * @param key Key of the node to delete.
+     * @return Corresponding object if found, 0 if no such object in the tree.
+     */
+    inline T *Delete(key_t &key)
+    {
+        EntryBase *e = RBTreeBase::Lookup(&key);
+        if (!e) {
+            return 0;
+        }
+        RBTreeBase::Delete(e);
         return static_cast<Entry *>(e)->obj;
     }
 

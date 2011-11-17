@@ -140,6 +140,12 @@ RBTreeBase::_RebalanceInsertion(EntryBase *node)
     }
 }
 
+void
+RBTreeBase::Delete(EntryBase *entry UNUSED)
+{
+    //XXX
+}
+
 RBTreeBase::EntryBase *
 RBTreeBase::Lookup(void *key)
 {

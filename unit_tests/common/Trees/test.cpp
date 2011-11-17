@@ -43,6 +43,7 @@ UT_TEST("RB tree")
     TestItem::TestTree tree;
 
     const size_t numItems = 8192;
+    const size_t numDeletions = 2000;
     TestItem items[numItems];
 
     for (size_t i = 0; i < numItems; i++) {
@@ -69,9 +70,7 @@ UT_TEST("RB tree")
 
     for (size_t i = 0; i < numItems; i++) {
         TestItem &item = items[i];
-        if (item.inserted) {
-            UT(item.visited) == UT(true);
-        }
+        UT(item.inserted) == UT(item.visited);
         item.visited = false;
     }
 
@@ -84,6 +83,35 @@ UT_TEST("RB tree")
         UT(item->idx) == UT(i);
     }
 
-    //notimpl
+    /* Verify deletions. */
+    for (size_t i = 0; i < numDeletions; i++) {
+        TestItem *item = tree.Delete(i);
+        UT(item) != UT_NULL;
+        UT(item->idx) == UT(i);
+        item->inserted = false;
+    }
+
+    UT(tree.Validate()) == UT(true);
+
+    for (size_t i = 0; i < numItems; i++) {
+        TestItem *item = tree.Lookup(i);
+        if (i < numDeletions) {
+            UT(item) == UT_NULL;
+        } else {
+            UT(item) != UT_NULL;
+            UT(item->idx) == UT(i);
+        }
+    }
+
+    for (TestItem &item: tree) {
+        UT(item.visited) == UT(false);
+        item.visited = true;
+    }
+
+    for (size_t i = 0; i < numItems; i++) {
+        TestItem &item = items[i];
+        UT(item.inserted) == UT(item.visited);
+        item.visited = false;
+    }
 }
 UT_TEST_END
