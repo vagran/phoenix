@@ -101,18 +101,7 @@ RBTreeBase::_RebalanceInsertion(EntryBase *node)
             y = node->parent;
         } else {
             /* Case 3 - rotate parent and transform to case 2. */
-            EntryBase *x = node->parent;
-            y = node;
-            x->child[!dir] = y->child[dir];
-            if (x->child[!dir]) {
-                x->child[!dir]->parent = x;
-            }
-
-            y->parent = x->parent;
-            y->parent->child[dir] = y;
-
-            y->child[dir] = x;
-            x->parent = y;
+            _Rotate(node->parent, !dir);
         }
         /* Case 2 - perform grandparent rotation. */
         EntryBase *x = y->parent;
@@ -120,30 +109,183 @@ RBTreeBase::_RebalanceInsertion(EntryBase *node)
         x->isRed = true;
         y->isRed = false;
 
-        x->child[dir] = y->child[!dir];
-        if (x->child[dir]) {
-            x->child[dir]->parent = x;
-        }
-
-        y->parent = x->parent;
-        x->parent = y;
-        y->child[!dir] = x;
-        if (y->parent) {
-            if (y->parent->child[0] == x) {
-                y->parent->child[0] = y;
-            } else {
-                y->parent->child[1] = y;
-            }
-        } else {
-            _root = y;
-        }
+        _Rotate(x, dir);
     }
 }
 
 void
-RBTreeBase::Delete(EntryBase *entry UNUSED)
+RBTreeBase::_RebalanceDeletion(EntryBase *node)
 {
-    //XXX
+    EntryBase *replNode = node, *tmpNode;
+
+    if (!node->parent) {
+        ASSERT(node == _root);
+        _root = 0;
+        return;
+    }
+
+    do {
+        /* Current is red leaf. */
+        if (node->isRed && !node->child[0] && !node->child[1]) {
+            /* Done */
+            break;
+        }
+
+        int nodeDir;
+        if (node->parent->child[0] == node) {
+            nodeDir = 0;
+        } else {
+            ASSERT(node->parent->child[1] == node);
+            nodeDir = 1;
+        }
+
+        /* Current is black with one red child. */
+        if (!node->isRed &&
+            (((tmpNode = node->child[0]) && tmpNode->isRed && !node->child[1]) ||
+             ((tmpNode = node->child[1]) && tmpNode->isRed && !node->child[0]))) {
+
+            tmpNode->parent = node->parent;
+            if (nodeDir != -1) {
+                node->parent->child[nodeDir] = tmpNode;
+            }
+            break;
+        }
+
+        do {
+            /* Current sibling is red. */
+            EntryBase *siblNode = node->parent->child[!nodeDir];
+            if (siblNode->isRed) {
+                /* Exchange colors of parent and sibling nodes. */
+                node->parent->isRed = true;
+                siblNode->isRed = false;
+
+                /* Rotate around the parent. */
+                _Rotate(node->parent, !nodeDir);
+                continue;
+            }
+
+            /* Current sibling is black with two black children */
+            if ((!siblNode->child[0] || !siblNode->child[0]->isRed) &&
+                (!siblNode->child[1] || !siblNode->child[1]->isRed)) {
+
+                /* Make sibling red. */
+                siblNode->isRed = true;
+                /* Make parent new current node. */
+                node = node->parent;
+                if (!node->isRed && node->parent) {
+                    if (node->parent->child[0] == node) {
+                        nodeDir = 0;
+                    } else {
+                        ASSERT(node->parent->child[1] == node);
+                        nodeDir = 1;
+                    }
+                    continue;
+                }
+                /* Current is red - make it black and we are done. */
+                node->isRed = false;
+                break;
+            }
+
+            /* Current sibling is black with one or two red children. */
+            EntryBase *farNephewNode = siblNode->child[!nodeDir];
+
+            if (!farNephewNode->isRed) {
+                /* Far nephew is black, rotate around the sibling. */
+                _Rotate(siblNode, nodeDir);
+                siblNode = node->parent->child[!nodeDir];
+                farNephewNode = siblNode->child[!nodeDir];
+            }
+
+            /* Color the far nephew black, make the sibling color the same as
+             * the color of its parent, color the parent black.
+             */
+            farNephewNode->isRed = false;
+            siblNode->isRed = node->parent->isRed;
+            node->parent->isRed = false;
+
+            /* Rotate around the parent. */
+            _Rotate(node->parent, !nodeDir);
+            break;
+        } while (node);
+    } while(false);
+
+    /* Detach replacement node. */
+    if (replNode->parent->child[0] == replNode) {
+        replNode->parent->child[0] = 0;
+    } else {
+        ASSERT(replNode->parent->child[1] == replNode);
+        replNode->parent->child[1] = 0;
+    }
+}
+
+void
+RBTreeBase::Delete(EntryBase *node)
+{
+    ASSERT(node->isWired);
+    /* Firstly find successor or predecessor of the provided. It will be
+     * detached from the tree instead of the provided node and after that it
+     * will replace the target node.
+     */
+    EntryBase *targetNode = node;
+    EntryBase *replNode = node; /* Replacement node. */
+    int dir; /* Initial direction. */
+    if (replNode->child[0] || replNode->child[1]) {
+        /* If there are children select direction. If there is a right item
+         * which is red or there are no left item, then find predecessor.
+         * Otherwise find successor.
+         */
+        if ((replNode->child[0] && replNode->child[0]->isRed) ||
+            !replNode->child[1]) {
+            dir = 0;
+        } else {
+            dir = 1;
+        }
+        replNode = replNode->child[dir];
+        while (replNode->child[!dir]) {
+            replNode = replNode->child[!dir];
+        }
+    }
+
+    /* Re-balance the tree and detach replacement entry. */
+    _RebalanceDeletion(replNode);
+
+    ASSERT(_nodesCount);
+    _nodesCount--;
+    _generation++;
+
+    /* Replace target entry with detached replacement entry. */
+    if (replNode == targetNode) {
+        /* The replacement entry which is also target entry was already
+         * detached by the previous call, so we are done.
+         */
+        targetNode->isWired = false;
+        return;
+    }
+    /* Move all links and color from target entry to the replacement one. */
+    replNode->isRed = targetNode->isRed;
+    targetNode->isWired = false;
+    replNode->parent = targetNode->parent;
+    if (targetNode->parent) {
+        if (targetNode->parent->child[0] == targetNode) {
+            targetNode->parent->child[0] = replNode;
+        } else {
+            ASSERT(targetNode->parent->child[1] == targetNode);
+            targetNode->parent->child[1] = replNode;
+        }
+    } else {
+        ASSERT(targetNode == _root);
+        _root = replNode;
+    }
+    replNode->child[0] = targetNode->child[0];
+    if (replNode->child[0]) {
+        ASSERT(replNode->child[0]->parent == targetNode);
+        replNode->child[0]->parent = replNode;
+    }
+    replNode->child[1] = targetNode->child[1];
+    if (replNode->child[1]) {
+        ASSERT(replNode->child[1]->parent == targetNode);
+        replNode->child[1]->parent = replNode;
+    }
 }
 
 RBTreeBase::EntryBase *
@@ -189,6 +331,20 @@ RBTreeBase::Validate()
     EntryBase *node = 0;
     int numBlackNodes = -1; /* Black nodes amount in a simple path. */
     while ((node = GetNextNode(node))) {
+        /* Verify link with parent. */
+        if (node->parent) {
+            if (node->parent->child[0] != node && node->parent->child[1] != node) {
+                /* Parent link broken. */
+                return false;
+            }
+        }
+        /* Validate children. */
+        if (node->child[0] && Compare(node->child[0], node) >= 0) {
+            return false;
+        }
+        if (node->child[1] && Compare(node->child[1], node) <= 0) {
+            return false;
+        }
         /* Red node never can have red children. */
         if (node->isRed && node->parent && node->parent->isRed) {
             return false;

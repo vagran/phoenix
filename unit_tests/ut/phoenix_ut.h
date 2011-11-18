@@ -100,8 +100,14 @@
  */
 #define UT_PASS()       ut::__ut_hit_assert()
 
+/** Output message to the test log. */
+#define UT_TRACE(msg, ...) ut::__ut_trace(__FILE__, __LINE__, msg, ## __VA_ARGS__)
+
 /** Unit tests related definitions reside in this namespace. */
 namespace ut {
+
+/** Output message to the test log. */
+void __ut_trace(const char *file, int line, const char *msg, ...);
 
 /** Increment tested values statistics. */
 void __ut_hit_value();

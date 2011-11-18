@@ -38,30 +38,9 @@ public:
     TestTree::Entry _rbEntry;
 };
 
-UT_TEST("RB tree")
+static void
+VerifyTree(TestItem::TestTree &tree, const size_t numItems, TestItem *items)
 {
-    TestItem::TestTree tree;
-
-    const size_t numItems = 8192;
-    const size_t numDeletions = 2000;
-    TestItem items[numItems];
-
-    for (size_t i = 0; i < numItems; i++) {
-        TestItem &item = items[i];
-        item.idx = i;
-        UT(tree.Insert(&item, &item._rbEntry)) == UT(&item);
-        item.inserted = true;
-    }
-
-    /* The second insertion should not succeed. */
-    TestItem tmpItems[numItems];
-    for (size_t i = 0; i < numItems; i++) {
-        TestItem &item = tmpItems[i];
-        item.idx = i;
-        UT(tree.Insert(&item, &item._rbEntry)) == UT_NULL;
-        item.inserted = true;
-    }
-
     /* Verify tree iteration. */
     for (TestItem &item: tree) {
         UT(item.visited) == UT(false);
@@ -79,39 +58,61 @@ UT_TEST("RB tree")
     /* Verify lookups */
     for (size_t i = 0; i < numItems; i++) {
         TestItem *item = tree.Lookup(i);
-        UT(item) != UT_NULL;
-        UT(item->idx) == UT(i);
+        if (items[i].inserted) {
+            UT(item) != UT_NULL;
+            UT(item->idx) == UT(i);
+        } else {
+            UT(item) == UT_NULL;
+        }
+    }
+}
+
+UT_TEST("RB tree")
+{
+    TestItem::TestTree tree;
+
+    const size_t numItems = 256;
+    const size_t numDeletions = 100;
+    TestItem items[numItems];
+    memset(items, 0, sizeof(items));
+
+    for (size_t i = 0; i < numItems; i++) {
+        items[i].idx = i;
     }
 
-    /* Verify deletions. */
+    UT_TRACE("Verifying insertions...");
+    for (size_t i = 0; i < numItems; i++) {
+        TestItem &item = items[i];
+        UT(tree.Insert(&item, &item._rbEntry)) == UT(&item);
+        item.inserted = true;
+        VerifyTree(tree, numItems, items);
+    }
+
+    /* The second insertion should not succeed. */
+    TestItem tmpItems[numItems];
+    for (size_t i = 0; i < numItems; i++) {
+        TestItem &item = tmpItems[i];
+        UT(tree.Insert(&item, &item._rbEntry)) == UT_NULL;
+        item.inserted = true;
+    }
+
+    VerifyTree(tree, numItems, items);
+
+    UT_TRACE("Verifying deletions...");
     for (size_t i = 0; i < numDeletions; i++) {
         TestItem *item = tree.Delete(i);
         UT(item) != UT_NULL;
         UT(item->idx) == UT(i);
         item->inserted = false;
+        VerifyTree(tree, numItems, items);
     }
-
-    UT(tree.Validate()) == UT(true);
-
-    for (size_t i = 0; i < numItems; i++) {
-        TestItem *item = tree.Lookup(i);
-        if (i < numDeletions) {
-            UT(item) == UT_NULL;
-        } else {
-            UT(item) != UT_NULL;
-            UT(item->idx) == UT(i);
-        }
-    }
-
-    for (TestItem &item: tree) {
-        UT(item.visited) == UT(false);
-        item.visited = true;
-    }
-
-    for (size_t i = 0; i < numItems; i++) {
-        TestItem &item = items[i];
-        UT(item.inserted) == UT(item.visited);
-        item.visited = false;
+    /* Delete the reset from the end. */
+    for (size_t i = numItems - 1; i >= numDeletions; i--) {
+        TestItem *item = tree.Delete(i);
+        UT(item) != UT_NULL;
+        UT(item->idx) == UT(i);
+        item->inserted = false;
+        VerifyTree(tree, numItems, items);
     }
 }
 UT_TEST_END

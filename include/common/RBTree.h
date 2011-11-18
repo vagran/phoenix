@@ -105,6 +105,43 @@ private:
      */
     void _RebalanceInsertion(EntryBase *node);
 
+    /** Re-balance the tree after deletion and detach replacement entry.
+     * @param node Replacement node which must be detached.
+     */
+    void _RebalanceDeletion(EntryBase *node);
+
+    /** Rotate subtree around the specified node in specified direction.
+     *
+     * @param node Node to rotate around.
+     * @param dir Rotation direction. If 0 then right child of the node will
+     *      become its parent, left if 1.
+     */
+    inline void _Rotate(EntryBase *node, int dir) {
+        ASSERT(dir == 0 || dir == 1);
+        EntryBase *x = node->child[dir];
+        ASSERT(x);
+        x->parent = node->parent;
+        if (node->parent) {
+            if (node->parent->child[0] == node) {
+                node->parent->child[0] = x;
+            } else {
+                ASSERT(node->parent->child[1] == node);
+                node->parent->child[1] = x;
+            }
+        } else {
+            ASSERT(_root == node);
+            _root = x;
+        }
+
+        node->child[dir] = x->child[!dir];
+        if (node->child[dir]) {
+            node->child[dir]->parent = node;
+        }
+
+        x->child[!dir] = node;
+        node->parent = x;
+    }
+
     /** Check if re-balancing after insertion is required for the provided
      * node. Call @ref _RebalanceInsertion method if required.
      *
@@ -125,9 +162,10 @@ private:
  * public:
  *
  *    int Compare(MyItem &item);
- *    typedef class RBTree<Item, &MyItem::Compare> MyTree;
+ *    int Compare(int key);
+ *    typedef class RBTree<Item, &MyItem::Compare, int, &MyItem::Compare> MyTree;
  * private:
- *    friend class RBTree<MyItem, &MyItem::Compare>;
+ *    friend class RBTree<MyItem, &MyItem::Compare, int, &MyItem::Compare>;
  *    MyTree::Entry _rbEntry;
  * };
  *
@@ -144,12 +182,13 @@ private:
  *      compared. The method must return positive value if this object is
  *      greater than the provided one, negative value if it is less, and zero
  *      if they are equal.
- * @param key_t Optional type for key. This parameter can be provided if look
- *      up by key is required.
- * @param KeyComparator Optional method to compare object with a key value.
+ * @param key_t Type for key.
+ * @param KeyComparator Method to compare object with a key value. The method
+ *      must return positive value if key value is greater than this object
+ *      value, negative value if it is less, and zero if they are equal.
  */
 template <class T, int (T::*Comparator)(T &obj),
-          typename key_t = void *, int (T::*KeyComparator)(key_t &key) = nullptr>
+          typename key_t, int (T::*KeyComparator)(key_t &key)>
 class RBTree : public RBTreeBase {
 public:
     class Entry : public EntryBase {
@@ -279,7 +318,7 @@ public:
 };
 
 template <class T, int (T::*Comparator)(T &obj),
-          typename key_t = void *, int (T::*KeyComparator)(key_t &key) = nullptr>
+          typename key_t, int (T::*KeyComparator)(key_t &key)>
 static inline typename RBTree<T, Comparator, key_t, KeyComparator>::Iterator
 begin(RBTree<T, Comparator, key_t, KeyComparator> &tree)
 {
@@ -287,7 +326,7 @@ begin(RBTree<T, Comparator, key_t, KeyComparator> &tree)
 }
 
 template <class T, int (T::*Comparator)(T &obj),
-          typename key_t = void *, int (T::*KeyComparator)(key_t &key) = nullptr>
+          typename key_t, int (T::*KeyComparator)(key_t &key)>
 static inline typename RBTree<T, Comparator, key_t, KeyComparator>::Iterator
 end(RBTree<T, Comparator, key_t, KeyComparator> &tree)
 {

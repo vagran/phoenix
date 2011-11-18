@@ -13,6 +13,7 @@
 
 #include <phoenix_ut.h>
 
+#include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
 #include <string>
@@ -237,6 +238,18 @@ ut::__ut_strlen(const char *s)
 {
     return strlen(s);
 }
+
+void
+ut::__ut_trace(const char *file, int line, const char *msg, ...)
+{
+    va_list args;
+    va_start(args, msg);
+    printf("[%s:%d] ", file, line);
+    vprintf(msg, args);
+    printf("\n");
+    va_end(args);
+}
+
 
 /* UtString class */
 
