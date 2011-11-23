@@ -24,6 +24,8 @@ public:
         FAIL, /**< Generic failure. */
         INV_PARAM, /**< Provided parameter(s) is(are) invalid. */
         NOT_FOUND, /**< Requested object not found. */
+        NO_MEMORY, /**< Failed to allocate memory. */
+        NO_RESOURCES, /**< Out of required resources. */
     };
 
     /** Construct RetCode object. Should not be used directly - use @ref RC
@@ -54,6 +56,10 @@ public:
             return "INV_PARAM";
         case NOT_FOUND:
             return "NOT_FOUND";
+        case NO_MEMORY:
+            return "NO_MEMORY";
+        case NO_RESOURCES:
+            return "NO_RESOURCES";
         }
         return "UNKNOWN";
     }
@@ -87,7 +93,7 @@ public:
         TRACE("Failed return code received in '%s' at %s:%d: %s", \
               __func__, __FILE__, __LINE__, (__rc).GetName()); \
     } \
-    (__rc).IsOK(); \
+    (__rc).IsOk(); \
 })
 
 /** Check if the return code indicates failure. */

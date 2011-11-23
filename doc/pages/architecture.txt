@@ -10,8 +10,7 @@ ACPI((Advanced Configuration and Power Interface)) is the main source of hardwar
 
 ===== Firmware =====
 
-Only [[http://en.wikipedia.org/wiki/Extensible_Firmware_Interface|EFI]]((Extensible Firmware Interface)) is supported to be a platform firmware. This is a new standard which replaces legacy PC BIOS.
-
+[[wp>Extensible_Firmware_Interface|EFI]]((Extensible Firmware Interface)) is the first supported firmware standard for the platform firmware. This is a new standard which replaces legacy PC BIOS. It is also possible that [[wp>Open_Firmware|Open Firmware]] support will be added later.
 
 ===== Disks =====
 

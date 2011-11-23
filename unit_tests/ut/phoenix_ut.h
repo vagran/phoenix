@@ -93,7 +93,7 @@
 /** User requested failure.
  * @param desc Description of the fault.
  */
-#define UT_FAIL(desc)   ut::__ut_user_fault(desc, __FILE__, __LINE__)
+#define UT_FAIL(desc, ...)   ut::__ut_user_fault(__FILE__, __LINE__, desc, ## __VA_ARGS__)
 
 /** Indicate successful milestone passing. Can be used to affect assertions
  * statistics while checking conditions manually.
@@ -103,11 +103,20 @@
 /** Output message to the test log. */
 #define UT_TRACE(msg, ...) ut::__ut_trace(__FILE__, __LINE__, msg, ## __VA_ARGS__)
 
+typedef __builtin_va_list       __ut_va_list;
+
+#define __ut_va_start(ap, last) __builtin_va_start((ap), (last))
+#define __ut_va_arg(ap, type)   __builtin_va_arg((ap), type)
+#define __ut_va_copy(dest, src) __builtin_va_copy((dest), (src))
+#define __ut_va_end(ap)         __builtin_va_end(ap)
+
 /** Unit tests related definitions reside in this namespace. */
 namespace ut {
 
 /** Output message to the test log. */
 void __ut_trace(const char *file, int line, const char *msg, ...);
+/** Output message to the test log. */
+void __ut_vtrace(const char *file, int line, const char *msg, __ut_va_list args);
 
 /** Increment tested values statistics. */
 void __ut_hit_value();
@@ -116,6 +125,9 @@ void __ut_hit_assert();
 
 unsigned __ut_strlen(const char *s);
 int __ut_strcmp(const char *s1, const char *s2);
+
+int __ut_snprintf(char *str, unsigned long size, const char *format, ...);
+int __ut_vsnprintf(char *str, unsigned long size, const char *format, __ut_va_list ap);
 
 class UtString {
 public:
@@ -361,7 +373,7 @@ public:
 };
 
 /** Throw user requested fault. Use @ref UT_FAIL macro to call this function. */
-void __ut_user_fault(const char *desc, const char *file, int line);
+void __ut_user_fault(const char *file, int line, const char *desc, ...);
 
 /** Description provided in the test makefile. */
 extern const char *__ut_test_description;

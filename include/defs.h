@@ -70,12 +70,21 @@
 /** Number of bits in byte */
 #define NBBY                        8
 
+#ifdef __cplusplus
+/** Language-independent (C, C++) type cast. Should be used in files which must
+ * be compilable in both C  and C++.
+ */
+#define TYPECAST(type, value)           static_cast<type>(value)
+#else /* __cplusplus */
+#define TYPECAST(type, value)           ((type)value)
+#endif /* __cplusplus */
+
 /** Minimal value of a given signed type. */
-#define TYPE_INT_MIN(type)          (static_cast<type>(1) << (sizeof(type) * NBBY - 1))
+#define TYPE_INT_MIN(type)          (TYPECAST(type, 1) << (sizeof(type) * NBBY - 1))
 /** Maximal value of a given signed type. */
 #define TYPE_INT_MAX(type)          (~TYPE_INT_MIN(type))
 /** Maximal value of a given unsigned type. */
-#define TYPE_UINT_MAX(type)         (~(type)0ul)
+#define TYPE_UINT_MAX(type)         (TYPECAST(type, ~0ul))
 
 /** Modifier for functions which can be called from assembler code. */
 #define ASMCALL                     extern "C" __attribute__((regparm(0)))

@@ -21,7 +21,7 @@ public:
      * troubleshooting and normally is not required to be used.
      *
      * @return @a true if the tree is valid red-black tree, @a false if there
-     *      are some rules violations.
+     *      are some rules violations or dis-integrity.
      */
     bool Validate();
 
@@ -86,6 +86,18 @@ protected:
      * @param entry Node to delete.
      */
     void Delete(EntryBase *entry);
+
+    /** Get the node with the lowest value.
+     *
+     * @return Node with the lowest value, NULL if the tree is empty.
+     */
+    EntryBase *Lowest();
+
+    /** Get the node with the highest value.
+     *
+     * @return Node with the highest value, NULL if the tree is empty.
+     */
+    EntryBase *Highest();
 
 private:
     /** Root node. */
@@ -185,7 +197,11 @@ private:
  * @param key_t Type for key.
  * @param KeyComparator Method to compare object with a key value. The method
  *      must return positive value if key value is greater than this object
- *      value, negative value if it is less, and zero if they are equal.
+ *      value, negative value if it is less, and zero if they are equal. It
+ *      should have the following prototype:
+ *      @code
+ *      int Compare(key_t &key);
+ *      @endcode
  */
 template <class T, int (T::*Comparator)(T &obj),
           typename key_t, int (T::*KeyComparator)(key_t &key)>
@@ -281,6 +297,30 @@ public:
             return 0;
         }
         RBTreeBase::Delete(e);
+        return static_cast<Entry *>(e)->obj;
+    }
+
+    /** Get the object with the lowest value.
+     *
+     * @return Object with the lowest value, NULL if the tree is empty.
+     */
+    inline T *Lowest() {
+        EntryBase *e = RBTreeBase::Lowest();
+        if (!e) {
+            return 0;
+        }
+        return static_cast<Entry *>(e)->obj;
+    }
+
+    /** Get the object with the highest value.
+     *
+     * @return Object with the highest value, NULL if the tree is empty.
+     */
+    inline T *Highest() {
+        EntryBase *e = RBTreeBase::Highest();
+        if (!e) {
+            return 0;
+        }
         return static_cast<Entry *>(e)->obj;
     }
 

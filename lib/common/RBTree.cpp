@@ -275,6 +275,7 @@ RBTreeBase::Delete(EntryBase *node)
     } else {
         ASSERT(targetNode == _root);
         _root = replNode;
+        _root->isRed = false;
     }
     replNode->child[0] = targetNode->child[0];
     if (replNode->child[0]) {
@@ -322,6 +323,34 @@ RBTreeBase::GetNextNode(EntryBase *node)
         node = node->parent;
     }
     return 0;
+}
+
+RBTreeBase::EntryBase *
+RBTreeBase::Lowest()
+{
+    if (UNLIKELY(!_root)) {
+        return 0;
+    }
+    EntryBase *node = _root;
+    /* Get the leftmost node. */
+    while (node->child[0]) {
+        node = node->child[0];
+    }
+    return node;
+}
+
+RBTreeBase::EntryBase *
+RBTreeBase::Highest()
+{
+    if (UNLIKELY(!_root)) {
+        return 0;
+    }
+    EntryBase *node = _root;
+    /* Get the rightmost node. */
+    while (node->child[1]) {
+        node = node->child[1];
+    }
+    return node;
 }
 
 bool

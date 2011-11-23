@@ -128,3 +128,16 @@ Pagers also have access to the kernel paging interfaces.
 Buddy allocator is used for allocating space in the global address space. It is used for allocating large blocks (staring from one page and greater) which are passed to scalable slab allocator which splits these large blocks to smaller well fitted units. This approach ensures optimal memory utilization.
 
 Memory allocation API does not provide any functions to the front-end code other than C++ "''new''" and "''delete''" operators which are the only way to allocate and free dynamical memory.
+
+==== Buddy allocator ====
+
+The universal buddy allocator (see [[wp>Buddy_memory_allocation|article about buddy allocators]]) is implemented in Phoenix for managing various address ranges. The allocator is abstracted from underlying resource type, i.e. it does not know what kind of resource is allocated -- is it physical or virtual memory, some ID space or anything else. It operates with address ranges only. The allocator must provide the following functionality:
+  * Allocate a block of specified size where possible.
+  * Allocate a block of specified size at specified location if possible.
+  * Free block at specified location.
+  * Find block size, location (start address) and status (allocated/free) by specified arbitrary address which  belongs to this block.
+Note that the allocator is capable for allocations and freeings only -- it does not provide any way to associate some client meta-information with allocated blocks. If such meta-information is required, the client should implement some mapping between block address and its meta-information block (e.g. using binary search trees).
+
+The buddy allocator is implemented using blocks bitmaps and free blocks cache. When the allocator is initialized it allocates several internal structures -- a set of block bitmaps and a pool of cached free blocks. The set of bitmaps is a map of currently allocated blocks. Each bitmap corresponds to one order with which the allocator operates. Each set bit in a bitmap corresponds to an allocated block of that order.
+
+Free blocks cache is a number of trees (one tree for each order) which store some amount of free blocks of each order. Trees are used because when a block is freed, its buddy can be coalesced if it is free. In such case it must be removed from free blocks cache of one order and placed to another one. In case lists are used instead of trees for free blocks cache then linear search should be used in order to find coalesced block and delete it from cache.

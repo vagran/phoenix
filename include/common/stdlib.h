@@ -115,5 +115,6 @@ int vsscanf(const char *str, char const *fmt, va_list ap) __FORMAT(scanf, 2, 0);
 
 #include <common/OTextStream.h>
 #include <common/RBTree.h>
+#include <common/BuddyAllocator.h>
 
 #endif /* STDLIB_H_ */

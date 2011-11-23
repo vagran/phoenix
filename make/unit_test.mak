@@ -25,6 +25,8 @@ UT_SRCS = $(notdir $(wildcard $(UT_DIR)/*.cpp))
 vpath %.cpp $(UT_DIR)
 SRCS = $(LOCAL_SRCS) $(UT_SRCS) $(notdir $(TEST_SRCS))
 
+COMMON_STUBS = $(UT_DIR)/phoenix_stubs.cpp
+
 AUTO_SRC = $(OBJ_DIR)/auto_stabs.cpp
 AUTO_OBJ = $(AUTO_SRC:.cpp=.o)
 
@@ -34,7 +36,7 @@ OBJS = $(foreach obj,$(SRCS:.cpp=.o),$(OBJ_DIR)/$(obj))
 
 INCLUDE_FLAGS += -I$(UT_DIR)
 
-COMMON_FLAGS = -pipe -Wall -Werror -DKERNEL_ADDRESS=$(KERNEL_ADDRESS)
+COMMON_FLAGS = -pipe -Wall -Werror -DKERNEL_ADDRESS=$(KERNEL_ADDRESS) -DUNITTEST
 
 ifeq ($(PHOENIX_TARGET),RELEASE)
 COMMON_FLAGS += -O2
@@ -94,7 +96,7 @@ $(AUTO_SRC): $(OBJS)
 	$(STUBS_GEN) --nm $(NAT_NM) --cppfilt $(NAT_CPPFILT) \
 	--result $@ \
 	$(foreach src,$(notdir $(TEST_SRCS)),--test_src $(OBJ_DIR)/$(src:.cpp=.o)) \
-	$(foreach src,$(LOCAL_SRCS),--src $(OBJ_DIR)/$(src:.cpp=.o))
+	$(foreach src,$(LOCAL_SRCS) $(notdir $(COMMON_STUBS)),--src $(OBJ_DIR)/$(src:.cpp=.o))
 	echo "$$AUTO_CHUNK" >> $@
 
 ifdef TEST_NAME

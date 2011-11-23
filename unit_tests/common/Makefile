@@ -5,6 +5,6 @@
 # All rights reserved.
 # See COPYING file for copyright details.
 
-SUBDIRS = BitString OTextStream Trees
+SUBDIRS = BitString BuddyAllocator OTextStream Trees
 
 include $(PHOENIX_ROOT)/make/unit_test.mak

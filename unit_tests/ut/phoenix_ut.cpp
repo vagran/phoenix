@@ -210,9 +210,14 @@ TestException::Describe(UtString &_s)
 }
 
 void
-ut::__ut_user_fault(const char *desc, const char *file, int line)
+ut::__ut_user_fault(const char *file, int line, const char *desc, ...)
 {
-    throw TestException(desc, file, line);
+    static char buf[2048];
+    va_list args;
+    va_start(args, desc);
+    vsnprintf(buf, sizeof(buf), desc, args);
+    va_end(args);
+    throw TestException(buf, file, line);
 }
 
 void
@@ -244,10 +249,32 @@ ut::__ut_trace(const char *file, int line, const char *msg, ...)
 {
     va_list args;
     va_start(args, msg);
+    __ut_vtrace(file, line, msg, args);
+    va_end(args);
+}
+
+void
+ut::__ut_vtrace(const char *file, int line, const char *msg, __ut_va_list args)
+{
     printf("[%s:%d] ", file, line);
     vprintf(msg, args);
     printf("\n");
+}
+
+int
+ut::__ut_snprintf(char *str, unsigned long size, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int ret = vsnprintf(str, size, format, args);
     va_end(args);
+    return ret;
+}
+
+int
+ut::__ut_vsnprintf(char *str, unsigned long size, const char *format, __builtin_va_list ap)
+{
+    return vsnprintf(str, size, format, ap);
 }
 
 

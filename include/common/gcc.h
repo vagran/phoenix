@@ -38,7 +38,7 @@ private:
 
 #endif /* __cplusplus */
 
-/* FIXME probably these function not required for 64 bits platform */
+/* FIXME probably these functions not required for 64 bits platform */
 ASMCALL i64 __divdi3(i64 a, i64 b);
 ASMCALL u64 __udivdi3(u64 a, u64 b);
 ASMCALL i64 __moddi3(i64 a, i64 b);

@@ -14,7 +14,13 @@
 #ifndef LOG_H_
 #define LOG_H_
 
-#ifdef KERNEL
+#ifdef UNITTEST
+
+void __ut_trace(const char *file, int line, const char *msg, ...);
+
+#define TRACE_FMT(...) __ut_trace(__FILE__, __LINE__, __VA_ARGS__)
+
+#elif defined(KERNEL)
 
 namespace log {
 
@@ -24,9 +30,13 @@ extern text_stream::OTextStream<DbgSerialPort> *dbgStream;
 
 } /* namespace log */
 
-#define TRACE_FMT log::dbgStream->Format
+#define TRACE_FMT(...) log::dbgStream->Format(__VA_ARGS__)
 
-#endif /* KERNEL */
+#elif defined(EFI_APP)
+
+#define TRACE_FMT(...)
+
+#endif
 
 /** Macro for printing debug messages into debug console. Has no effect in
  * production build.
@@ -35,7 +45,7 @@ extern text_stream::OTextStream<DbgSerialPort> *dbgStream;
  */
 #ifdef DEBUG
 #define TRACE(msg, ...) \
-    TRACE_FMT("[TRACE] %s:%d: " msg "\n", __FILE__, __LINE__, ## __VA_ARGS__)
+    TRACE_FMT("[TRACE] %s:%d <%s>: " msg "\n", __FILE__, __LINE__, __func__, ## __VA_ARGS__)
 #else /* DEBUG */
 #define TRACE(msg, ...)
 #endif /* DEBUG */
