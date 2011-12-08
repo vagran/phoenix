@@ -25,6 +25,14 @@ using namespace ut;
 #define UT_HDL2STR(str_hdl) (*static_cast<std::string *>(str_hdl))
 #define UT_STR2HDL(str)     (static_cast<void *>(&str))
 
+namespace ut {
+
+void __ut_mdump();
+
+bool __ut_mtrack_enabled = true;
+
+}
+
 namespace {
 
 std::string &
@@ -123,6 +131,7 @@ TestMan::Run()
 
         printf("Test %s\n", failed ? "FAILED" : "PASSED");
         PrintStat();
+        ::__ut_mdump();
         testIdx++;
         if (!failed ) {
             numPassed++;
@@ -134,6 +143,7 @@ TestMan::Run()
            numPassed == numTests ? "SUCCEED" : "FAILED",
            numPassed, numTests);
     PrintStat(true);
+    ::__ut_mtrack_enabled = false;
     return numPassed == numTests;
 }
 
@@ -272,9 +282,145 @@ ut::__ut_snprintf(char *str, unsigned long size, const char *format, ...)
 }
 
 int
-ut::__ut_vsnprintf(char *str, unsigned long size, const char *format, __builtin_va_list ap)
+ut::__ut_vsnprintf(char *str, unsigned long size, const char *format,
+                   __builtin_va_list ap)
 {
     return vsnprintf(str, size, format, ap);
+}
+
+#ifndef IS_POWER_OF_2
+#define IS_POWER_OF_2(value)       ((((value) - 1) & (value)) == 0)
+#endif
+
+#ifndef ROUND_UP2
+#define ROUND_UP2(size, align)     (((size) + (align) - 1) & (~((align) - 1)))
+#endif
+
+struct ut_mblock_hdr {
+    enum {
+        MAGIC = 0x3e781b0a
+    };
+    unsigned magic;
+    const char *file;
+    int line;
+    /* Requested size. */
+    unsigned long size;
+    /* Requested alignment. */
+    unsigned long align;
+    /* Start of the memory block allocated. */
+    void *memStart;
+};
+
+template <class T>
+class UtAllocator {
+public:
+    typedef size_t      size_type;
+    typedef intptr_t    difference_type;
+    typedef T*          pointer;
+    typedef const T*    const_pointer;
+    typedef T&          reference;
+    typedef const T&    const_reference;
+    typedef T           value_type;
+
+    template<typename _Tp1>
+    struct rebind {
+        typedef UtAllocator<_Tp1> other;
+    };
+
+    pointer address(reference x) const { return &x; }
+
+    const_pointer *address(const_reference x) const { return &x; }
+
+    pointer allocate(size_t n, const void *hint = 0) {
+        T *ptr = static_cast<T *>(malloc(n * sizeof(T)));
+        if (!ptr) {
+            throw std::bad_alloc();
+        }
+        return ptr;
+    }
+
+    void deallocate(pointer p, size_t n) {
+        free(p);
+    }
+
+    size_type max_size() const throw() { return 1024 * 1024 / sizeof(T) + 1; }
+
+    void construct(pointer p, const_reference val) {
+        new(static_cast<void *>(p)) T(val);
+    }
+
+    void destroy(pointer p) {
+        p->~T();
+    }
+};
+
+static std::list<ut_mblock_hdr *, UtAllocator<ut_mblock_hdr *>> allocatedBlocks;
+
+void *
+ut::__ut_malloc(const char *file, int line, unsigned long size, unsigned long align)
+{
+    void *mem, *block;
+    if (align) {
+        if (!IS_POWER_OF_2(align)) {
+            UT_FAIL("Invalid alignment: %lu bytes at %s:%d", align, file, line);
+        }
+        mem = malloc(sizeof(ut_mblock_hdr) + size * 2);
+    } else {
+        mem = malloc(sizeof(ut_mblock_hdr) + size);
+    }
+    if (!mem) {
+        UT_FAIL("Memory allocation failed: %lu bytes at %s:%d", size, file, line);
+    }
+    if (align) {
+        block = reinterpret_cast<void *>(ROUND_UP2(reinterpret_cast<uintptr_t>(mem) + sizeof(ut_mblock_hdr), size));
+    } else {
+        block = static_cast<char *>(mem) + sizeof(ut_mblock_hdr);
+    }
+    ut_mblock_hdr *hdr = static_cast<ut_mblock_hdr *>(block) - 1;
+
+    hdr->magic = ut_mblock_hdr::MAGIC;
+    hdr->file = file;
+    hdr->line = line;
+    hdr->size = size;
+    hdr->align = align;
+    hdr->memStart = mem;
+
+    if (::__ut_mtrack_enabled) {
+        ::allocatedBlocks.push_front(hdr);
+    }
+
+    return block;
+}
+
+void
+ut::__ut_mfree(void *ptr)
+{
+    ut_mblock_hdr *hdr = static_cast<ut_mblock_hdr *>(ptr) - 1;
+    if (hdr->magic != ut_mblock_hdr::MAGIC) {
+        UT_FAIL("Trying to free non-managed block");
+    }
+
+    free(hdr->memStart);
+
+    if (::__ut_mtrack_enabled) {
+        ::allocatedBlocks.remove(hdr);
+    }
+}
+
+void
+ut::__ut_mdump()
+{
+    bool found = false;
+    for (ut_mblock_hdr *hdr: ::allocatedBlocks) {
+        if (!hdr->file) {
+            continue;
+        }
+        if (!found) {
+            printf("Warning: Non freed memory blocks:\n");
+            found = true;
+        }
+        printf("%lu bytes at %p (%s:%d)\n", hdr->size, hdr + 1, hdr->file, hdr->line);
+    }
 }
 
 

@@ -113,6 +113,11 @@ typedef __builtin_va_list       __ut_va_list;
 /** Unit tests related definitions reside in this namespace. */
 namespace ut {
 
+/** Allocate memory block. */
+void *__ut_malloc(const char *file, int line, unsigned long size, unsigned long align = 0);
+/** Free memory block. */
+void __ut_mfree(void *ptr);
+
 /** Output message to the test log. */
 void __ut_trace(const char *file, int line, const char *msg, ...);
 /** Output message to the test log. */

@@ -89,20 +89,22 @@ public:
 
 /** Check if the return code is successful. */
 #define OK(__rc)        ({ \
-    if ((__rc).IsFailed()) { \
+    RetCode __Xrc = __rc; \
+    if ((__Xrc).IsFailed()) { \
         TRACE("Failed return code received in '%s' at %s:%d: %s", \
-              __func__, __FILE__, __LINE__, (__rc).GetName()); \
+              __func__, __FILE__, __LINE__, (__Xrc).GetName()); \
     } \
-    (__rc).IsOk(); \
+    (__Xrc).IsOk(); \
 })
 
 /** Check if the return code indicates failure. */
 #define NOK(__rc)       ({ \
-    if ((__rc).IsFailed()) { \
+    RetCode __Xrc = __rc; \
+    if ((__Xrc).IsFailed()) { \
         TRACE("Failed return code received in '%s' at %s:%d: %s", \
-              __func__, __FILE__, __LINE__, (__rc).GetName()); \
+              __func__, __FILE__, __LINE__, (__Xrc).GetName()); \
     } \
-    (__rc).IsFailed(); \
+    (__Xrc).IsFailed(); \
 })
 
 #else /* DEBUG */

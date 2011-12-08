@@ -51,7 +51,7 @@ public:
     enum :size_t {
         /** Maximal allowed value for @a maxOrder parameter. */
         MAX_ORDER = sizeof(Addr) * NBBY,
-        /** Maximal cache size. */
+        /** Maximal cache size in elements. */
         MAX_CACHE_SIZE = U16_MAX,
     };
 
@@ -59,6 +59,8 @@ public:
      * not usable until @ref Initialize method is called.
      */
     BuddyAllocatorBase();
+
+    ~BuddyAllocatorBase();
 
     /** Initialize the allocator. It will require some memory allocations for
      * the allocator internal data structures.
@@ -84,7 +86,7 @@ private:
     int _minOrder, _maxOrder;
 
     /** Free blocks cache entry. */
-    struct CacheEntry {
+    class CacheEntry {
     public:
         typedef u16 Index; /**< This entry index in the cache table. */
         typedef Index ListHead; /**< Head of entries list. */
@@ -97,16 +99,55 @@ private:
         typedef RBTree<CacheEntry, &CacheEntry::Compare, Addr, &CacheEntry::Compare> Tree;
 
         Addr address;  /**< Address of the block this entry represents. */
-        Index next, /**< Next entry index when in list. */
-              prev; /**< Previous entry index when in list. */
+        Index next = NONE, /**< Next entry index when in list. */
+              prev = NONE; /**< Previous entry index when in list. */
         Tree::Entry treeEntry;
 
+        /** Get entry pointer by its index. */
+        inline CacheEntry *GetPtr(CacheEntry *cache, Index idx) { return &cache[idx]; }
+        /** Get this entry index. */
+        inline Index GetIdx(CacheEntry *cache) { return this - cache; }
 
+        /** Insert entry in a list as a head.
+         *
+         * @param head Head of the list to insert the entry to.
+         */
+        void Insert(CacheEntry *cache, ListHead &head);
+
+        /** Delete entry from a list.
+         *
+         * @param head Head of the list to delete the entry from.
+         */
+        void Delete(CacheEntry *cache, ListHead &head);
     };
 
+    /** Storage which holds the cache entries. */
+    CacheEntry *_cache = 0;
+    /** Number of elements in the cache. */
+    size_t _cacheSize;
     /** Pool of cache entries. */
-    CacheEntry::ListHead freeCacheEntries = CacheEntry::NONE;
+    CacheEntry::ListHead _freeCacheEntries = CacheEntry::NONE;
+    /** Tree of cache entries. */
+    CacheEntry::Tree _cacheTree;
 
+    /** Each managed order is represented by one instance of this class. */
+    class OrderPool {
+    public:
+        /** Initialize pool element.
+         *
+         * @param numBlocks Number of blocks of corresponding order.
+         * @return Status code.
+         */
+        RetCode Initialize(size_t numBlocks);
+        ~OrderPool();
+    private:
+        u8 *_bitmapData = 0; /**< Storage for bitmap data. */
+        BitString<> _bitmap; /**< Free blocks bitmap. */
+        CacheEntry::ListHead _freeBlocks; /** Free blocks cache. */
+    };
+
+    /** All managed resources are represented in this pool. */
+    OrderPool *_pool = 0;
 
     /** Get order which corresponds to the provided size. */
     inline int _GetOrder(Addr size) {
@@ -123,6 +164,9 @@ private:
     inline Addr _GetOrderSize(int order) {
         return 1 << order;
     }
+
+    /** Release all allocated resources. */
+    void _Free();
 };
 
 /** Universal buddy allocator.

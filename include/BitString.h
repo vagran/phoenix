@@ -173,12 +173,14 @@ public:
      *      bitmap bits.
      * @param numBits Number of bits in the bitmap.
      */
-    inline BitString(u8 *bitmap, const size_t numBits) :
+    inline BitString(u8 *bitmap = 0, const size_t numBits = 0) :
         _bits(bitmap),
         _numBits(numBits),
         _bitmapSize((numBits + NBBY - 1) / NBBY)
     {
-        memset(_bits, 0, _bitmapSize);
+        if (_bits) {
+            memset(_bits, 0, _bitmapSize);
+        }
     }
 
     /** Set bit at specified position.
