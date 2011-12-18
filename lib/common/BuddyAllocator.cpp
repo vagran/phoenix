@@ -52,7 +52,8 @@ BuddyAllocatorBase::Initialize(Addr startAddress, Addr endAddress, int minOrder,
         alignedStart = RoundUp2(startAddress, size);
         alignedEnd = RoundDown2(endAddress, size);
         order--;
-    } while (alignedEnd - alignedStart != size);
+    } while ((alignedEnd <= alignedStart) ||
+             (alignedEnd - alignedStart) % size != 0);
     order++;
 
     if (maxOrder == -1 || order < maxOrder) {

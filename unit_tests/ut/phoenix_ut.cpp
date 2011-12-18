@@ -111,6 +111,11 @@ TestMan::Run()
         printf("Test suite: %s\n", __ut_test_description);
     }
 
+    if (!__ut_InitStubs()) {
+        printf("Stubs initialization failed.");
+        return false;
+    }
+
     size_t numTests = _tests.size();
     size_t testIdx = 0;
     size_t numPassed = 0;
@@ -123,13 +128,14 @@ TestMan::Run()
         try {
             t->TestBody();
         } catch (TestException &e) {
+            printf("\n");
             std::string desc;
             TestException_Describe(e, desc);
             printf("%s\n", desc.c_str());
             failed = true;
         }
 
-        printf("Test %s\n", failed ? "FAILED" : "PASSED");
+        printf("\nTest %s\n", failed ? "FAILED" : "PASSED");
         PrintStat();
         ::__ut_mdump();
         testIdx++;
@@ -252,6 +258,12 @@ unsigned
 ut::__ut_strlen(const char *s)
 {
     return strlen(s);
+}
+
+void
+ut::__ut_putc(char c)
+{
+    printf("%c", c);
 }
 
 void
@@ -389,6 +401,8 @@ ut::__ut_malloc(const char *file, int line, unsigned long size, unsigned long al
         ::allocatedBlocks.push_front(hdr);
     }
 
+    memset(block, 0xcc, size);
+
     return block;
 }
 
@@ -399,6 +413,8 @@ ut::__ut_mfree(void *ptr)
     if (hdr->magic != ut_mblock_hdr::MAGIC) {
         UT_FAIL("Trying to free non-managed block");
     }
+
+    memset(ptr, 0xfe, hdr->size);
 
     free(hdr->memStart);
 
@@ -422,7 +438,6 @@ ut::__ut_mdump()
         printf("%lu bytes at %p (%s:%d)\n", hdr->size, hdr + 1, hdr->file, hdr->line);
     }
 }
-
 
 /* UtString class */
 

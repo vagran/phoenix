@@ -37,6 +37,8 @@ __ut_trace(const char *file, int line, const char *msg, ...)
     __ut_va_end(args);
 }
 
+/* Memory allocation interface. */
+
 void *
 operator new(size_t size)
 {
@@ -101,4 +103,76 @@ void
 operator delete[](void *ptr)
 {
     ut::__ut_mfree(ptr);
+}
+
+/* Kernel logging interface. */
+
+log::SysLog *log::sysLog;
+
+log::KSysLog::KSysLog()
+{
+    lastNewLine = true;
+}
+
+log::SysLogBase &
+log::KSysLog::operator << (Level level)
+{
+    /* Terminate previous message if necessary. */
+    if (!lastNewLine) {
+        Putc('\n');
+        lastNewLine = true;
+    }
+    ClearOptions();
+
+    _curLevel = level;
+    if (_curLevel > _maxLevel) {
+        return *this;
+    }
+
+    const char *name;
+    switch (level) {
+    case LOG_ALERT:
+        name = "ALERT";
+        break;
+    case LOG_CRITICAL:
+        name = "CRITICAL";
+        break;
+    case LOG_ERROR:
+        name = "ERROR";
+        break;
+    case LOG_WARNING:
+        name = "WARNING";
+        break;
+    case LOG_NOTICE:
+        name = "NOTICE";
+        break;
+    case LOG_INFO:
+        name = "INFO";
+        break;
+    case LOG_DEBUG:
+        name = "DEBUG";
+        break;
+    default:
+        FAULT("Invalid log level specified: %d", static_cast<int>(level));
+        break;
+    }
+    Format("[%s] ", name);
+    return *this;
+}
+
+bool
+log::KSysLog::Putc(char c, void *)
+{
+    lastNewLine = c == '\n';
+    ut::__ut_putc(c);
+    return true;
+}
+
+/* Initialize stubs module. */
+bool
+ut::__ut_InitStubs()
+{
+    log::sysLog = new log::SysLog;
+
+    return true;
 }

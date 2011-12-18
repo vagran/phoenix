@@ -26,8 +26,8 @@ sub ParseFile {
     open(NM, "$NM $filename |") or die("Failed to open file '$filename'");
     
     while (my $line = <NM>) {
-        if ($line =~ /^\s*[0-9a-fA-F]*\s+([TDU])\s+(.*)$/) {
-            if ($1 eq "T" or $1 eq "D") {
+        if ($line =~ /^\s*[0-9a-fA-F]*\s+([TDUB])\s+(.*)$/) {
+            if ($1 eq "T" or $1 eq "D" or $1 eq "B") {
                 $defined_syms{$2} = $filename;
             } elsif ($1 eq "U" and $isTest) {
                 if ($2 !~ /__cxa|__cxx|__gxx|_Unwind_/) {

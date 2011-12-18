@@ -8,8 +8,11 @@
 TEST_NAME = BuddyAllocator
 TEST_DESC = Universal buddy allocator
 
-TEST_SRCS = $(PHOENIX_ROOT)/lib/common/BuddyAllocator.cpp \
-	$(PHOENIX_ROOT)/lib/common/CommonLib.cpp $(PHOENIX_ROOT)/lib/common/RBTree.cpp
+TEST_SRCS = \
+	$(PHOENIX_ROOT)/lib/common/BuddyAllocator.cpp \
+	$(PHOENIX_ROOT)/lib/common/CommonLib.cpp \
+	$(PHOENIX_ROOT)/lib/common/OTextStream.cpp \
+	$(PHOENIX_ROOT)/lib/common/RBTree.cpp
 
 TEST_DEFS = KERNEL
 

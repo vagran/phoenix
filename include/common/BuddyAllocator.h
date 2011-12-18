@@ -162,6 +162,7 @@ private:
 
     /** Get size which corresponds to the provided order. */
     inline Addr _GetOrderSize(int order) {
+        ASSERT(order >= 0);
         return 1 << order;
     }
 

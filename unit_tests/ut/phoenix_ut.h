@@ -113,11 +113,20 @@ typedef __builtin_va_list       __ut_va_list;
 /** Unit tests related definitions reside in this namespace. */
 namespace ut {
 
+/** Environment-specific stubs definition module must provide this function
+ * which is called by the framework before any test is executed.
+ *
+ * @return @a true if initialization succeeded, @a false otherwise.
+ */
+bool __ut_InitStubs();
+
 /** Allocate memory block. */
 void *__ut_malloc(const char *file, int line, unsigned long size, unsigned long align = 0);
 /** Free memory block. */
 void __ut_mfree(void *ptr);
 
+/** Output character to the test log. */
+void __ut_putc(char c);
 /** Output message to the test log. */
 void __ut_trace(const char *file, int line, const char *msg, ...);
 /** Output message to the test log. */

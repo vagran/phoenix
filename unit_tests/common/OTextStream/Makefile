@@ -8,7 +8,8 @@
 TEST_NAME = OTextStream
 TEST_DESC = Output text stream
 
-TEST_SRCS = $(PHOENIX_ROOT)/lib/common/OTextStream.cpp \
+TEST_SRCS = \
+	$(PHOENIX_ROOT)/lib/common/OTextStream.cpp \
 	$(PHOENIX_ROOT)/lib/common/CommonLib.cpp
 
 TEST_DEFS = KERNEL
