@@ -8,7 +8,9 @@
 TEST_NAME = BitString
 TEST_DESC = Bit strings
 
-TEST_SRCS = $(PHOENIX_ROOT)/lib/common/CommonLib.cpp
+TEST_SRCS = \
+	$(PHOENIX_ROOT)/lib/common/CommonLib.cpp \
+	$(PHOENIX_ROOT)/lib/common/OTextStream.cpp
 
 TEST_DEFS = KERNEL
 

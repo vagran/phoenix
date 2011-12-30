@@ -10,7 +10,8 @@ TEST_DESC = Various tree data types
 
 TEST_SRCS = \
 	$(PHOENIX_ROOT)/lib/common/CommonLib.cpp \
-	$(PHOENIX_ROOT)/lib/common/RBTree.cpp
+	$(PHOENIX_ROOT)/lib/common/RBTree.cpp \
+	$(PHOENIX_ROOT)/lib/common/OTextStream.cpp
 
 TEST_DEFS = KERNEL
 
