@@ -106,7 +106,7 @@ UT_TEST("RB tree")
         item->inserted = false;
         VerifyTree(tree, numItems, items);
     }
-    /* Delete the reset from the end. */
+    /* Delete the rest from the end. */
     for (size_t i = numItems - 1; i >= numDeletions; i--) {
         TestItem *item = tree.Delete(i);
         UT(item) != UT_NULL;

@@ -105,6 +105,8 @@ operator delete[](void *ptr)
     ut::__ut_mfree(ptr);
 }
 
+#ifdef KERNEL
+
 /* Kernel logging interface. */
 
 log::SysLog *log::sysLog;
@@ -168,11 +170,15 @@ log::KSysLog::Putc(char c, void *)
     return true;
 }
 
+#endif /* KERNEL */
+
 /* Initialize stubs module. */
 bool
 ut::__ut_InitStubs()
 {
+#   ifdef KERNEL
     log::sysLog = new log::SysLog;
+#   endif
 
     return true;
 }

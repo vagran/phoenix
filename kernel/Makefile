@@ -8,7 +8,7 @@
 export KERNROOT = $(PHOENIX_ROOT)/kernel
 MAKEIMAGE = 1
 
-SUBDIRS = boot $(PHOENIX_ROOT)/lib/common \
+SUBDIRS = boot $(PHOENIX_ROOT)/lib/triton $(PHOENIX_ROOT)/lib/common \
 	init efi kern vm
 
 include $(KERNROOT)/make/make.mak

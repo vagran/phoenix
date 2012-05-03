@@ -28,7 +28,8 @@
 #include <compat_types.h>
 
 /* Language support */
-#include <std.h>
+#include <std.h> //XXX obsolete by Triton, remove
+#include <triton.h>
 
 /* CPU specific */
 #include <cpu_regs.h>

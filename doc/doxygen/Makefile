@@ -7,7 +7,7 @@
 
 include $(PHOENIX_ROOT)/make/makevar.mak
 
-CONF_FILES = kernel_doc.conf
+CONF_FILES = system_doc.conf
 
 OUTPUT_DIRS = kernel
 
