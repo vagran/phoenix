@@ -1,7 +1,7 @@
 # /phoenix/doc/doxygen/Makefile
 #
 # This file is a part of Phoenix operating system.
-# Copyright (c) 2011, Artyom Lebedev <artyom.lebedev@gmail.com>
+# Copyright (c) 2011-2012, Artyom Lebedev <artyom.lebedev@gmail.com>
 # All rights reserved.
 # See COPYING file for copyright details.
 
@@ -9,7 +9,7 @@ include $(PHOENIX_ROOT)/make/makevar.mak
 
 CONF_FILES = system_doc.conf
 
-OUTPUT_DIRS = kernel
+OUTPUT_DIRS = system
 
 .PHONY: all clean test
 
