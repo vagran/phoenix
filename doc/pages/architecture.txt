@@ -28,6 +28,9 @@ TCP/IP stack implementation is planned. Only IPv6 support will be implemented.
 
 Phoenix is fully object oriented OS.  It implements principles of orthogonal persistence. See [[athena:product:phoenix:architecture:data_model|main article]] for details.
 
+===== Run-time environment =====
+
+Both kernel and user space code is written in C++. Standard C/C++ libraries are not used, [[athena:product:phoenix:components:triton|Triton]] run-time library is used instead. Phoenix also has own implementation for C/C++ run-time support libraries. C++ run-time types identification feature is not supported. C++ exceptions are supported in user space but not in the kernel (:?: should it be changed? Review kernel design and make decision FIXME).
 ===== Kernel =====
 
 Phoenix is a microkernel-based system. It is attempted to move out of the kernel as most functionality as possible. The kernel primary responsibilities are:

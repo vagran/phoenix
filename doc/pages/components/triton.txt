@@ -1,0 +1,5 @@
+====== Triton library ======
+
+Since Phoenix does not use standard C and C++ libraries it has its own replacement for most common run-time functionality (strings, lists, maps etc.). Phoenix standard run-time library named Triton provides most common classes which should be used by all Phoenix code.
+
+Most of Triton concepts, classes and functions are based on Python language concepts.
