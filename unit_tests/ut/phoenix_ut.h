@@ -69,8 +69,14 @@
  */
 #define UT(value)   ut::TestValue<decltype(value)>(value, __UT_STR(value), __FILE__, __LINE__)
 
+/** Wrapper which interprets value as boolean. */
+#define UT_BOOL(value)  ut::TestValue<bool>(static_cast<bool>(value), __UT_STR(value), __FILE__, __LINE__)
+
+#define UT_FALSE    UT(false)
+#define UT_TRUE     UT(true)
+
 /** Wrapper for null pointer value. */
-#define UT_NULL     ut::TestValue<void *>(0, "NULL", __FILE__, __LINE__)
+#define UT_NULL     ut::TestValue<void *>(nullptr, "NULL", __FILE__, __LINE__)
 
 /** Wrapper which interprets value as pointer to constant data. Can be useful
  * to force comparing strings by pointers instead of comparing by content.
@@ -180,6 +186,11 @@ public:
     void ToString(const char *value)
     {
         _ToString(value);
+    }
+
+    void ToString(bool value)
+    {
+        _ToString(value ? "true" : "false");
     }
 
 private:

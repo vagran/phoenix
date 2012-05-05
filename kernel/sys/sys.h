@@ -28,6 +28,7 @@
 #include <compat_types.h>
 
 /* Language support */
+#include <new.h>
 #include <std.h> //XXX obsolete by Triton, remove
 #include <triton.h>
 
@@ -38,7 +39,6 @@
 
 /* Run-time support */
 #include <RetCode.h>
-#include <new.h>
 #include <common/gcc.h>
 #include <common/stdlib.h>
 

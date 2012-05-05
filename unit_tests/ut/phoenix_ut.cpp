@@ -27,7 +27,7 @@ using namespace ut;
 
 namespace ut {
 
-void __ut_mdump();
+bool __ut_mdump();
 
 bool __ut_mtrack_enabled = true;
 
@@ -183,7 +183,7 @@ TestMan::Run()
 
         printf("\nTest %s\n", failed ? "FAILED" : "PASSED");
         PrintStat();
-        ::__ut_mdump();
+        failed |= ::__ut_mdump();
         testIdx++;
         if (!failed ) {
             numPassed++;
@@ -426,20 +426,18 @@ ut::__ut_mfree(void *ptr)
     }
 }
 
-void
+bool
 ut::__ut_mdump()
 {
     bool found = false;
     for (ut_mblock_hdr *hdr: ::allocatedBlocks) {
-        if (!hdr->file) {
-            continue;
-        }
         if (!found) {
             printf("Warning: Non freed memory blocks:\n");
             found = true;
         }
         printf("%lu bytes at %p (%s:%d)\n", hdr->size, hdr + 1, hdr->file, hdr->line);
     }
+    return found;
 }
 
 /* UtString class */
@@ -459,7 +457,7 @@ UtString::UtString(void *handle)
 UtString::~UtString()
 {
     if (_allocated) {
-        delete &UT_HDL2STR(_handle);
+        //delete &UT_HDL2STR(_handle);
     }
 }
 
