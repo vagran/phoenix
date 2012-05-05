@@ -1,5 +1,5 @@
 /*
- * /phoenix/unit_tests/triton/strings/basic.cpp
+ * /phoenix/unit_tests/triton/generic/test.cpp
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011-2012, Artyom Lebedev <artyom.lebedev@gmail.com>
@@ -7,8 +7,8 @@
  * See COPYING file for copyright details.
  */
 
-/** @file basic.cpp
- * Basic strings functionality.
+/** @file test.cpp
+ * Tests for Triton generic functionality.
  */
 
 #include <phoenix_ut.h>
@@ -17,7 +17,7 @@
 
 using namespace triton;
 
-UT_TEST("Basic strings operations")
+UT_TEST("Objects pointers")
 {
 }
 UT_TEST_END

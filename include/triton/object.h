@@ -23,6 +23,11 @@ class Object {
 private:
     int _refCount = 0;
 public:
+    virtual ~Object() {
+        /* Should be destructed only when last reference released. */
+        ASSERT(!_refCount);
+    }
+
     /** Add reference to the object. */
     inline void AddRef() {
         _refCount++;

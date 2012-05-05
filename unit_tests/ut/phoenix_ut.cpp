@@ -22,7 +22,7 @@
 
 using namespace ut;
 
-#define UT_HDL2STR(str_hdl) (*static_cast<std::string *>(str_hdl))
+#define UT_HDL2STR(str_hdl) (*static_cast<ut_string *>(str_hdl))
 #define UT_STR2HDL(str)     (static_cast<void *>(&str))
 
 namespace ut {
@@ -35,28 +35,8 @@ bool __ut_mtrack_enabled = true;
 
 namespace {
 
-std::string &
-GetUtString(UtString &s)
-{
-    return UT_HDL2STR(s.GetHandle());
-}
-
-void
-TestValueBase_Describe(TestValueBase &value, std::string &s)
-{
-    UtString str(UT_STR2HDL(s));
-    value.Describe(str);
-}
-
-void
-TestException_Describe(TestException &e, std::string &s)
-{
-    UtString str(UT_STR2HDL(s));
-    e.Describe(str);
-}
-
 template <class T>
-class UtAllocator {
+class UtAllocator : public std::allocator<T> {
 public:
     typedef size_t      size_type;
     typedef intptr_t    difference_type;
@@ -97,6 +77,29 @@ public:
         p->~T();
     }
 };
+
+typedef std::basic_string<char, std::char_traits<char>, UtAllocator<char>> ut_string;
+typedef std::basic_stringstream<char, std::char_traits<char>, UtAllocator<char>> ut_stringstream;
+
+ut_string &
+GetUtString(UtString &s)
+{
+    return UT_HDL2STR(s.GetHandle());
+}
+
+void
+TestValueBase_Describe(TestValueBase &value, ut_string &s)
+{
+    UtString str(UT_STR2HDL(s));
+    value.Describe(str);
+}
+
+void
+TestException_Describe(TestException &e, ut_string &s)
+{
+    UtString str(UT_STR2HDL(s));
+    e.Describe(str);
+}
 
 /** Tests manager. */
 class TestMan {
@@ -172,7 +175,7 @@ TestMan::Run()
             t->TestBody();
         } catch (TestException &e) {
             printf("\n");
-            std::string desc;
+            ut_string desc;
             TestException_Describe(e, desc);
             printf("%s\n", desc.c_str());
             failed = true;
@@ -226,8 +229,8 @@ TestDesc::~TestDesc()
 void
 TestValueBase::Describe(UtString &_s)
 {
-    std::string &s = GetUtString(_s);
-    std::stringstream ss;
+    ut_string &s = GetUtString(_s);
+    ut_stringstream ss;
     ss << "Value: " << _name << " [" << GetUtString(_value) << "]" <<
         " (defined at " << _file << ":" << _line << ")";
     s = ss.str();
@@ -236,8 +239,8 @@ TestValueBase::Describe(UtString &_s)
 void
 TestException::Describe(UtString &_s)
 {
-    std::string &s = GetUtString(_s);
-    std::stringstream ss;
+    ut_string &s = GetUtString(_s);
+    ut_stringstream ss;
     switch (_type) {
     case BINARY_ASSERT:
         ss << "Assertion failed: " << _value1.GetName() << " " << _op <<
@@ -251,7 +254,7 @@ TestException::Describe(UtString &_s)
         break;
     }
     ss << "\n";
-    std::string value;
+    ut_string value;
     switch (_type) {
     case BINARY_ASSERT:
         TestValueBase_Describe(_value1, value);
@@ -443,7 +446,7 @@ ut::__ut_mdump()
 
 UtString::UtString()
 {
-    _handle = UT_STR2HDL(*new std::string);
+    _handle = UT_STR2HDL(*new ut_string);
     _allocated = true;
 }
 
@@ -478,7 +481,7 @@ template <typename T>
 void
 UtString::_ToString(T value)
 {
-    std::stringstream ss;
+    ut_stringstream ss;
     ss << value;
     UT_HDL2STR(_handle) = ss.str();
 }
