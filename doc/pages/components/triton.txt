@@ -3,3 +3,7 @@
 Since Phoenix does not use standard C and C++ libraries it has its own replacement for most common run-time functionality (strings, lists, maps etc.). Phoenix standard run-time library named Triton provides most common classes which should be used by all Phoenix code.
 
 Most of Triton concepts, classes and functions are based on Python language concepts.
+
+====== Naming convention ======
+
+All Triton provided names are defined in 'triton' namespace. Names for global functions and special methods do not follow Phoenix global coding style -- global standard functions names do not begin with upper case letters, special methods names start and end with '__' having name in lower case.

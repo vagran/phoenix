@@ -33,6 +33,7 @@ AUTO_OBJ = $(AUTO_SRC:.cpp=.o)
 VPATH += $(dir $(TEST_SRCS))
 
 OBJS = $(foreach obj,$(SRCS:.cpp=.o),$(OBJ_DIR)/$(obj))
+DEPS = $(OBJS:.o=.d)
 
 INCLUDE_FLAGS += -I$(UT_DIR)
 
@@ -74,11 +75,14 @@ all: $(BINARY_NAME) $(SUBDIRS_TARGET)
 clean: $(SUBDIRS_TARGET)
 	$(RMBUILD)
 
+# include dependencies if exist
+-include $(DEPS)
+
 $(COMPILE_DIR):
-	if [ ! -d $@ ]; then mkdir $@; fi
+	[ -d $@ ] || mkdir $@
 
 $(OBJ_DIR): $(COMPILE_DIR)
-	if [ ! -d $@ ]; then mkdir $@; fi
+	[ -d $@ ] || mkdir $@
 
 $(BINARY_NAME): $(OBJ_DIR) $(OBJS) $(AUTO_OBJ)
 	$(NAT_LD) -lstdc++ $(OBJS) $(AUTO_OBJ) -o $@
@@ -86,6 +90,8 @@ $(BINARY_NAME): $(OBJ_DIR) $(OBJS) $(AUTO_OBJ)
 $(OBJ_DIR)/%.o: %.cpp
 	$(NAT_CC) -c $(INCLUDE_FLAGS) $(NAT_INCLUDE_FLAGS) $(COMMON_FLAGS) \
 		$(CXX_FLAGS) -o $@ $<
+	$(CC) -MM -MT '$@' -c $(INCLUDE_FLAGS) $(NAT_INCLUDE_FLAGS) $(COMMON_FLAGS) \
+		$(CXX_FLAGS) -o $(@:.o=.d) $<
 
 $(AUTO_OBJ): $(AUTO_SRC)
 	$(NAT_CC) -c $(INCLUDE_FLAGS) $(NAT_INCLUDE_FLAGS) $(COMMON_FLAGS) \

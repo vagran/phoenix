@@ -111,7 +111,6 @@ __divdi3(i64 a, i64 b)
 ASMCALL u64
 __udivdi3(u64 a,u64 b)
 {
-
     return (__qdivrem(a, b, (u64 *)0));
 }
 
@@ -139,9 +138,8 @@ ASMCALL u64
 __umoddi3(u64 a, u64 b)
 {
     u64 r;
-
     __qdivrem(a, b, &r);
-    return (r);
+    return r;
 }
 
 #define CHAR_BIT    NBBY

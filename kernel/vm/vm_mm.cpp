@@ -208,105 +208,38 @@ KmemDebugOverhead::Free(void *ptr, bool isArray)
 }
 
 void *
-operator new(size_t size)
+__operator_new(size_t size, const char *file, int line, bool isArray,
+               size_t align)
 {
-#ifdef DEBUG
-    return KmemDebugOverhead::Allocate(size);
-#else /* DEBUG */
-    return KmemAllocate(size);
-#endif /* DEBUG */
-}
-
-void *
-operator new[](size_t size)
-{
-#ifdef DEBUG
-    return KmemDebugOverhead::Allocate(size, true);
-#else /* DEBUG */
-    return KmemAllocate(size);
-#endif /* DEBUG */
-}
-
-void *
-operator new(size_t size, size_t align, bool nonRec)
-{
-#ifdef DEBUG
-    void *ptr = KmemDebugOverhead::Allocate(size, false, align);
-#else /* DEBUG */
-    void *ptr = KmemAllocate(size, align);
-#endif /* DEBUG */
-
-    if (UNLIKELY(!ptr && nonRec)) {
-        FAULT("Non-recoverable memory allocation failed");
-    }
+#   ifdef DEBUG
+        void *ptr = KmemDebugOverhead::Allocate(size, isArray, align, file, line);
+#   else /* DEBUG */
+        void *ptr = KmemAllocate(size, align);
+#   endif /* DEBUG */
+    //XXX throw exception if fails
     return ptr;
 }
 
 void *
-operator new[](size_t size, size_t align, bool nonRec)
+__operator_new(size_t size, bool isArray, size_t align)
 {
-#ifdef DEBUG
-    void *ptr = KmemDebugOverhead::Allocate(size, true, align);
-#else /* DEBUG */
-    void *ptr = KmemAllocate(size, align);
-#endif /* DEBUG */
-
-    if (UNLIKELY(!ptr && nonRec)) {
-        FAULT("Non-recoverable memory allocation failed");
-    }
-    return ptr;
-}
-
-void *
-operator new(size_t size, const char *file, int line, size_t align, bool nonRec)
-{
-#ifdef DEBUG
-    void *ptr = KmemDebugOverhead::Allocate(size, false, align, file, line);
-#else /* DEBUG */
-    void *ptr = KmemAllocate(size, align);
-#endif /* DEBUG */
-
-    if (!ptr && nonRec) {
-        FAULT("Non-recoverable memory allocation failed from '%s':%d",
-              file, line);
-    }
-    return ptr;
-}
-
-void *
-operator new[](size_t size, const char *file, int line, size_t align, bool nonRec)
-{
-#ifdef DEBUG
-    void *ptr = KmemDebugOverhead::Allocate(size, true, align, file, line);
-#else /* DEBUG */
-    void *ptr = KmemAllocate(size, align);
-#endif /* DEBUG */
-
-    if (!ptr && nonRec) {
-        FAULT("Non-recoverable memory allocation failed from '%s':%d",
-              file, line);
-    }
+#   ifdef DEBUG
+        void *ptr = KmemDebugOverhead::Allocate(size, isArray, align);
+#   else /* DEBUG */
+        void *ptr = KmemAllocate(size, align);
+#   endif /* DEBUG */
+    //XXX throw exception if fails
     return ptr;
 }
 
 void
-operator delete(void *ptr)
+__operator_delete(void *ptr, bool isArray)
 {
-#ifdef DEBUG
-    KmemDebugOverhead::Free(ptr);
-#else /* DEBUG */
+#   ifdef DEBUG
+    KmemDebugOverhead::Free(ptr, isArray);
+#   else /* DEBUG */
     KmemFree(ptr);
-#endif /* DEBUG */
-}
-
-void
-operator delete[](void *ptr)
-{
-#ifdef DEBUG
-    KmemDebugOverhead::Free(ptr, true);
-#else /* DEBUG */
-    KmemFree(ptr);
-#endif /* DEBUG */
+#   endif /* DEBUG */
 }
 
 QuickMap::QuickMap(Vaddr mapBase, size_t numPages, void **mapPte) :
@@ -389,7 +322,7 @@ MM::Initialize(void *memMap, size_t memMapNumDesc, size_t memMapDescSize,
                u32 memMapDescVersion)
 {
     ASSERT(!::mm);
-    ::mm = NEW_NONREC MM(memMap, memMapNumDesc, memMapDescSize, memMapDescVersion);
+    ::mm = NEW MM(memMap, memMapNumDesc, memMapDescSize, memMapDescVersion);
 }
 
 void

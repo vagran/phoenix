@@ -20,7 +20,23 @@ namespace triton {
  * should be derived from this class.
  */
 class Object {
+private:
+    int _refCount = 0;
+public:
+    /** Add reference to the object. */
+    inline void AddRef() {
+        _refCount++;
+    }
 
+    /** Release reference to the object. For dynamically allocated objects
+     * last released reference causes the object deletion.
+     */
+    inline void Release() {
+        ASSERT(_refCount);
+        if (!--_refCount) {
+            delete this;
+        }
+    }
 };
 
 } /* namespace triton */

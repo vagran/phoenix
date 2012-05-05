@@ -139,7 +139,7 @@ private:
          * @return Status code.
          */
         RetCode Initialize(size_t numBlocks);
-        ~OrderPool();
+        ~OrderPool() {/* XXX */}
     private:
         u8 *_bitmapData = 0; /**< Storage for bitmap data. */
         BitString<> _bitmap; /**< Free blocks bitmap. */

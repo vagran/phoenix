@@ -233,10 +233,10 @@ $(SUBDIRS_TARGET):
 	@$(MAKE) -C $(patsubst %.dir,%,$@) $(MAKECMDGOALS)
 
 $(COMPILE_DIR):
-	if [ ! -d $@ ]; then mkdir $@; fi
+	[ -d $@ ] || mkdir $@
 
 $(OBJ_DIR): $(COMPILE_DIR)
-	if [ ! -d $@ ]; then mkdir $@; fi
+	[ -d $@ ] || mkdir $@
 	cp $(TOOLS_ROOT)/gdb/gdbinit $@/.gdbinit
 	cp $(TOOLS_ROOT)/gdb/phoenix_gdb.py $@/
 

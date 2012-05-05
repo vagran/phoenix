@@ -78,9 +78,6 @@ RoundDown2(T size, Tal align)
 #define strlen      __builtin_strlen
 #define strcpy      __builtin_strcpy
 
-ASMCALL int toupper(int c);
-ASMCALL int tolower(int c);
-
 ASMCALL char *strncpy(char *dst, const char *src, size_t len);
 ASMCALL int strcmp(const char *s1, const char *s2);
 ASMCALL int strncmp(const char *s1, const char *s2, size_t len);
@@ -98,9 +95,9 @@ ASMCALL bool ispunct(int c);
 ASMCALL bool isspace(int c);
 ASMCALL bool isupper(int c);
 ASMCALL bool isxdigit(int c);
+ASMCALL bool isascii(int c);
 ASMCALL int tolower(int c);
 ASMCALL int toupper(int c);
-ASMCALL bool isascii(int c);
 
 ASMCALL long strtol(const char *nptr, const char **endptr, unsigned base);
 ASMCALL unsigned long strtoul(const char *nptr, const char **endptr, unsigned base);

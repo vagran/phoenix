@@ -1,0 +1,3 @@
+====== C++ run-time support library ======
+
+Its code is fully original but several 3rd parties products are used for reference (licxxrt from BSD and libgcc_eh from GCC). It implements C++ run-time support code (constructions/destructions, exceptions handling. RTTI support now is optional.), ELF executables stack unwinding.

@@ -331,6 +331,18 @@ LoaderGetMemory(vaddr_t address, u64 pages)
     return EFI_ERROR(rc) ? -1 : 0;
 }
 
+void *
+LoaderAlloc(size_t size)
+{
+    return AllocatePool(size);
+}
+
+void
+LoaderFree(void *ptr)
+{
+    return FreePool(ptr);
+}
+
 int
 LoaderReadFile(Elf_File *file, u64 offset, u64 size, void *mem)
 {

@@ -129,11 +129,11 @@ Main(void *arg)
                        boot::kernBootParam->memMapDescVersion);
 
     /* Initialize EFI runtime support. */
-    efi::sysTable = NEW_NONREC efi::SystemTable(boot::kernBootParam->efiSystemTable,
-                                                boot::kernBootParam->memMap,
-                                                boot::kernBootParam->memMapNumDesc,
-                                                boot::kernBootParam->memMapDescSize,
-                                                boot::kernBootParam->memMapDescVersion);
+    efi::sysTable = NEW efi::SystemTable(boot::kernBootParam->efiSystemTable,
+                                         boot::kernBootParam->memMap,
+                                         boot::kernBootParam->memMapNumDesc,
+                                         boot::kernBootParam->memMapDescSize,
+                                         boot::kernBootParam->memMapDescVersion);
 
     MODULE_TEST(MT_AllocOnInitialized);
     MODULE_TEST(MT_RwLocks);

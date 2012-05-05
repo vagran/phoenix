@@ -55,6 +55,49 @@ TestException_Describe(TestException &e, std::string &s)
     e.Describe(str);
 }
 
+template <class T>
+class UtAllocator {
+public:
+    typedef size_t      size_type;
+    typedef intptr_t    difference_type;
+    typedef T*          pointer;
+    typedef const T*    const_pointer;
+    typedef T&          reference;
+    typedef const T&    const_reference;
+    typedef T           value_type;
+
+    template<typename _Tp1>
+    struct rebind {
+        typedef UtAllocator<_Tp1> other;
+    };
+
+    pointer address(reference x) const { return &x; }
+
+    const_pointer *address(const_reference x) const { return &x; }
+
+    pointer allocate(size_t n, const void *hint = 0) {
+        T *ptr = static_cast<T *>(malloc(n * sizeof(T)));
+        if (!ptr) {
+            throw std::bad_alloc();
+        }
+        return ptr;
+    }
+
+    void deallocate(pointer p, size_t n) {
+        free(p);
+    }
+
+    size_type max_size() const throw() { return 1024 * 1024 / sizeof(T) + 1; }
+
+    void construct(pointer p, const_reference val) {
+        new(static_cast<void *>(p)) T(val);
+    }
+
+    void destroy(pointer p) {
+        p->~T();
+    }
+};
+
 /** Tests manager. */
 class TestMan {
 public:
@@ -71,7 +114,7 @@ public:
     inline void HitAssert() { _numAsserts++; _totNumAsserts++; }
     void PrintStat(bool total = false);
 private:
-    std::list<TestDesc *> _tests;
+    std::list<TestDesc *, UtAllocator<TestDesc *>> _tests;
     size_t _numValues, _numAsserts;
     size_t _totNumValues, _totNumAsserts;
 };
@@ -321,49 +364,6 @@ struct ut_mblock_hdr {
     unsigned long align;
     /* Start of the memory block allocated. */
     void *memStart;
-};
-
-template <class T>
-class UtAllocator {
-public:
-    typedef size_t      size_type;
-    typedef intptr_t    difference_type;
-    typedef T*          pointer;
-    typedef const T*    const_pointer;
-    typedef T&          reference;
-    typedef const T&    const_reference;
-    typedef T           value_type;
-
-    template<typename _Tp1>
-    struct rebind {
-        typedef UtAllocator<_Tp1> other;
-    };
-
-    pointer address(reference x) const { return &x; }
-
-    const_pointer *address(const_reference x) const { return &x; }
-
-    pointer allocate(size_t n, const void *hint = 0) {
-        T *ptr = static_cast<T *>(malloc(n * sizeof(T)));
-        if (!ptr) {
-            throw std::bad_alloc();
-        }
-        return ptr;
-    }
-
-    void deallocate(pointer p, size_t n) {
-        free(p);
-    }
-
-    size_type max_size() const throw() { return 1024 * 1024 / sizeof(T) + 1; }
-
-    void construct(pointer p, const_reference val) {
-        new(static_cast<void *>(p)) T(val);
-    }
-
-    void destroy(pointer p) {
-        p->~T();
-    }
 };
 
 static std::list<ut_mblock_hdr *, UtAllocator<ut_mblock_hdr *>> allocatedBlocks;

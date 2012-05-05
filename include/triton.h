@@ -17,5 +17,6 @@
 #define TRITON_H_
 
 #include <triton/object.h>
+#include <triton/iterator.h>
 
 #endif /* TRITON_H_ */

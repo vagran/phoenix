@@ -40,67 +40,22 @@ __ut_trace(const char *file, int line, const char *msg, ...)
 /* Memory allocation interface. */
 
 void *
-operator new(size_t size)
+__operator_new(size_t size, const char *file, int line, bool isArray,
+               size_t align)
 {
-    /* Do not track allocations for default operators. */
-    return ut::__ut_malloc(0, 0, size);
+    void *ptr = ut::__ut_malloc(file, line, size, align);
+    return ptr;
 }
 
 void *
-operator new[](size_t size)
+__operator_new(size_t size, bool isArray, size_t align)
 {
-    /* Do not track allocations for default operators. */
-    return ut::__ut_malloc(0, 0, size);
-}
-
-void *
-operator new(size_t size, size_t align, bool nonRec)
-{
-    void *p = ut::__ut_malloc(__FILE__, __LINE__, size, align);
-    if (!p && nonRec) {
-        UT_FAIL("Unrecoverable memory allocation failed.");
-    }
-    return p;
-}
-
-void *
-operator new[](size_t size, size_t align, bool nonRec)
-{
-    void *p = ut::__ut_malloc(__FILE__, __LINE__, size, align);
-    if (!p && nonRec) {
-        UT_FAIL("Unrecoverable memory allocation failed.");
-    }
-    return p;
-}
-
-void *
-operator new(size_t size, const char *file, int line, size_t align, bool nonRec)
-{
-    void *p = ut::__ut_malloc(file, line, size, align);
-    if (!p && nonRec) {
-        UT_FAIL("Unrecoverable memory allocation failed: %s:%d", file, line);
-    }
-    return p;
-}
-
-void *
-operator new[](size_t size, const char *file, int line, size_t align, bool nonRec)
-{
-    void *p = ut::__ut_malloc(file, line, size, align);
-    if (!p && nonRec) {
-        UT_FAIL("Unrecoverable memory allocation failed: %s:%d", file, line);
-    }
-    return p;
+    void *ptr = ut::__ut_malloc(nullptr, 0, size, align);
+    return ptr;
 }
 
 void
-operator delete(void *ptr)
-{
-    ut::__ut_mfree(ptr);
-}
-
-void
-operator delete[](void *ptr)
+__operator_delete(void *ptr, bool isArray)
 {
     ut::__ut_mfree(ptr);
 }

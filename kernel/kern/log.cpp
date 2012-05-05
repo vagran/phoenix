@@ -282,7 +282,7 @@ KSysLog::Putc(char c, void *)
 void
 log::InitLog()
 {
-    ::dbgSerialPort = NEW_NONREC DbgSerialPort;
-    ::dbgStream = NEW_NONREC text_stream::OTextStream<DbgSerialPort>(::dbgSerialPort);
-    ::sysLog = NEW_NONREC SysLog;
+    ::dbgSerialPort = NEW DbgSerialPort;
+    ::dbgStream = NEW text_stream::OTextStream<DbgSerialPort>(::dbgSerialPort);
+    ::sysLog = NEW SysLog;
 }

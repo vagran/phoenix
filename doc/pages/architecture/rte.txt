@@ -1,0 +1,30 @@
+====== Phoenix run-time environment ======
+
+Both kernel and user space code is written in C++. There are several levels of run-time support code organized in separate components:
+
+===== Compiler support library =====
+
+It contains lowest-level functions used implicitly by the compiler (e.g. ''<nowiki>__divdi3</nowiki>'', ''<nowiki>__moddi3</nowiki>''). Its implementation (which is mostly ported from libgcc) is included in common library code.
+
+===== C run-time helper functions =====
+
+The minimal set of C-required functions is implemented. They sometimes are called implicitly by compiler and also can be called explicitly by low-level C++ code with an assumption that these functions are highly optimized for a particular platform. High-level C++ code should not call them directly but should use Triton language-level support library provided services instead. Some ported components written in C also may use these functions (e.g. libelf). The following functions groups are defined:
+
+  * **Memory manipulation**: memset, memcpy, memmove, memcmp, memchr.
+  * **String manipulation**: strlen, strcpy, strncpy, strcmp, strncmp, strchr, strstr.
+  * **Characters classification and manipulation**: isalnum, isalpha, iscntrl, isdigit, isgraph, islower, isprint, ispunct, isspace, isupper, isxdigit, isascii, tolower, toupper.
+  * **String to integer conversion**: strtol, strtoul, strtoq, strtouq.
+
+===== Memory management operators =====
+
+All memory allocations and freeings in higher level code should be done using __only__ ''new'' and ''delete'' operators. In order to have advanced debugging functionality and additional features (e.g. block alignment specification) ''NEW'' and ''DELETE'' macros should be used everywhere in the code.
+
+Each Phoenix environment (EFI boot loader, kernel, user space, unit tests) should implement back-end functions for the memory management operators: ''<nowiki>__operator_new()</nowiki>'' and ''<nowiki>__operator_delete()</nowiki>''.
+
+===== C++ run-time support library =====
+
+Phoenix has own implementation for C++ run-time support library which provides support for such C++ features as constructors/destructors invocation for static objects, exceptions handling etc. C++ run-time types identification feature is not supported. C++ exceptions are supported in both user space and the kernel. Low-level C++ run-time support is implemented in separate component -- [[athena:product:phoenix:components:libcxxrt|cxxrt library]].
+
+===== Language-level support library =====
+
+Standard C/C++ libraries are not used, [[athena:product:phoenix:components:triton|Triton]] language library is used instead. It provides most commonly used data types (e.g. strings, lists, maps). They should be used by all higher-level C++ code.

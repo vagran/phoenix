@@ -15,7 +15,12 @@
 
 #include <sys.h>
 
+using namespace triton;
+
 UT_TEST("Basic strings operations")
 {
+   Object o;
+
+   o.Release();
 }
 UT_TEST_END
