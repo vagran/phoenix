@@ -17,6 +17,9 @@
 #define TRITON_H_
 
 #include <triton/object.h>
+#include <triton/exception.h>
+#include <triton/ptr.h>
+#include <triton/tuple.h>
 #include <triton/iterator.h>
 
 #endif /* TRITON_H_ */

@@ -37,7 +37,24 @@ UT_TEST("Objects pointers")
     UT_BOOL(p4) == UT_TRUE;
     p2 = p1;
 
+    p4->AddRef();
+    (*p4).Release();
     p4 = nullptr;
     UT_BOOL(p4) == UT_FALSE;
+
+    bool catched = false;
+    try {
+        p4->AddRef();
+    } catch (NullPtrError &) {
+        catched = true;
+    }
+    UT(catched) == UT_TRUE;
+}
+UT_TEST_END
+
+UT_TEST("Tuples")
+{
+    Tuple<int, const char *, float> t(237, "test", 2.0);
+    UT(t.__len__()) == UT(static_cast<size_t>(3));
 }
 UT_TEST_END
