@@ -19,7 +19,7 @@ namespace triton {
 /** Namespace for internal Triton helpers which should not be publicly used. */
 namespace triton_internal {
 
-/** Helper class for determining number of values in a tuple.
+/** Helper for determining number of values in a tuple.
  * @code
  * size = TupleSize<int, float, char>::size;
  * @endcode
@@ -44,17 +44,41 @@ template <> class TupleStorage<> { };
 template <typename T, typename... components>
 class TupleStorage<T, components...>: private TupleStorage<components...> {
 public:
-    /** Next component of a tuple. */
+    /** This component of a tuple. */
     T value;
     /** Type of base class for this one. */
     typedef TupleStorage<components...> BaseType;
 
     inline
-    TupleStorage(T firstValue, components... restValues) :
+    TupleStorage(add_const_reference<T> firstValue,
+                 add_const_reference<components>... restValues) :
         BaseType(restValues...), value(firstValue) {}
 };
 
-} /* namespace triton_internal */
+/** Helper for retrieving type of tuple components at specified position.
+ * @code
+ * TupleTypeImpl<2, int, flow, char>::Type c = 'a';
+ * @endcode
+ */
+template <int idx, typename T, typename... components>
+struct TupleTypeImpl {
+    typedef typename TupleTypeImpl<idx - 1, components...>::Type Type;
+};
+
+template <typename T, typename... components>
+struct TupleTypeImpl<0, T, components...> {
+    typedef T Type;
+};
+
+/** Helper for retrieving type of tuple components at specified position.
+ * @code
+ * TupleType<2, int, flow, char> c = 'a';
+ * @endcode
+ */
+template <int idx, typename... components>
+using TupleType = typename TupleTypeImpl<idx, components...>::Type;
+
+}; /* namespace triton_internal */
 
 /** Tuple container stores arbitrary amount of different type values. */
 template <class... components>
@@ -62,6 +86,16 @@ class Tuple: public Container {
 private:
     triton_internal::TupleStorage<components...> _values;
 public:
+    /** Get type of tuple component.
+     *
+     * @param idx Index of tuple component which type should be returned.
+     * @code
+     * decltype(t)::Type<2> v = 0;
+     * @endcode
+     */
+    template <int idx>
+    using Type = triton_internal::TupleType<idx, components...>;
+
     inline
     Tuple(components... values) : _values(values...) {}
 

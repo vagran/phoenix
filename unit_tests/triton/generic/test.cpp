@@ -56,5 +56,8 @@ UT_TEST("Tuples")
 {
     Tuple<int, const char *, float> t(237, "test", 2.0);
     UT(t.__len__()) == UT(static_cast<size_t>(3));
+
+    decltype(t)::Type<1> pChar = "aaa";
+    (void)pChar;//XXX
 }
 UT_TEST_END

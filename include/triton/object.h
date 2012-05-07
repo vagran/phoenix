@@ -14,7 +14,6 @@
 #ifndef OBJECT_H_
 #define OBJECT_H_
 
-/** All Triton provided entities are defined in this namespace. */
 namespace triton {
 
 /** Base class for all Triton objects. All the library and client code objects
@@ -62,7 +61,9 @@ public:
     }
 };
 
-/** Base class for all container classes. */
+/** Base class for all container classes. When Triton objects are stored in
+ * containers, @ref Ptr class should be used for that.
+ */
 class Container: public Object {
 public:
     /** Method for retrieving number of elements in a container object.
