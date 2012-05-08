@@ -323,9 +323,8 @@ public:
     T value;
 
     TestValue(T value, const char *name, const char *file, int line) :
-        TestValueBase(name, file, line)
+        TestValueBase(name, file, line), value(value)
     {
-        this->value = value;
         SetValue(value);
         __ut_hit_value();
     }

@@ -36,25 +36,6 @@ struct TupleSize<T, components...> {
     static const size_t size = 1 + TupleSize<components...>::size;
 };
 
-/** Helper class storing tuple components. */
-template <typename... components> class TupleStorage;
-
-template <> class TupleStorage<> { };
-
-template <typename T, typename... components>
-class TupleStorage<T, components...>: private TupleStorage<components...> {
-public:
-    /** This component of a tuple. */
-    T value;
-    /** Type of base class for this one. */
-    typedef TupleStorage<components...> BaseType;
-
-    inline
-    TupleStorage(add_const_reference<T> firstValue,
-                 add_const_reference<components>... restValues) :
-        BaseType(restValues...), value(firstValue) {}
-};
-
 /** Helper for retrieving type of tuple components at specified position.
  * @code
  * TupleTypeImpl<2, int, flow, char>::Type c = 'a';
@@ -77,6 +58,49 @@ struct TupleTypeImpl<0, T, components...> {
  */
 template <int idx, typename... components>
 using TupleType = typename TupleTypeImpl<idx, components...>::Type;
+
+/** Helper class storing tuple components. */
+template <typename... components>
+class TupleStorage;
+
+template <> class TupleStorage<> { };
+
+template <typename T, typename... components>
+class TupleStorage<T, components...>: public TupleStorage<components...> {
+public:
+    /** This component of a tuple. */
+    T value;
+    /** Type of base class for this one. */
+    typedef TupleStorage<components...> BaseType;
+
+    /** Construct tuple storage from provided values. */
+    inline
+    TupleStorage(add_const_reference<T> firstValue,
+                 add_const_reference<components>... restValues) :
+        BaseType(restValues...), value(firstValue) {}
+
+};
+
+/** Helper class for accessing values of a tuple. */
+template <int idx, typename T, typename... components>
+class TupleGetter {
+public:
+    static inline TupleType<idx, T, components...> &
+    Get(TupleStorage<T, components...> &stg)
+    {
+        return TupleGetter<idx - 1, components...>::Get(stg);
+    }
+};
+
+template <typename T, typename... components>
+class TupleGetter<0, T, components...> {
+public:
+    static inline T &
+    Get(TupleStorage<T, components...> &stg)
+    {
+        return stg.value;
+    }
+};
 
 }; /* namespace triton_internal */
 
@@ -107,6 +131,20 @@ public:
     __len__()
     {
         return triton_internal::TupleSize<components...>::size;
+    }
+
+    /** Get value from tuple.
+     * @param idx Index of value to retrieve.
+     * @return Reference to a value at specified index.
+     * @code
+     * t.get<2>() = 10;
+     * @endcode
+     */
+    template <int idx>
+    inline triton_internal::TupleType<idx, components...> &
+    get()
+    {
+        return triton_internal::TupleGetter<idx, components...>::Get(_values);
     }
 };
 

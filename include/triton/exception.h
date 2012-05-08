@@ -84,6 +84,49 @@ public:
     }
 };
 
+/** The base class for the exceptions that are raised when a key or index used
+ * on a mapping or sequence is invalid.
+ */
+class LookupError: public TritonError {
+public:
+    /** Name of this error. */
+    virtual const char *
+    __name__() const
+    {
+        return "LookupError";
+    }
+
+    //xxx __str__
+};
+
+/** Exception class which is raised when a sequence subscript is out of range. */
+class IndexError: public LookupError {
+public:
+    /** Name of this error. */
+    virtual const char *
+    __name__() const
+    {
+        return "IndexError";
+    }
+
+    //xxx __str__
+};
+
+/** Exception class which is raised when a mapping (dictionary) key is not found
+ * in the set of existing keys.
+ */
+class KeyError: public LookupError {
+public:
+    /** Name of this error. */
+    virtual const char *
+    __name__() const
+    {
+        return "KeyError";
+    }
+
+    //xxx __str__
+};
+
 } /* namespace triton */
 
 #endif /* EXCEPTION_H_ */

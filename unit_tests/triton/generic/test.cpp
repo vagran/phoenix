@@ -55,9 +55,15 @@ UT_TEST_END
 UT_TEST("Tuples")
 {
     Tuple<int, const char *, float> t(237, "test", 2.0);
-    UT(t.__len__()) == UT(static_cast<size_t>(3));
+    UT(len(t)) == UT(static_cast<size_t>(3));
 
-    decltype(t)::Type<1> pChar = "aaa";
-    (void)pChar;//XXX
+    /* Retrieving components types. */
+    decltype(t)::Type<0> v0 = 237;
+    decltype(t)::Type<1> v1 = "test";
+    decltype(t)::Type<2> v2 = 2.0;
+    /* Retrieving components values. */
+    UT(t.get<0>()) == UT(v0);
+    UT(t.get<1>()) == UT(v1);
+    UT(t.get<2>()) == UT(v2);
 }
 UT_TEST_END

@@ -76,6 +76,17 @@ public:
     }
 };
 
+/** Get number of elements in container object.
+ *
+ * @param obj Container object.
+ * @return Number of elements currently stored in container object.
+ */
+template <class T>
+inline size_t len(T &obj)
+{
+    return obj.__len__();
+}
+
 /** Base class for all iterable classes - i.e. containers which support their
  * elements iteration.
  */
