@@ -59,7 +59,40 @@ public:
     {
         return "Object";
     }
+
+    /** Type of object hash value. */
+    typedef u64 hash_t;
+
+    /** Get objects hash. The hash is used for optimized organizing of objects
+     * in collections. The hash should provide good distribution of values. Two
+     * equal objects must return the same hash value.
+     *
+     * @return Hash value of an object.
+     */
+    virtual hash_t
+    __hash__() const
+    {
+        /* Default implementation returns constant value. */
+        return 1;
+    }
 };
+
+/** Get hash value of an object
+ *
+ * @param obj Container object.
+ * @return Number of elements currently stored in container object.
+ */
+inline Object::hash_t
+hash(Object &obj)
+{
+    return obj.__hash__();
+}
+
+inline Object::hash_t
+hash(Object &&obj)
+{
+    return obj.__hash__();
+}
 
 /** Base class for all container classes. When Triton objects are stored in
  * containers, @ref Ptr class should be used for that.
@@ -81,8 +114,19 @@ public:
  * @param obj Container object.
  * @return Number of elements currently stored in container object.
  */
-template <class T>
-inline size_t len(T &obj)
+inline size_t
+len(Container &obj)
+{
+    return obj.__len__();
+}
+
+/** Get number of elements in container object.
+ *
+ * @param obj Container object.
+ * @return Number of elements currently stored in container object.
+ */
+inline size_t
+len(Container &&obj)
 {
     return obj.__len__();
 }

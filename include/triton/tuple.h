@@ -19,23 +19,6 @@ namespace triton {
 /** Namespace for internal Triton helpers which should not be publicly used. */
 namespace triton_internal {
 
-/** Helper for determining number of values in a tuple.
- * @code
- * size = TupleSize<int, float, char>::size;
- * @endcode
- */
-template <typename... components> struct TupleSize;
-
-template <>
-struct TupleSize<> {
-    static const size_t size = 0;
-};
-
-template <typename T, typename... components>
-struct TupleSize<T, components...> {
-    static const size_t size = 1 + TupleSize<components...>::size;
-};
-
 /** Helper for retrieving type of tuple components at specified position.
  * @code
  * TupleTypeImpl<2, int, flow, char>::Type c = 'a';
@@ -78,7 +61,6 @@ public:
     TupleStorage(add_const_reference<T> firstValue,
                  add_const_reference<components>... restValues) :
         BaseType(restValues...), value(firstValue) {}
-
 };
 
 /** Helper class for accessing values of a tuple. */
@@ -90,6 +72,12 @@ public:
     {
         return TupleGetter<idx - 1, components...>::Get(stg);
     }
+
+    static inline Object::hash_t
+    __hash__(TupleStorage<T, components...> &stg)
+    {
+        return hash(stg.value) ^ TupleGetter<idx - 1, components...>::__hash__(stg);
+    }
 };
 
 template <typename T, typename... components>
@@ -99,6 +87,12 @@ public:
     Get(TupleStorage<T, components...> &stg)
     {
         return stg.value;
+    }
+
+    static inline Object::hash_t
+    __hash__(TupleStorage<T, components...> &stg)
+    {
+        return hash(stg.value);
     }
 };
 
@@ -130,7 +124,7 @@ public:
     virtual size_t
     __len__()
     {
-        return triton_internal::TupleSize<components...>::size;
+        return sizeof... (components);
     }
 
     /** Get value from tuple.
@@ -146,6 +140,16 @@ public:
     {
         return triton_internal::TupleGetter<idx, components...>::Get(_values);
     }
+
+#if 0
+    virtual Object::hash_t
+    __hash__() const
+    {
+        return triton_internal::
+               TupleGetter<triton_internal::TupleSize<components...>::size - 1, components...>::
+               __hash__(_values);
+    }
+#endif
 };
 
 } /* namespace triton */
