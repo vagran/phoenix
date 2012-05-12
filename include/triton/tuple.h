@@ -61,6 +61,9 @@ public:
     TupleStorage(add_const_reference<T> firstValue,
                  add_const_reference<components>... restValues) :
         BaseType(restValues...), value(firstValue) {}
+
+    TupleStorage(const TupleStorage<T, components...> &src) :
+        BaseType(static_cast<const BaseType &>(src)), value(src.value) {}
 };
 
 /** Helper class for accessing values of a tuple. */
@@ -74,9 +77,11 @@ public:
     }
 
     static inline Object::hash_t
-    __hash__(TupleStorage<T, components...> &stg)
+    __hash__(const TupleStorage<T, components...> &stg)
     {
-        return hash(stg.value) ^ TupleGetter<idx - 1, components...>::__hash__(stg);
+        const Object::hash_t h = TupleGetter<idx - 1, components...>::__hash__(stg);
+        //XXX use hash mix
+        return hash(stg.value) ^ h;
     }
 };
 
@@ -90,7 +95,7 @@ public:
     }
 
     static inline Object::hash_t
-    __hash__(TupleStorage<T, components...> &stg)
+    __hash__(const TupleStorage<T, components...> &stg)
     {
         return hash(stg.value);
     }
@@ -117,6 +122,15 @@ public:
     inline
     Tuple(components... values) : _values(values...) {}
 
+    inline
+    Tuple(const Tuple<components...> &t) : _values(t._values) {}
+
+    virtual const char *
+    __name__() const
+    {
+        return "Tuple";
+    }
+
     /** Get tuple length.
      *
      * @return Number of values in the tuple.
@@ -124,7 +138,7 @@ public:
     virtual size_t
     __len__()
     {
-        return sizeof... (components);
+        return sizeof...(components);
     }
 
     /** Get value from tuple.
@@ -141,15 +155,14 @@ public:
         return triton_internal::TupleGetter<idx, components...>::Get(_values);
     }
 
-#if 0
+    /** Get hash value for a tuple. */
     virtual Object::hash_t
     __hash__() const
     {
         return triton_internal::
-               TupleGetter<triton_internal::TupleSize<components...>::size - 1, components...>::
+               TupleGetter<sizeof...(components) - 1, components...>::
                __hash__(_values);
     }
-#endif
 };
 
 } /* namespace triton */

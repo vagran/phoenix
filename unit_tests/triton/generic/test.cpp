@@ -31,6 +31,37 @@ UT_TEST("Helper utilities")
 
     enable_if<ice_or<true, false, true, false>(), int> i = 0;
     UT(i) == UT(0);
+
+    UT(is_integral<char>()) == UT_TRUE;
+    UT(is_integral<unsigned char>()) == UT_TRUE;
+    UT(is_integral<wchar_t>()) == UT_TRUE;
+    UT(is_integral<int>()) == UT_TRUE;
+    UT(is_integral<unsigned>()) == UT_TRUE;
+    UT(is_integral<long>()) == UT_TRUE;
+    UT(is_integral<unsigned long>()) == UT_TRUE;
+    UT(is_integral<long long>()) == UT_TRUE;
+    UT(is_integral<unsigned long long>()) == UT_TRUE;
+    UT(is_integral<float>()) == UT_FALSE;
+    UT(is_integral<double>()) == UT_FALSE;
+
+    UT(is_integral<const int>()) == UT_TRUE;
+    UT(is_integral<volatile int>()) == UT_TRUE;
+    UT(is_integral<const volatile int>()) == UT_TRUE;
+    UT(is_integral<const int *>()) == UT_FALSE;
+    UT(is_integral<remove_ptr<const int *>>()) == UT_TRUE;
+
+    UT(is_float<float>()) == UT_TRUE;
+    UT(is_float<double>()) == UT_TRUE;
+    UT(is_float<long double>()) == UT_TRUE;
+    UT(is_float<int>()) == UT_FALSE;
+
+    UT(is_float<const volatile float>()) == UT_TRUE;
+    UT(is_float<float *>()) == UT_FALSE;
+
+    UT(is_numeric<int>()) == UT_TRUE;
+    UT(is_numeric<float>()) == UT_TRUE;
+    UT(is_numeric<bool>()) == UT_FALSE;
+    UT(is_numeric<int *>()) == UT_FALSE;
 }
 UT_TEST_END
 
@@ -89,8 +120,13 @@ UT_TEST("Tuples")
     UT(t.get<1>()) == UT(v1);
     UT(t.get<2>()) == UT(v2);
 
-    //tuple_t t2(t);
-    //UT(hash(t2)) != UT(hash(t));
+    tuple_t t2(t);
+    //tuple_t t2(237, 10/* "test" */, 2.0);
+    UT(len(t2)) == UT(static_cast<size_t>(3));
+    UT(t2.get<0>()) == UT(v0);
+    UT(t2.get<1>()) == UT(v1);
+    UT(t2.get<2>()) == UT(v2);
+    UT(hash(t2)) == UT(hash(t));
 }
 UT_TEST_END
 

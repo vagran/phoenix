@@ -68,6 +68,32 @@ RoundDown2(T size, Tal align)
     return ROUND_DOWN2(size, align);
 }
 
+/** Bit-rotate value left by specified number of bits.
+ *
+ * @param value Value to rotate.
+ * @param numBits Number of bits to rotate.
+ * @return Rotation result.
+ */
+template <typename T>
+inline T
+RotL(const T value, const int numBits)
+{
+    return (value << numBits) | (value >> (sizeof(value) * NBBY - numBits));
+}
+
+/** Bit-rotate value left by specified number of bits.
+ *
+ * @param value Value to rotate.
+ * @param numBits Number of bits to rotate.
+ * @return Rotation result.
+ */
+template <typename T>
+inline T
+RotR(const T value, const int numBits)
+{
+    return (value >> numBits) | (value << (sizeof(value) * NBBY - numBits));
+}
+
 } /* Anonymous namespace */
 
 #define memset      __builtin_memset
@@ -103,9 +129,6 @@ ASMCALL long strtol(const char *nptr, const char **endptr, unsigned base);
 ASMCALL unsigned long strtoul(const char *nptr, const char **endptr, unsigned base);
 ASMCALL i64 strtoq(const char *nptr, const char **endptr, unsigned base);
 ASMCALL u64 strtouq(const char *nptr, const char **endptr, unsigned base);
-
-u32 GetHash32(const char *s);
-u32 GetHash32(const void *data, size_t size);
 
 int sscanf(const char *str, const char *fmt, ...) __FORMAT(scanf, 2, 3);
 int vsscanf(const char *str, char const *fmt, va_list ap) __FORMAT(scanf, 2, 0);

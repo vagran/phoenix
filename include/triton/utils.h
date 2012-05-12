@@ -17,6 +17,61 @@
 /** All Triton provided entities are defined in this namespace. */
 namespace triton {
 
+/* ************************************************************************** */
+
+namespace triton_internal {
+
+template <typename T>
+struct remove_const_impl {
+    typedef T type;
+};
+
+template <typename T>
+struct remove_const_impl<const T> {
+    typedef T type;
+};
+
+template <typename T>
+struct remove_volatile_impl {
+    typedef T type;
+};
+
+template <typename T>
+struct remove_volatile_impl<volatile T> {
+    typedef T type;
+};
+
+template <typename T>
+struct remove_ptr_impl {
+    typedef T type;
+};
+
+template <typename T>
+struct remove_ptr_impl<T *> {
+    typedef T type;
+};
+
+} /* namespace triton_internal */
+
+/** Remove @a const qualifier from provided type. */
+template <typename T>
+using remove_const = typename triton_internal::remove_const_impl<T>::type;
+
+/** Remove @a volatile qualifier from provided type. */
+template <typename T>
+using remove_volatile = typename triton_internal::remove_volatile_impl<T>::type;
+
+/** Remove both @a const and @a volatile qualifiers from provided type. */
+template <typename T>
+using remove_cv = typename triton_internal::remove_volatile_impl<
+                  typename triton_internal::remove_const_impl<T>::type>::type;
+
+/** Convert pointer type to the type pointed to. */
+template <typename T>
+using remove_ptr = typename triton_internal::remove_ptr_impl<T>::type;
+
+/* ************************************************************************** */
+
 namespace triton_internal {
 
 /* Conditional template instantiation helpers. Idea borrowed from Boost library. */
@@ -48,11 +103,12 @@ struct disable_if_impl<true, T> {};
  * @return @a T argument if @a Cond is @a true.
  * @code
  * template <class T>
- * typename enable_if<is_numeric<T>(), T>
+ * enable_if<is_numeric<T>(), T>
  * foo(T t)
  * {
  *      return t;
  * }
+ * @endcode
  */
 template <bool cond, class T = void>
 using enable_if = typename triton_internal::enable_if_impl<cond, T>::type;
@@ -154,6 +210,13 @@ ice_and()
     return triton_internal::ice_and_impl<values...>::value;
 }
 
+/** Helper for boolean "not" operation with constant value.
+ * @code
+ * ...
+ * ice_not<is_integer<T>>()
+ * ...
+ * @endcode
+ */
 template <bool value>
 constexpr bool
 ice_not()
@@ -168,6 +231,80 @@ ice_not<true>()
     return false;
 }
 
+/* ************************************************************************** */
+
+namespace triton_internal {
+
+template <typename T>
+constexpr bool
+is_integral_impl()
+{
+    return false;
+}
+
+#define TRITON_IS_INTEGRAL_IMPL(__type) \
+template <> \
+constexpr bool \
+is_integral_impl<__type>() \
+{ \
+    return true; \
+}
+
+TRITON_IS_INTEGRAL_IMPL(char)
+TRITON_IS_INTEGRAL_IMPL(unsigned char)
+TRITON_IS_INTEGRAL_IMPL(wchar_t)
+TRITON_IS_INTEGRAL_IMPL(int)
+TRITON_IS_INTEGRAL_IMPL(unsigned)
+TRITON_IS_INTEGRAL_IMPL(long)
+TRITON_IS_INTEGRAL_IMPL(unsigned long)
+TRITON_IS_INTEGRAL_IMPL(long long)
+TRITON_IS_INTEGRAL_IMPL(unsigned long long)
+
+template <typename T>
+constexpr bool
+is_float_impl()
+{
+    return false;
+}
+
+#define TRITON_IS_FLOAT_IMPL(__type) \
+template <> \
+constexpr bool \
+is_float_impl<__type>() \
+{ \
+    return true; \
+}
+
+TRITON_IS_FLOAT_IMPL(float)
+TRITON_IS_FLOAT_IMPL(double)
+TRITON_IS_FLOAT_IMPL(long double)
+
+} /* namespace triton_internal */
+
+/** Check if provided type is integral type. */
+template <typename T>
+constexpr bool
+is_integral()
+{
+    return triton_internal::is_integral_impl<remove_cv<T>>();
+}
+
+/** Check if provided type is floating point type. */
+template <typename T>
+constexpr bool
+is_float()
+{
+    return triton_internal::is_float_impl<remove_cv<T>>();
+}
+
+/** Check if provided type is numeric type (either integral or floating point). */
+template <typename T>
+constexpr bool
+is_numeric()
+{
+    return triton_internal::is_integral_impl<remove_cv<T>>() ||
+           triton_internal::is_float_impl<remove_cv<T>>();
+}
 
 /* ************************************************************************** */
 
