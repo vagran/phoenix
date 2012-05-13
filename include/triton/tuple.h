@@ -79,9 +79,11 @@ public:
     static inline Object::hash_t
     __hash__(const TupleStorage<T, components...> &stg)
     {
-        const Object::hash_t h = TupleGetter<idx - 1, components...>::__hash__(stg);
-        //XXX use hash mix
-        return hash(stg.value) ^ h;
+        u32 h1 = TupleGetter<idx - 1, components...>::__hash__(stg);
+        u32 h2 = hash(stg.value);
+        u32 h3 = idx;
+        Hash::Mix(h1, h2, h3);
+        return static_cast<Object::hash_t>(h2) << 32 | h3;
     }
 };
 
@@ -141,8 +143,7 @@ public:
         return sizeof...(components);
     }
 
-    /** Get value from tuple.
-     * @param idx Index of value to retrieve.
+    /** Get value from tuple specified by @a idx template argument.
      * @return Reference to a value at specified index.
      * @code
      * t.get<2>() = 10;

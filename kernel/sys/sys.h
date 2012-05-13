@@ -30,7 +30,6 @@
 /* Language support */
 #include <new.h>
 #include <std.h> //XXX obsolete by Triton, remove
-#include <triton.h>
 
 /* CPU specific */
 #include <cpu_regs.h>
@@ -45,6 +44,8 @@
 #include <md_stack.h>
 #include <BitString.h>
 #include <lock.h>
+
+#include <triton.h>
 
 #include <log.h>
 

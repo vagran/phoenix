@@ -7,7 +7,7 @@
  * See COPYING file for copyright details.
  */
 
-/** @file utils.h
+/** @file
  * Various helper utilities for Triton.
  */
 
@@ -101,6 +101,7 @@ struct disable_if_impl<true, T> {};
  *      Otherwise it is evaluated as invalid expression which causes compiler
  *      to select another instantiation.
  * @return @a T argument if @a Cond is @a true.
+ * Usage example:
  * @code
  * template <class T>
  * enable_if<is_numeric<T>(), T>
@@ -183,6 +184,7 @@ struct ice_and_impl<true, values...>
 } /* namespace triton_internal */
 
 /** Helper for boolean "or" operation with constant values.
+ * Usage example:
  * @code
  * ...
  * ice_or<is_integer<T>, is_float<T>>()
@@ -197,6 +199,7 @@ ice_or()
 }
 
 /** Helper for boolean "and" operation with constant values.
+ * Usage example:
  * @code
  * ...
  * ice_and<is_integer<T>, is_float<T>>()
@@ -211,6 +214,7 @@ ice_and()
 }
 
 /** Helper for boolean "not" operation with constant value.
+ * Usage example:
  * @code
  * ...
  * ice_not<is_integer<T>>()

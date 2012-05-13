@@ -431,6 +431,10 @@ ut::__ut_mdump()
 {
     bool found = false;
     for (ut_mblock_hdr *hdr: ::allocatedBlocks) {
+        if (!hdr->file) {
+            /* Do not account untracked allocations. */
+            continue;
+        }
         if (!found) {
             printf("Warning: Non freed memory blocks:\n");
             found = true;

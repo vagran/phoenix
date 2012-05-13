@@ -72,8 +72,13 @@
 /** Wrapper which interprets value as boolean. */
 #define UT_BOOL(value)  ut::TestValue<bool>(static_cast<bool>(value), __UT_STR(value), __FILE__, __LINE__)
 
-#define UT_FALSE    UT(false)
-#define UT_TRUE     UT(true)
+/** Predefined unit test value for boolean @a false. */
+#define UT_FALSE        UT(false)
+/** Predefined unit test value for boolean @a true. */
+#define UT_TRUE         UT(true)
+
+/** Wrapper which interprets value as size type. */
+#define UT_SIZE(value)  UT(static_cast<size_t>(value))
 
 /** Wrapper for null pointer value. */
 #define UT_NULL     ut::TestValue<void *>(nullptr, "NULL", __FILE__, __LINE__)
@@ -293,6 +298,8 @@ public:
 
     /** User requested failure.
      * @param desc Description of the failure.
+     * @param file Source file name where the exception occurred.
+     * @param line Line number in the source file specified in @a file argument.
      */
     TestException(const char *desc, const char *file, int line) :
         _value1(desc, file, line)

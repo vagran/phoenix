@@ -17,84 +17,9 @@
  * Phoenix. Used mainly by low-level C++ support code.
  */
 
+#include <common/utils.h>
 #include <common/crc.h>
-
-namespace {
-
-/** Minimal value. */
-template <typename T>
-inline T
-Min(T x, T y) { return MIN(x, y); }
-
-/** Maximal value. */
-template <typename T>
-inline T
-Max(T x, T y) { return MAX(x, y); }
-
-/** Round up the value with specified alignment. */
-template <typename T, typename Tal>
-inline T
-RoundUp(T size, Tal align) { return ROUND_UP(size, align); }
-
-/** Round down the value with specified alignment. */
-template <typename T, typename Tal>
-inline T
-RoundDown(T size, Tal align) { return ROUND_DOWN(size, align); }
-
-/** Check if specified value is an integer power of two. */
-template <typename T>
-inline bool
-IsPowerOf2(T value) { return IS_POWER_OF_2(value); }
-
-/** Round up the value with specified alignment. Alignment must be an integer
- * power of two.
- */
-template <typename T, typename Tal>
-inline T
-RoundUp2(T size, Tal align)
-{
-    ASSERT(IsPowerOf2(align));
-    return ROUND_UP2(size, align);
-}
-
-/** Round down the value with specified alignment. Alignment must be an integer
- * power of two.
- */
-template <typename T, typename Tal>
-inline T
-RoundDown2(T size, Tal align)
-{
-    ASSERT(IsPowerOf2(align));
-    return ROUND_DOWN2(size, align);
-}
-
-/** Bit-rotate value left by specified number of bits.
- *
- * @param value Value to rotate.
- * @param numBits Number of bits to rotate.
- * @return Rotation result.
- */
-template <typename T>
-inline T
-RotL(const T value, const int numBits)
-{
-    return (value << numBits) | (value >> (sizeof(value) * NBBY - numBits));
-}
-
-/** Bit-rotate value left by specified number of bits.
- *
- * @param value Value to rotate.
- * @param numBits Number of bits to rotate.
- * @return Rotation result.
- */
-template <typename T>
-inline T
-RotR(const T value, const int numBits)
-{
-    return (value >> numBits) | (value << (sizeof(value) * NBBY - numBits));
-}
-
-} /* Anonymous namespace */
+#include <common/hash.h>
 
 #define memset      __builtin_memset
 #define memcpy      __builtin_memcpy
