@@ -25,7 +25,7 @@ template <typename T>
 class Numeric: public Object {
 protected:
     union Value {
-        enable_if<is_numeric<T>(), T> value;
+        remove_cv<remove_ref<enable_if<is_numeric<T>(), T>>> value;
         hash_t hash;
     } _v;
 public:
@@ -132,17 +132,17 @@ typedef triton_internal::NumericFloat<double> Double;
 typedef triton_internal::NumericFloat<long double> LongDouble;
 
 template <typename T>
-inline Object::hash_t
-hash(T value, enable_if<is_integral<T>(), T> dummy = 0)
+inline triton_internal::NumericInt<T>
+object(T &&value, remove_cv<remove_ref<enable_if<is_integral<T>(), T>>> dummy = 0)
 {
-    return triton_internal::NumericInt<T>(value).__hash__();
+    return triton_internal::NumericInt<T>(value);
 }
 
 template <typename T>
-inline Object::hash_t
-hash(T value, enable_if<is_float<T>(), T> dummy = 0)
+inline triton_internal::NumericFloat<T>
+object(T &&value, remove_cv<remove_ref<enable_if<is_float<T>(), T>>> dummy = 0)
 {
-    return triton_internal::NumericFloat<T>(value).__hash__();
+    return triton_internal::NumericFloat<T>(value);
 }
 
 } /* namespace triton */

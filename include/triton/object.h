@@ -77,21 +77,26 @@ public:
     }
 };
 
-/** Get hash value of an object
+/** This built-in function should return Triton object from provided argument.
+ * All classes provides this function which constructs class object from any
+ * suitable arguments.
  *
- * @param obj Container object.
- * @return Number of elements currently stored in container object.
+ * Particularly this instance is overloaded for Triton object as argument which
+ * is just returned back.
+ *
+ * @param obj Triton object.
+ * @return The object passed in the argument.
  */
-inline Object::hash_t
-hash(Object &obj)
+inline Object &
+object(Object &obj)
 {
-    return obj.__hash__();
+    return obj;
 }
 
-inline Object::hash_t
-hash(Object &&obj)
+inline Object &&
+object(Object &&obj)
 {
-    return obj.__hash__();
+    return static_cast<Object &&>(obj);
 }
 
 /** Base class for all container classes. When Triton objects are stored in
@@ -108,28 +113,6 @@ public:
         return 0;
     }
 };
-
-/** Get number of elements in container object.
- *
- * @param obj Container object.
- * @return Number of elements currently stored in container object.
- */
-inline size_t
-len(Container &obj)
-{
-    return obj.__len__();
-}
-
-/** Get number of elements in container object.
- *
- * @param obj Container object.
- * @return Number of elements currently stored in container object.
- */
-inline size_t
-len(Container &&obj)
-{
-    return obj.__len__();
-}
 
 /** Base class for all iterable classes - i.e. containers which support their
  * elements iteration.

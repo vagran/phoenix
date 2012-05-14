@@ -18,11 +18,60 @@
 
 #include <triton/utils.h>
 #include <triton/object.h>
+
+/** All Triton provided entities are defined in this namespace. */
+namespace triton {
+
+/* Triton built-in functions. */
+
+/** Get hash value of an object
+ *
+ * @param obj Triton object or a type from which it can be created.
+ * @return Number of elements currently stored in container object.
+ */
+template <typename T>
+inline Object::hash_t
+hash(T &&obj);
+
+/** Get number of elements in container object.
+ *
+ * @param obj Container object.
+ * @return Number of elements currently stored in container object.
+ */
+template <typename T>
+inline size_t
+len(T &&obj);
+
+} /* namespace triton */
+
 #include <triton/exception.h>
 #include <triton/ptr.h>
 #include <triton/numeric.h>
 #include <triton/tuple.h>
 #include <triton/iterator.h>
 #include <triton/list.h>
+
+namespace triton {
+
+/* Triton built-in functions implementation should follow all Triton classes
+ * declarations. The implementation depends on overloaded object() functions
+ * provided by each triton class.
+ */
+
+template <typename T>
+inline Object::hash_t
+hash(T &&obj)
+{
+    return object(forward<T>(obj)).__hash__();
+}
+
+template <typename T>
+inline size_t
+len(T &&obj)
+{
+    return static_cast<Container &&>(object(forward<T>(obj))).__len__();
+}
+
+} /* namespace triton */
 
 #endif /* TRITON_H_ */

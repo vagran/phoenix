@@ -222,31 +222,17 @@ public:
 };
 
 template <class T>
-inline size_t
-len(Ptr<T> &objPtr)
+inline Object &
+object(Ptr<T> &objPtr)
 {
-    return objPtr->__len__();
+    return *objPtr;
 }
 
 template <class T>
-inline size_t
-len(Ptr<T> &&objPtr)
+inline Object &
+object(Ptr<T> &&objPtr)
 {
-    return objPtr->__len__();
-}
-
-template <class T>
-inline Object::hash_t
-hash(Ptr<T> &objPtr)
-{
-    return objPtr->__hash__();
-}
-
-template <class T>
-inline Object::hash_t
-hash(Ptr<T> &&objPtr)
-{
-    return objPtr->__hash__();
+    return *objPtr;
 }
 
 } /* namespace triton */

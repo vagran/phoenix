@@ -44,8 +44,11 @@ UT_TEST("Helper utilities")
     UT(is_integral<float>()) == UT_FALSE;
     UT(is_integral<double>()) == UT_FALSE;
 
+    UT(is_integral<int &>()) == UT_TRUE;
     UT(is_integral<const int>()) == UT_TRUE;
+    UT(is_integral<const int &>()) == UT_TRUE;
     UT(is_integral<volatile int>()) == UT_TRUE;
+    UT(is_integral<volatile int &>()) == UT_TRUE;
     UT(is_integral<const volatile int>()) == UT_TRUE;
     UT(is_integral<const int *>()) == UT_FALSE;
     UT(is_integral<remove_ptr<const int *>>()) == UT_TRUE;
@@ -62,6 +65,14 @@ UT_TEST("Helper utilities")
     UT(is_numeric<float>()) == UT_TRUE;
     UT(is_numeric<bool>()) == UT_FALSE;
     UT(is_numeric<int *>()) == UT_FALSE;
+
+    UT(is_lvalue_ref<int>()) == UT_FALSE;
+    UT(is_lvalue_ref<int &>()) == UT_TRUE;
+    UT(is_lvalue_ref<int &&>()) == UT_FALSE;
+
+    UT(is_rvalue_ref<int>()) == UT_FALSE;
+    UT(is_rvalue_ref<int &>()) == UT_FALSE;
+    UT(is_rvalue_ref<int &&>()) == UT_TRUE;
 }
 UT_TEST_END
 
@@ -165,6 +176,9 @@ UT_TEST("Numeric values")
     UT(hash(i2)) == UT(h2);
     UT(hash(1)) == UT(h1);
     UT(hash(2)) == UT(h2);
+
+    int int_i1 = i1;
+    UT(hash(int_i1)) == UT(h1);
 
     i1 = 7;
     UT(i1 == 7) == UT_TRUE;
