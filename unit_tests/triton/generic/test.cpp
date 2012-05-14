@@ -109,6 +109,7 @@ UT_TEST("Tuples")
     Ptr<tuple_t> p(t);
     UT(len(p)) == UT(static_cast<size_t>(3));
     UT(len(Ptr<tuple_t>(t))) == UT(static_cast<size_t>(3));
+    UT(hash(p)) == UT(hash(t));
 
     /* Retrieving components types. */
     decltype(t)::Type<0> v0 = 237;
@@ -126,6 +127,18 @@ UT_TEST("Tuples")
     UT(t2.get<0>()) == UT(v0);
     UT(t2.get<1>()) == UT(v1);
     UT(t2.get<2>()) == UT(v2);
+    UT(hash(t2)) == UT(hash(t));
+
+    t2.get<0>() = 238;
+    UT(t2.get<0>()) == UT(238);
+    UT(hash(t2)) != UT(hash(t));
+    t2.get<0>() = v0;
+    UT(hash(t2)) == UT(hash(t));
+
+    t2.get<2>() = 3.0;
+    UT(t2.get<2>()) == UT(3.0);
+    UT(hash(t2)) != UT(hash(t));
+    t2.get<2>() = v2;
     UT(hash(t2)) == UT(hash(t));
 }
 UT_TEST_END

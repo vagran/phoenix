@@ -23,5 +23,6 @@
 #include <triton/numeric.h>
 #include <triton/tuple.h>
 #include <triton/iterator.h>
+#include <triton/list.h>
 
 #endif /* TRITON_H_ */

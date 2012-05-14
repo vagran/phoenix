@@ -22,14 +22,17 @@ UT_TEST("Hash class")
         "012345678abcdef012345678abcdef012345678abcdef012345678abcdef"
         "012345678abcdef012345678abcdef012345678abcdef012345678abcdef"
         "012345678abcdef012345678abcdef012345678abcdef012345678abcdef";
+
     Hash h1;
     h1.Feed(&data[0], 64);
+
     Hash h2;
     h2.Feed(&data[0], 128);
     UT(h1.Get64()) != UT(h2.Get64());
     h2.Reset();
     h2.Feed(&data[0], 64);
     UT(h1.Get64()) == UT(h2.Get64());
+
     h2.Reset();
     h2.Feed(&data[0], 1);
     h2.Feed(&data[1], 1);
@@ -42,5 +45,11 @@ UT_TEST("Hash class")
     UT(h1.Get64()) == UT(h2.Get64());
     UT(static_cast<u64>(h1)) == UT(static_cast<u64>(h2));
     UT(static_cast<u32>(h1)) == UT(static_cast<u32>(h2));
+
+    h2.Reset();
+    for (int i = 0; i < 64; i++) {
+        h2.Feed(&data[i], 1);
+    }
+    UT(h2.Get64()) == UT(h1.Get64());
 }
 UT_TEST_END

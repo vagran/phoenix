@@ -22,7 +22,7 @@
  * http://ast-phoenix.sourceforge.net/doc/doku.php - Project documentation in
  * Wiki format which contains a lot of information about the system concepts,
  * architecture, implementation details etc. @n
- * http://ast-phoenix.sourceforge.net/doxygen/kernel/html/ - on-line copy of the
+ * http://ast-phoenix.sourceforge.net/doxygen/system/html/ - on-line copy of the
  * code documentation.
  */
 

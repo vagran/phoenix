@@ -1,5 +1,5 @@
 /*
- * /phoenix/include/triton/iterator.h
+ * /phoenix/include/triton/list.h
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011-2012, Artyom Lebedev <artyom.lebedev@gmail.com>
@@ -7,15 +7,15 @@
  * See COPYING file for copyright details.
  */
 
-/** @file iterator.h
- * Triton iterators interfaces description.
+/** @file list.h
+ * Triton lists implementation.
  */
 
-#ifndef ITERATOR_H_
-#define ITERATOR_H_
+#ifndef LIST_H_
+#define LIST_H_
 
 namespace triton {
 
 } /* namespace triton */
 
-#endif /* ITERATOR_H_ */
+#endif /* LIST_H_ */
