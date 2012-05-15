@@ -224,6 +224,17 @@ forward(remove_ref<T> &&arg)
     return static_cast<T &&>(arg);
 }
 
+/** Convert a value to an rvalue.
+ *  @param arg A thing of arbitrary type.
+ *  @return The parameter cast to an rvalue-reference to allow moving it.
+*/
+template <typename T>
+constexpr remove_ref<T> &&
+move(T &&arg)
+{
+    return static_cast<remove_ref<T> &&>(arg);
+}
+
 /* ************************************************************************** */
 
 namespace triton_internal {

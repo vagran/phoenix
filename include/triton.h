@@ -18,6 +18,7 @@
 
 #include <triton/utils.h>
 #include <triton/object.h>
+#include <triton/allocator.h>
 
 /** All Triton provided entities are defined in this namespace. */
 namespace triton {

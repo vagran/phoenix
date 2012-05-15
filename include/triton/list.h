@@ -16,6 +16,22 @@
 
 namespace triton {
 
+/** List is a collection type for indexed storage of provided set of values.
+ * Stored values type defined by @a T template parameter. Back-end for memory
+ * allocations
+ */
+template <typename T, class AllocatorT = Allocator<T>>
+class List: public Iterable {
+private:
+
+    class Node {
+
+    };
+
+    typedef typename AllocatorT::template Rebind<Node> NodeAllocator;
+public:
+};
+
 } /* namespace triton */
 
 #endif /* LIST_H_ */

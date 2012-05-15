@@ -15,7 +15,10 @@
 
 #include <sys.h>
 
+using namespace triton;
+
 UT_TEST("Basic lists operations")
 {
+    List<int> l;
 }
 UT_TEST_END

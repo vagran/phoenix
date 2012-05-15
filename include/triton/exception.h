@@ -64,7 +64,7 @@ public:
     }
 };
 
-/** This exception is thrown when Triton object null pointer is dereferenced. */
+/** This exception is thrown when Triton runs out of memory. */
 class MemoryError: public TritonError {
 public:
     /** Name of this error. */
