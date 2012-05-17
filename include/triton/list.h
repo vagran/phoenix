@@ -16,20 +16,102 @@
 
 namespace triton {
 
-/** List is a collection type for indexed storage of provided set of values.
- * Stored values type defined by @a T template parameter. Back-end for memory
- * allocations
- */
-template <typename T, class AllocatorT = Allocator<T>>
-class List: public Iterable {
-private:
+namespace triton_internal {
 
-    class Node {
+/** Base class for Triton lists. */
+class ListBase {
+private:
+    /** Base class for list node. */
+    class NodeBase {
 
     };
 
+    template <typename T>
+    class Node: public NodeBase {
+    public:
+        T value;
+    };
+
+    size_t _numNodes;
+
+protected:
+
+    inline size_t
+    __len__()
+    {
+        return _numNodes;
+    }
+
+public:
+
+
+};
+
+template <>
+class ListBase::Node<Object *>: public ListBase::NodeBase {
+public:
+     Object *value;
+};
+
+} /* namespace triton_internal */
+
+template <typename T, class AllocatorT = Allocator<T>>
+class List: public triton_internal::ListBase, public Sequence<T>, public Iterable {
+private:
+
+    typedef triton_internal::ListBase::Node<T> Node;
+
     typedef typename AllocatorT::template Rebind<Node> NodeAllocator;
 public:
+    /** Type of index of value in a list. */
+    typedef typename Sequence<T>::index_t index_t;
+
+    virtual const char *
+    __name__() const
+    {
+        return "List";
+    }
+
+    virtual Object::hash_t
+    __hash__() const
+    {
+        //XXX
+        return 1;
+    }
+
+    virtual size_t
+    __len__()
+    {
+        return ListBase::__len__();
+    }
+
+    virtual T &
+    __min__()
+    {
+        //XXX
+        throw ValueError();
+    }
+
+    virtual T &
+    __max__()
+    {
+        //XXX
+        throw ValueError();
+    }
+
+    virtual index_t
+    index(T &&value)
+    {
+        //XXX
+        return 0;
+    }
+
+    virtual size_t
+    count(T &&value)
+    {
+        //XXX
+        return 0;
+    }
 };
 
 } /* namespace triton */

@@ -88,6 +88,10 @@ using remove_ptr = typename triton_internal::remove_ptr_impl<T>::type;
 template <typename T>
 using remove_ref = typename triton_internal::remove_ref_impl<T>::type;
 
+/** Remove reference and CV-qualifiers from a type if any. */
+template <typename T>
+using remove_cv_ref = remove_cv<remove_ref<T>>;
+
 /* ************************************************************************** */
 
 namespace triton_internal {
@@ -179,7 +183,7 @@ template <typename T>
 constexpr bool
 is_integral()
 {
-    return triton_internal::is_integral_impl<remove_cv<remove_ref<T>>>();
+    return triton_internal::is_integral_impl<remove_cv_ref<T>>();
 }
 
 /** Check if provided type is floating point type. */
@@ -187,7 +191,7 @@ template <typename T>
 constexpr bool
 is_float()
 {
-    return triton_internal::is_float_impl<remove_cv<remove_ref<T>>>();
+    return triton_internal::is_float_impl<remove_cv_ref<T>>();
 }
 
 /** Check if provided type is numeric type (either integral or floating point). */
@@ -195,8 +199,8 @@ template <typename T>
 constexpr bool
 is_numeric()
 {
-    return triton_internal::is_integral_impl<remove_cv<remove_ref<T>>>() ||
-           triton_internal::is_float_impl<remove_cv<remove_ref<T>>>();
+    return triton_internal::is_integral_impl<remove_cv_ref<T>>() ||
+           triton_internal::is_float_impl<remove_cv_ref<T>>();
 }
 
 /* ************************************************************************** */
@@ -283,7 +287,7 @@ using enable_if = typename triton_internal::enable_if_impl<cond, T>::type;
  * enable_if_c.
  */
 template <bool cond, class T = void>
-using disable_if = typename triton_internal::enable_if_impl<cond, T>::type;
+using disable_if = typename triton_internal::disable_if_impl<cond, T>::type;
 
 /* ************************************************************************** */
 

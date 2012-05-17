@@ -23,6 +23,37 @@
 /** All Triton provided entities are defined in this namespace. */
 namespace triton {
 
+/* Forward declaration of all Triton classes. */
+
+/** Base class for all Triton objects. All the library and client code objects
+ * should be derived from this class.
+ */
+class Object;
+
+/** Base class for all container classes. When Triton objects are stored in
+ * containers, @ref Ptr class should be used for that.
+ */
+class Container;
+
+/** Base class for all sequence classes - containers which store items in a
+ * sequenced manner - each items has permanent index while sequence is not
+ * modified. Type of item is defined by @a T template parameter.
+ */
+template <typename T>
+class Sequence;
+
+/** Base class for all iterable classes - i.e. containers which support their
+ * elements iteration.
+ */
+class Iterable;
+
+/** List is a collection type for indexed storage of provided set of values.
+ * Stored values type defined by @a T template parameter. Back-end for memory
+ * allocations
+ */
+template <typename T, class AllocatorT>
+class List;
+
 /* Triton built-in functions. */
 
 /** Get hash value of an object

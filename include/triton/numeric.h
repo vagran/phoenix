@@ -25,7 +25,7 @@ template <typename T>
 class Numeric: public Object {
 protected:
     union Value {
-        remove_cv<remove_ref<enable_if<is_numeric<T>(), T>>> value;
+        remove_cv_ref<enable_if<is_numeric<T>(), T>> value;
         hash_t hash;
     } _v;
 public:
@@ -107,42 +107,59 @@ public:
 
 } /* namespace triton_internal */
 
+/** Triton wrapper class for all numeric types. */
+template <typename T, class Enable = enable_if<is_numeric<T>()>>
+class Numeric;
+
+template <typename T>
+class Numeric<T, enable_if<is_integral<T>()>>:
+public triton_internal::NumericInt<remove_cv_ref<T>> {
+private:
+    typedef triton_internal::NumericInt<remove_cv_ref<T>> BaseType;
+public:
+    template <typename... Args>
+    Numeric(Args &&... args) : BaseType(forward<Args>(args)...) {}
+};
+
+template <typename T>
+class Numeric<T, enable_if<is_float<T>()>>:
+public triton_internal::NumericFloat<remove_cv_ref<T>> {
+private:
+    typedef triton_internal::NumericFloat<remove_cv_ref<T>> BaseType;
+public:
+    template <typename... Args>
+    Numeric(Args &&... args) : BaseType(forward<Args>(args)...) {}
+};
+
 /** Numeric class for characters. */
-typedef triton_internal::NumericInt<char> Char;
+typedef Numeric<char> Char;
 /** Numeric class for unsigned characters. */
-typedef triton_internal::NumericInt<unsigned char> UChar;
+typedef Numeric<unsigned char> UChar;
 /** Numeric class for integers. */
-typedef triton_internal::NumericInt<int> Int;
+typedef Numeric<int> Int;
 /** Numeric class for unsigned integers. */
-typedef triton_internal::NumericInt<unsigned int> UInt;
+typedef Numeric<unsigned int> UInt;
 /** Numeric class for long integers. */
-typedef triton_internal::NumericInt<long> Long;
+typedef Numeric<long> Long;
 /** Numeric class for unsigned long integers. */
-typedef triton_internal::NumericInt<unsigned long> ULong;
+typedef Numeric<unsigned long> ULong;
 /** Numeric class for long long integers. */
-typedef triton_internal::NumericInt<long> LongLong;
+typedef Numeric<long> LongLong;
 /** Numeric class for unsigned long long integers. */
-typedef triton_internal::NumericInt<unsigned long> ULongLong;
+typedef Numeric<unsigned long> ULongLong;
 
 /** Numeric class for floating point numbers. */
-typedef triton_internal::NumericFloat<float> Float;
+typedef Numeric<float> Float;
 /** Numeric class for floating point numbers with double precision. */
-typedef triton_internal::NumericFloat<double> Double;
+typedef Numeric<double> Double;
 /** Numeric class for floating point numbers with long double precision. */
-typedef triton_internal::NumericFloat<long double> LongDouble;
+typedef Numeric<long double> LongDouble;
 
 template <typename T>
-inline triton_internal::NumericInt<T>
-object(T &&value, remove_cv<remove_ref<enable_if<is_integral<T>(), T>>> dummy = 0)
+inline Numeric<T>
+object(T &&value)
 {
-    return triton_internal::NumericInt<T>(value);
-}
-
-template <typename T>
-inline triton_internal::NumericFloat<T>
-object(T &&value, remove_cv<remove_ref<enable_if<is_float<T>(), T>>> dummy = 0)
-{
-    return triton_internal::NumericFloat<T>(value);
+    return Numeric<T>(value);
 }
 
 } /* namespace triton */

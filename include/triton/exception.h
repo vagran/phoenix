@@ -127,6 +127,22 @@ public:
     //xxx __str__
 };
 
+/** Exception class which is raised when a method receives an argument that has
+ * inappropriate value, and the situation is not described by a more precise
+ * exception.
+ */
+class ValueError: public LookupError {
+public:
+    /** Name of this error. */
+    virtual const char *
+    __name__() const
+    {
+        return "ValueError";
+    }
+
+    //xxx __str__
+};
+
 } /* namespace triton */
 
 #endif /* EXCEPTION_H_ */
