@@ -356,7 +356,7 @@ struct ice_and_impl<true, values...>
  * Usage example:
  * @code
  * ...
- * ice_or<is_integer<T>, is_float<T>>()
+ * ice_or<is_integer<T>(), is_float<T>()>()
  * ...
  * @endcode
  */
@@ -371,7 +371,7 @@ ice_or()
  * Usage example:
  * @code
  * ...
- * ice_and<is_integer<T>, is_float<T>>()
+ * ice_and<is_integer<T>(), is_float<T>()>()
  * ...
  * @endcode
  */
@@ -386,7 +386,7 @@ ice_and()
  * Usage example:
  * @code
  * ...
- * ice_not<is_integer<T>>()
+ * ice_not<is_integer<T>()>()
  * ...
  * @endcode
  */

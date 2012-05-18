@@ -105,7 +105,6 @@ public:
 
 }; /* namespace triton_internal */
 
-/** Tuple container stores arbitrary amount of different type values. */
 template <class... components>
 class Tuple: public Container {
 private:

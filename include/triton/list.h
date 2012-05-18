@@ -26,7 +26,7 @@ private:
 
     };
 
-    template <typename T>
+    template <typename T, class Enable = void>
     class Node: public NodeBase {
     public:
         T value;
@@ -47,10 +47,11 @@ public:
 
 };
 
-template <>
-class ListBase::Node<Object *>: public ListBase::NodeBase {
+template <typename T>
+class ListBase::Node<T *, enable_if<is_triton_obj<T>()>>:
+public ListBase::NodeBase {
 public:
-     Object *value;
+     Ptr<T> value;
 };
 
 } /* namespace triton_internal */

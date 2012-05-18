@@ -107,10 +107,6 @@ public:
 
 } /* namespace triton_internal */
 
-/** Triton wrapper class for all numeric types. */
-template <typename T, class Enable = enable_if<is_numeric<T>()>>
-class Numeric;
-
 template <typename T>
 class Numeric<T, enable_if<is_integral<T>()>>:
 public triton_internal::NumericInt<remove_cv_ref<T>> {
