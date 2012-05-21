@@ -81,8 +81,8 @@ UT_TEST("Helper utilities")
     UT(is_triton_obj<Object *>()) == UT_FALSE;
     UT(is_triton_obj<int>()) == UT_FALSE;
 
-    UT(is_triton_obj<Container>()) == UT_TRUE;
-    UT(is_triton_obj<Iterable>()) == UT_TRUE;
+    UT(is_triton_obj<Container<int>>()) == UT_TRUE;
+    UT(is_triton_obj<Iterable<int>>()) == UT_TRUE;
     UT(is_triton_obj<Sequence<int>>()) == UT_TRUE;
     UT(is_triton_obj<Numeric<int>>()) == UT_TRUE;
     UT((is_triton_obj<Tuple<int, float, char *>>())) == UT_TRUE;

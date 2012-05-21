@@ -106,7 +106,7 @@ public:
 }; /* namespace triton_internal */
 
 template <class... components>
-class Tuple: public Container {
+class Tuple: public Object {
 private:
     triton_internal::TupleStorage<components...> _values;
 public:

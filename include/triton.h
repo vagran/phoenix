@@ -17,9 +17,9 @@
 #define TRITON_H_
 
 #include <triton/utils.h>
+#include <triton/classes.h>
 #include <triton/object.h>
 #include <triton/allocator.h>
-#include <triton/classes.h>
 
 /** All Triton provided entities are defined in this namespace. */
 namespace triton {
@@ -48,6 +48,8 @@ len(T &&obj);
 
 #include <triton/exception.h>
 #include <triton/ptr.h>
+#include <triton/container.h>
+#include <triton/sequence.h>
 #include <triton/numeric.h>
 #include <triton/tuple.h>
 #include <triton/iterator.h>
@@ -71,7 +73,7 @@ template <typename T>
 inline size_t
 len(T &&obj)
 {
-    return static_cast<Container &&>(object(forward<T>(obj))).__len__();
+    return object(forward<T>(obj)).__len__();
 }
 
 } /* namespace triton */

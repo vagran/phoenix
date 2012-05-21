@@ -26,6 +26,7 @@ class Object;
 /** Base class for all container classes. When Triton objects are stored in
  * containers, @ref Ptr class should be used for that.
  */
+template <typename T>
 class Container;
 
 /** Base class for all sequence classes - containers which store items in a
@@ -38,6 +39,7 @@ class Sequence;
 /** Base class for all iterable classes - i.e. containers which support their
  * elements iteration.
  */
+template <typename T>
 class Iterable;
 
 /** Triton wrapper class for all numeric types. */
@@ -62,15 +64,20 @@ struct is_triton_obj_impl {
     static const bool value = false;
 };
 
-#define TRITON_IS_TRITON_OBJ_IMPL(__type) \
-template <> \
-struct is_triton_obj_impl<__type> { \
-    static const bool value = true; \
+template <>
+struct is_triton_obj_impl<Object> {
+    static const bool value = true;
 };
 
-TRITON_IS_TRITON_OBJ_IMPL(Object)
-TRITON_IS_TRITON_OBJ_IMPL(Container)
-TRITON_IS_TRITON_OBJ_IMPL(Iterable)
+template <typename T>
+struct is_triton_obj_impl<Container<T>> {
+    static const bool value = true;
+};
+
+template <typename T>
+struct is_triton_obj_impl<Iterable<T>> {
+    static const bool value = true;
+};
 
 template <typename T>
 struct is_triton_obj_impl<Sequence<T>> {

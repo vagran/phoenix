@@ -20,5 +20,14 @@ using namespace triton;
 UT_TEST("Basic lists operations")
 {
     List<int> l;
+
+    UT(len(l)) == UT_SIZE(0);
+    l.append(1);
+    UT(len(l)) == UT_SIZE(1);
+
+    List<Numeric<int> *> l2;
+    UT(len(l2)) == UT_SIZE(0);
+    l2.append(NEW Numeric<int>(1));
+    UT(len(l2)) == UT_SIZE(1);
 }
 UT_TEST_END
