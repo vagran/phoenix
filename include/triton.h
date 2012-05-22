@@ -48,11 +48,11 @@ len(T &&obj);
 
 #include <triton/exception.h>
 #include <triton/ptr.h>
+#include <triton/iterator.h>
 #include <triton/container.h>
 #include <triton/sequence.h>
 #include <triton/numeric.h>
 #include <triton/tuple.h>
-#include <triton/iterator.h>
 #include <triton/list.h>
 
 namespace triton {

@@ -64,9 +64,17 @@ triton_internal::ListBase::_Append(NodeBase *node)
 void
 triton_internal::ListBase::_Insert(long idx, NodeBase *node)
 {
-    NodeBase *nextNode = _GetNode(idx, false);
+    NodeBase *nextNode;
+    if (idx > _numNodes || -idx > _numNodes) {
+        nextNode = _firstNode;
+    } else {
+        nextNode = _GetNode(idx);
+    }
     if (nextNode) {
         node->Link(nextNode->prev);
+        if (-idx > _numNodes) {
+            _firstNode = node;
+        }
     } else {
         ASSERT(!_firstNode);
         _firstNode = node;
@@ -75,35 +83,26 @@ triton_internal::ListBase::_Insert(long idx, NodeBase *node)
 }
 
 triton_internal::ListBase::NodeBase *
-triton_internal::ListBase::_GetNode(long idx, bool strictIdx)
+triton_internal::ListBase::_GetNode(long idx)
 {
     if (idx >= _numNodes) {
-        if (strictIdx) {
-            throw IndexError(/* "list index out of range" */);
-        }
-        /* Return last node. */
-        if (_firstNode) {
-            return _firstNode->prev;
-        }
-        return nullptr;
+        throw IndexError(/* "list index out of range" */);
     }
     if (idx < 0 && -idx > _numNodes) {
-        if (strictIdx) {
-            throw IndexError(/* "list index out of range" */);
-        }
-        /* Return first node. */
-        return _firstNode;
+        throw IndexError(/* "list index out of range" */);
     }
     NodeBase *node = _firstNode;
     if (idx >= 0) {
         /* Traverse list forward. */
         while (idx > 0) {
             node = node->next;
+            idx--;
         }
     } else {
         /* Traverse list backward. */
         while (idx < 0) {
             node = node->prev;
+            idx++;
         }
     }
     return node;

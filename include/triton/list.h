@@ -78,14 +78,10 @@ protected:
     void _Insert(long idx, NodeBase *node);
     /** Get node at specified position.
      * @param idx Index of node to retrieve. Negative values are counted from
-     *      the list end.
-     * @param strictIdx @ref IndexError is thrown if @a true and index is out of
-     *      range. If @a false then either the first or last node is returned
-     *      when index is out of range.
-     * @return Node at specified position. @a nullptr if the list is empty and
-     *      @a strictIdx is @a false.
+     *      the list end. @ref IndexError is thrown if index is out of range.
+     * @return Node at specified position.
      */
-    NodeBase *_GetNode(long idx, bool strictIdx);
+    NodeBase *_GetNode(long idx);
     /** Free all nodes. */
     void _ClearAll();
 public:
@@ -175,7 +171,7 @@ public:
     virtual ValueType &
     operator [](index_t idx)
     {
-        return static_cast<Node *>(_GetNode(idx, true))->value;
+        return static_cast<Node *>(_GetNode(idx))->value;
     }
 
     virtual index_t
@@ -203,7 +199,11 @@ public:
     extend(Iterable<T> &it) {}
 
     virtual void
-    insert(index_t idx, T &&value) {}
+    insert(index_t idx, T &&value)
+    {
+        NodeBase *node = _alloc.Allocate(forward<T>(value));
+        _Insert(idx, node);
+    }
 };
 
 } /* namespace triton */

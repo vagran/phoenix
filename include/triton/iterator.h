@@ -16,6 +16,23 @@
 
 namespace triton {
 
+/** Interface for objects which support iteration over their contained elements. */
+template <typename T>
+class Iterable {
+    //XXX
+};
+
+/** Objects of this class are created by iterable classes. The object controls
+ * iteration over elements stored in iterable object.
+ */
+template <typename T>
+class Iterator: public Object, public Iterable<T> {
+public:
+    inline bool operator !=(Iterator<T> &it) { return false; }
+    inline void operator ++() {  }
+    inline T &operator *() { return T(); }
+};
+
 } /* namespace triton */
 
 #endif /* ITERATOR_H_ */

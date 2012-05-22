@@ -17,11 +17,6 @@
 namespace triton {
 
 template <typename T>
-class Iterable {
-    //XXX
-};
-
-template <typename T>
 class Sequence: public Container<T> {
 public:
     typedef typename Container<T>::ValueType ValueType;
