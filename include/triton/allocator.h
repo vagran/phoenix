@@ -35,7 +35,7 @@ public:
      * Usage example:
      * @code
      * typedef Allocator<int> intAlloc;
-     * typedef intAlloc::Rebind<long> longAlloc;
+     * typedef typename intAlloc::template Rebind<long> longAlloc;
      * @endcode
      */
     template <typename Tother>

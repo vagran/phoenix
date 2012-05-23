@@ -42,6 +42,9 @@ class Sequence;
 template <typename T>
 class Iterable;
 
+template <typename T>
+class Iterator;
+
 /** Triton wrapper class for all numeric types. */
 template <typename T, class Enable = enable_if<is_numeric<T>()>>
 class Numeric;
@@ -76,6 +79,11 @@ struct is_triton_obj_impl<Container<T>> {
 
 template <typename T>
 struct is_triton_obj_impl<Iterable<T>> {
+    static const bool value = true;
+};
+
+template <typename T>
+struct is_triton_obj_impl<Iterator<T>> {
     static const bool value = true;
 };
 

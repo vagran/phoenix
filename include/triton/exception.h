@@ -143,6 +143,21 @@ public:
     //xxx __str__
 };
 
+/** This exception is raised when @a __next__ method is called for @ref
+ * Iterator object and there are no more items to iterate.
+ */
+class StopIteration: public LookupError {
+public:
+    /** Name of this error. */
+    virtual const char *
+    __name__() const
+    {
+        return "StopIteration";
+    }
+
+    //xxx __str__
+};
+
 } /* namespace triton */
 
 #endif /* EXCEPTION_H_ */

@@ -107,7 +107,9 @@ public:
 } /* namespace triton_internal */
 
 template <typename T, class AllocatorT = Allocator<T>>
-class List: public triton_internal::ListBase, public Sequence<T>, public Iterable<T> {
+class List:
+    public triton_internal::ListBase, public Sequence<T>,
+    public Iterable<typename Container<T>::ValueType> {
 private:
 
     typedef triton_internal::ListBase::Node<T> Node;
@@ -129,6 +131,23 @@ public:
      * of node template specialization.
      */
     typedef decltype(Node::value) ValueType;
+
+    class ListIterator: public IteratorImpl<ValueType> {
+    private:
+        List<T, AllocatorT> &_list;
+    public:
+        ListIterator(List<T, AllocatorT> &list) : _list(list)
+        {
+
+        }
+
+        virtual
+        ValueType &
+        __next__()
+        {
+            throw StopIteration();
+        }
+    };
 
     ~List()
     {
@@ -152,6 +171,13 @@ public:
     __len__()
     {
         return ListBase::__len__();
+    }
+
+    virtual
+    Iterator<ValueType>
+    __iter__()
+    {
+        return Iterator<ValueType>().template Assign<ListIterator>(*this);
     }
 
     virtual ValueType &

@@ -46,6 +46,17 @@ void *__operator_new(size_t size, bool isArray = false, size_t align = 0);
  */
 void __operator_delete(void *ptr, bool isArray = false);
 
+/** @a new operator for objects in-place construction.
+ *
+ * @param size Size of object.
+ * @param location Pre-allocated area address where object should be constructed.
+ */
+inline void *
+operator new(size_t size, void *location)
+{
+    return location;
+}
+
 /** @a new operator for untracked allocations.
  *
  * @param size Allocation size.
