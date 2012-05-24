@@ -17,33 +17,101 @@
 
 using namespace triton;
 
+/* Verify that list contains expected values provided in the second argument. */
+template<typename T>
+void
+CheckList(List<T> &list, const initializer_list<T> &il)
+{
+    /* Verify length. */
+    UT(len(list)) == UT(il.size());
+    /* Verify direct access to all items using positive and negative indexes. */
+    auto il_it = il.begin();
+    for (size_t i = 0; i < il.size(); i++) {
+        UT(list[i]) == UT(*il_it);
+        UT(list[-il.size() + i]) == UT(*il_it);
+        il_it++;
+    }
+    /* Verify IndexError exceptions when accessing items out of range. */
+    bool catched = false;
+    try {
+        list[il.size()];
+    } catch(IndexError &) {
+        catched = true;
+    }
+    UT(catched) == UT_TRUE;
+    catched = false;
+    try {
+        list[-il.size() - 1];
+    } catch(IndexError &) {
+        catched = true;
+    }
+    UT(catched) == UT_TRUE;
+
+    /* Verify iteration. Firstly verify iter() and next() functions interface. */
+    auto it = iter(list);
+    il_it = il.begin();
+    for (size_t i = 0; i < il.size(); i++) {
+        auto &value = next(it);
+        UT(value) == UT(*il_it);
+        il_it++;
+    }
+    /* StopIteration exception should be thrown when next() called more times
+     * than number of items in the list.
+     */
+    catched = false;
+    try {
+        next(it);
+    } catch (StopIteration &) {
+        catched = true;
+    }
+    UT(catched) == UT_TRUE;
+
+    /* Verify "for"-based iteration. */
+    il_it = il.begin();
+    size_t i = 0;
+    for (auto item: list) {
+        if (i >= il.size()) {
+            UT_FAIL("Number of iterated values is more than expected");
+        }
+        UT(item) == UT(*il_it);
+        il_it++;
+        i++;
+    }
+    UT(i) == UT(il.size());
+
+    /* Iterating over iterator should also work. */
+    il_it = il.begin();
+    i = 0;
+    for (auto item: iter(list)) {
+        if (i >= il.size()) {
+            UT_FAIL("Number of iterated values is more than expected");
+        }
+        UT(item) == UT(*il_it);
+        il_it++;
+        i++;
+    }
+    UT(i) == UT(il.size());
+}
+
 UT_TEST("Basic lists operations")
 {
     List<int> l;
-    //int l_v[] = { 1, 2, 3, 4, 5, 6 };
 
-    UT(len(l)) == UT_SIZE(0);
-    /* Iterate empty list. */
-    //XXX
+    CheckList(l, {});
     l.append(2);
-    UT(len(l)) == UT_SIZE(1);
-    UT(l[0]) == UT(2);
-    UT(l[-1]) == UT(2);
-    /* Iterate one element list. */
-    //XXX
+    CheckList(l, {2});
     l.append(5);
-    UT(l[-1]) == UT(5);
+    CheckList(l, {2, 5});
     l.insert(10, 6);
-    UT(l[-1]) == UT(6);
-    UT(l[-2]) == UT(5);
-    UT(l[-3]) == UT(2);
-    UT(l[0]) == UT(2);
-    UT(l[1]) == UT(5);
-    UT(l[2]) == UT(6);
-    l.insert(-10, 2);
-    l.insert(1, 4);
-    l.insert(1, 3);
-    UT(len(l)) == UT_SIZE(6);
+    CheckList(l, {2, 5, 6});
+    l.insert(-10, 1);
+    CheckList(l, {1, 2, 5, 6});
+    l.insert(2, 4);
+    CheckList(l, {1, 2, 4, 5, 6});
+    l.insert(2, 3);
+    CheckList(l, {1, 2, 3, 4, 5, 6});
+
+    //XXX copy constructor, move constructor
 
     /* Initializer list construction and assignment. */
     //XXX

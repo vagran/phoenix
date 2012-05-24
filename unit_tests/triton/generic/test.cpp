@@ -122,6 +122,12 @@ UT_TEST("Objects pointers")
         catched = true;
     }
     UT(catched) == UT_TRUE;
+
+    p4 = p2;
+    UT(p4 == p2) == UT_TRUE;
+    p3 = move(p4);
+    UT(p2 == p2) == UT_TRUE;
+    UT_BOOL(p4) == UT_FALSE;
 }
 UT_TEST_END
 

@@ -99,6 +99,12 @@ public:
         ptr._obj = nullptr;
     }
 
+    inline bool
+    IsDeletable() const
+    {
+        return _canDelete;
+    }
+
     /** Destruct pointer and release reference to an object. Referenced object
      * is deleted if last reference was released and object can be deleted.
      */
@@ -113,7 +119,7 @@ public:
      * @return Reference to itself.
      */
     inline Ptr<T> &
-    operator =(Ptr<T> &ptr)
+    operator =(const Ptr<T> &ptr)
     {
         _ReleaseObj();
         if (ptr._obj) {

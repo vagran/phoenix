@@ -246,7 +246,9 @@ typedef void *SysLog;
 /** Initialize logging functionality. */
 void InitLog();
 
-/** Macro for short reference to system log levels. Usage example:
+/** Macro for short reference to system log levels.
+ *
+ * Usage example:
  * @code
  * sysLog << LL(WARNING) << "Some warning message";
  * @endcode

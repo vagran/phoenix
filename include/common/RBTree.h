@@ -168,6 +168,7 @@ private:
 };
 
 /** Implementation template for red-black tree class.
+ *
  * Usage example:
  * @code
  * class MyItem {

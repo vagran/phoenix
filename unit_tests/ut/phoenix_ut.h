@@ -34,7 +34,9 @@
 
 #define __UT_TEST_DESC          __UT_CONCAT(UtTestDesc_, __LINE__)
 
-/** Macro for defining a test. Usage example:
+/** Macro for defining a test.
+ *
+ * Usage example:
  * @code
  * UT_TEST("My test of some functionality")
  * {
@@ -58,7 +60,9 @@
     } __UT_UID(utTestDesc_); \
     } /* anonymous namespace */
 
-/** Wrapper for all values which are participating in asserts. Usage example:
+/** Wrapper for all values which are participating in asserts.
+ *
+ * Usage example:
  * @code
  * UT(someValue) == UT(anotherValue);
  * UT(a) < UT(b);

@@ -56,7 +56,7 @@
  *
  * Usage example:
  * @code
- * int SomeFunction(int someParam UNUSED) { ... }
+ * int SomeFunction(int UNUSED someParam) { ... }
  * @endcode
  */
 #define UNUSED                      __attribute__((unused))

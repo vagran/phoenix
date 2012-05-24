@@ -51,13 +51,10 @@ protected:
         Node(Args&&... args) : NodeBase(), value(forward<Args>(args)...) {}
     };
 
-private:
     /** Current number of nodes in the list. */
     long _numNodes = 0;
     /** First node in the list. */
     NodeBase *_firstNode = nullptr;
-
-protected:
 
     inline size_t
     __len__()
@@ -134,20 +131,38 @@ public:
 
     class ListIterator: public IteratorImpl<ValueType> {
     private:
-        List<T, AllocatorT> &_list;
+        typedef List<T, AllocatorT> ListT;
+        ListT &_list;
+        ListT::Node *_nextNode;
     public:
         ListIterator(List<T, AllocatorT> &list) : _list(list)
         {
-
+            _nextNode = static_cast<Node *>(_list._firstNode);
+            this->_hasNext = _nextNode ? true : false;
         }
 
         virtual
         ValueType &
         __next__()
         {
+            if (_nextNode) {
+                ValueType &v = _nextNode->value;
+                if (_nextNode->next == _list._firstNode) {
+                    _nextNode = nullptr;
+                } else {
+                    _nextNode = static_cast<Node *>(_nextNode->next);
+                }
+                return v;
+            }
             throw StopIteration();
         }
     };
+
+    //XXX initializer list constructor
+
+    //XXX copy/move constructor
+
+    //XXX assignment operators
 
     ~List()
     {
@@ -175,9 +190,14 @@ public:
 
     virtual
     Iterator<ValueType>
-    __iter__()
+    __iter__(bool endIterator = false)
     {
-        return Iterator<ValueType>().template Assign<ListIterator>(*this);
+        Iterator<ValueType> it;
+        if (endIterator) {
+            return it;
+        }
+        it.template Assign<ListIterator>(*this);
+        return it;
     }
 
     virtual ValueType &
@@ -231,6 +251,20 @@ public:
         _Insert(idx, node);
     }
 };
+
+template <typename T, typename AllocatorT>
+constexpr inline List<T, AllocatorT> &
+object(List<T, AllocatorT> &obj)
+{
+    return obj;
+}
+
+template <typename T, typename AllocatorT>
+constexpr inline List<T, AllocatorT> &&
+object(List<T, AllocatorT> &&obj)
+{
+    return static_cast<List<T, AllocatorT> &&>(obj);
+}
 
 } /* namespace triton */
 

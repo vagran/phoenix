@@ -1,5 +1,5 @@
 /*
- * /phoenix/include/std.h
+ * /phoenix/include/triton/std.h
  *
  * This file is a part of Phoenix operating system.
  * Copyright (c) 2011-2012, Artyom Lebedev <artyom.lebedev@gmail.com>

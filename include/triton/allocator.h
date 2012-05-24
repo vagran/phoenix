@@ -32,6 +32,7 @@ private:
 public:
     /** Helper for getting an allocator of same class with another type of
      * allocated objects (specified via @a Tother template parameter).
+     *
      * Usage example:
      * @code
      * typedef Allocator<int> intAlloc;

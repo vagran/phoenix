@@ -270,6 +270,7 @@ struct disable_if_impl<true, T> {};
  *      Otherwise it is evaluated as invalid expression which causes compiler
  *      to select another instantiation.
  * @return @a T argument if @a Cond is @a true.
+ *
  * Usage example:
  * @code
  * template <class T>
@@ -353,6 +354,7 @@ struct ice_and_impl<true, values...>
 } /* namespace triton_internal */
 
 /** Helper for boolean "or" operation with constant values.
+ *
  * Usage example:
  * @code
  * ...
@@ -368,6 +370,7 @@ ice_or()
 }
 
 /** Helper for boolean "and" operation with constant values.
+ *
  * Usage example:
  * @code
  * ...
@@ -383,6 +386,7 @@ ice_and()
 }
 
 /** Helper for boolean "not" operation with constant value.
+ *
  * Usage example:
  * @code
  * ...

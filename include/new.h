@@ -52,7 +52,7 @@ void __operator_delete(void *ptr, bool isArray = false);
  * @param location Pre-allocated area address where object should be constructed.
  */
 inline void *
-operator new(size_t size, void *location)
+operator new(size_t UNUSED size, void *location)
 {
     return location;
 }

@@ -29,7 +29,6 @@
 
 /* Language support */
 #include <new.h>
-#include <std.h> //XXX obsolete by Triton, remove
 
 /* CPU specific */
 #include <cpu_regs.h>

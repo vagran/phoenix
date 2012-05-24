@@ -16,6 +16,9 @@
 #ifndef TRITON_H_
 #define TRITON_H_
 
+#include <triton/std.h>
+using namespace std;
+
 #include <triton/utils.h>
 #include <triton/classes.h>
 #include <triton/object.h>
@@ -32,7 +35,7 @@ namespace triton {
  * @return Number of elements currently stored in container object.
  */
 template <typename T>
-inline Object::hash_t
+constexpr inline Object::hash_t
 hash(T &&obj);
 
 /** Get number of elements in container object.
@@ -41,8 +44,27 @@ hash(T &&obj);
  * @return Number of elements currently stored in container object.
  */
 template <typename T>
-inline size_t
+constexpr inline size_t
 len(T &&obj);
+
+/** Start iteration over iterable object items.
+ *
+ * @param obj Object to iterate on.
+ * @return Iterator object.
+ */
+template <typename T>
+constexpr inline auto
+iter(T &&obj) -> decltype(object(forward<T>(obj)).__iter__());
+
+/** Get next value from iterator object. @ref StopIteration exception is thrown
+ * if no more items to iterate.
+ *
+ * @param it Iterator object.
+ * @return Next item from the collection being iterated.
+ */
+template <typename IterT>
+constexpr inline IterT &
+next(Iterator<IterT> &it);
 
 } /* namespace triton */
 
@@ -63,17 +85,31 @@ namespace triton {
  */
 
 template <typename T>
-inline Object::hash_t
+constexpr inline Object::hash_t
 hash(T &&obj)
 {
     return object(forward<T>(obj)).__hash__();
 }
 
 template <typename T>
-inline size_t
+constexpr inline size_t
 len(T &&obj)
 {
     return object(forward<T>(obj)).__len__();
+}
+
+template <typename T>
+constexpr inline auto
+iter(T &&obj) -> decltype(object(forward<T>(obj)).__iter__())
+{
+    return object(forward<T>(obj)).__iter__();
+}
+
+template <typename IterT>
+constexpr inline IterT &
+next(Iterator<IterT> &it)
+{
+    return it.__next__();
 }
 
 } /* namespace triton */
