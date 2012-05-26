@@ -20,7 +20,7 @@ using namespace triton;
 /* Verify that list contains expected values provided in the second argument. */
 template<typename T>
 void
-CheckList(List<T> &list, const initializer_list<T> &il)
+CheckList(List<T> &list, const InitList<T> &il)
 {
     /* Verify length. */
     UT(len(list)) == UT(il.size());
@@ -106,20 +106,74 @@ UT_TEST("Basic lists operations")
     CheckList(l, {2, 5, 6});
     l.insert(-10, 1);
     CheckList(l, {1, 2, 5, 6});
-    l.insert(2, 4);
+    Int i1 = 4;
+    l.insert(2, i1);
     CheckList(l, {1, 2, 4, 5, 6});
-    l.insert(2, 3);
+    int i2 = 3;
+    l.insert(2, i2);
     CheckList(l, {1, 2, 3, 4, 5, 6});
 
-    //XXX copy constructor, move constructor
+    /* Verify modification during iteration. */
+    for (auto &item: l) {
+        item = 42;
+    }
+    CheckList(l, {42, 42, 42, 42, 42, 42});
 
-    /* Initializer list construction and assignment. */
-    //XXX
+    /* Initializer list assignment. */
+    l = {2, 3, 4};
+    CheckList(l, {2, 3, 4});
 
-    List<Numeric<int> *> l2;
+    /* Object pointer values. */
+    List<Int *> l2;
     UT(len(l2)) == UT_SIZE(0);
-    l2.append(NEW Numeric<int>(1));
+    l2.append(NEW Int(1));
     UT(len(l2)) == UT_SIZE(1);
     UT(static_cast<int>(*l2[0])) == UT(1);
+    l2[0] = NEW Int(2);
+    UT(len(l2)) == UT_SIZE(1);
+    UT(static_cast<int>(*l2[0])) == UT(2);
+    l2.append(NEW Int(3));
+    UT(len(l2)) == UT_SIZE(2);
+    UT(static_cast<int>(*l2[1])) == UT(3);
+
+    /* Initializer list construction. */
+    List<int> l3 {1, 2, 3, 4};
+    CheckList(l3, {1, 2, 3, 4});
+
+    /* Copy constructor. */
+    List<int> l4(l3);
+    CheckList(l4, {1, 2, 3, 4});
+    List<Int *> l5(l2);
+    UT(len(l5)) == UT_SIZE(2);
+    UT(static_cast<int>(*l5[0])) == UT(2);
+    UT(static_cast<int>(*l5[1])) == UT(3);
+
+    /* Move constructor. */
+    List<Int *> l6(move(l5));
+    UT(len(l6)) == UT_SIZE(2);
+    UT(static_cast<int>(*l6[0])) == UT(2);
+    UT(static_cast<int>(*l6[1])) == UT(3);
+    UT(len(l5)) == UT_SIZE(0);
+
+    List<Int *> l7;
+    l7 = l6;
+    UT(len(l7)) == UT_SIZE(2);
+    UT(static_cast<int>(*l7[0])) == UT(2);
+    UT(static_cast<int>(*l7[1])) == UT(3);
+
+    List<Int *> l8;
+    l8 = move(l6);
+    UT(len(l8)) == UT_SIZE(2);
+    UT(static_cast<int>(*l8[0])) == UT(2);
+    UT(static_cast<int>(*l8[1])) == UT(3);
+    UT(len(l6)) == UT_SIZE(0);
+
+    List<int> l9;
+    l9 = list(l3);
+    CheckList(l9, {1, 2, 3, 4});
+    l9 = list({5, 6, 7});
+    CheckList(l9, {5, 6, 7});
+
+    //XXX list("abc");
 }
 UT_TEST_END

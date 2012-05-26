@@ -20,6 +20,9 @@ namespace triton {
 template <typename T>
 class Iterable {
 public:
+    /** Type of iterated values. */
+    typedef T ValueType;
+
     /** Initialize iteration over iterable object elements.
      *
      * @param endIterator Indicates that end iterator should be created, i.e.
@@ -28,7 +31,7 @@ public:
      */
     virtual
     Iterator<T>
-    __iter__(bool endIterator = false) = 0;
+    __iter__(bool endIterator = false) const = 0;
 };
 
 template <typename T>
@@ -52,7 +55,7 @@ object(Iterable<T> &&obj)
  */
 template<typename T>
 constexpr Iterator<T>
-begin(Iterable<T> &iterable)
+begin(const Iterable<T> &iterable)
 {
     return iterable.__iter__();
 }
@@ -66,7 +69,7 @@ begin(Iterable<T> &iterable)
  */
 template<typename T>
 constexpr Iterator<T>
-end(Iterable<T> &iterable)
+end(const Iterable<T> &iterable)
 {
     return iterable.__iter__(true);
 }
@@ -131,6 +134,7 @@ private:
     {
         ASSERT(_itPtr);
         if (!_itPtr->__hasNext__()) {
+            _nextValue = nullptr;
             return;
         }
         try {
@@ -140,6 +144,9 @@ private:
         }
     }
 public:
+    /** Type of iterated values. */
+    typedef T ValueType;
+
     inline
     Iterator() {}
 
@@ -240,7 +247,7 @@ public:
      */
     inline
     Iterator<T>
-    __iter__(bool endIterator = false)
+    __iter__(bool endIterator = false) const
     {
         if (endIterator) {
             return Iterator<T>();

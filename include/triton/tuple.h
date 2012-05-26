@@ -137,7 +137,7 @@ public:
      * @return Number of values in the tuple.
      */
     virtual size_t
-    __len__()
+    __len__() const
     {
         return sizeof...(components);
     }

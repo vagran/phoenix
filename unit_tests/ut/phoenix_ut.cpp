@@ -414,7 +414,7 @@ ut::__ut_mfree(void *ptr)
 {
     ut_mblock_hdr *hdr = static_cast<ut_mblock_hdr *>(ptr) - 1;
     if (hdr->magic != ut_mblock_hdr::MAGIC) {
-        UT_FAIL("Trying to free non-managed block");
+        UT_FAIL("Trying to free non-managed or already freed block");
     }
 
     memset(ptr, 0xfe, hdr->size);

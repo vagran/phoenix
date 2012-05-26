@@ -17,8 +17,6 @@
 #define TRITON_H_
 
 #include <triton/std.h>
-using namespace std;
-
 #include <triton/utils.h>
 #include <triton/classes.h>
 #include <triton/object.h>
@@ -110,6 +108,14 @@ constexpr inline IterT &
 next(Iterator<IterT> &it)
 {
     return it.__next__();
+}
+
+template <typename Tobj, class AllocatorT = Allocator<int>>
+constexpr inline auto
+list(Tobj &&obj) ->
+List<typename decltype(object(forward<Tobj>(obj)).__iter__())::ValueType, AllocatorT>
+{
+    return List<typename decltype(object(forward<Tobj>(obj)).__iter__())::ValueType, AllocatorT>(object(forward<Tobj>(obj)));
 }
 
 } /* namespace triton */

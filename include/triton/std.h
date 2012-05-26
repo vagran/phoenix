@@ -69,12 +69,19 @@ public:
     }
 };
 
+} /* namespace std */
+
+namespace triton {
+
+template <typename T>
+using InitList = std::initializer_list<T>;
+
 /** Return an iterator pointing to the first element of the @ref initializer_list.
  *  @param __ils Initializer list.
  */
-template<class _Tp>
-constexpr const _Tp*
-begin(initializer_list<_Tp> __ils)
+template<typename T>
+constexpr const T*
+begin(InitList<T> __ils)
 {
     return __ils.begin();
 }
@@ -83,13 +90,13 @@ begin(initializer_list<_Tp> __ils)
  *      @ref initializer_list.
  *  @param __ils Initializer list.
  */
-template<class _Tp>
-constexpr const _Tp*
-end(initializer_list<_Tp> __ils)
+template<typename T>
+constexpr const T*
+end(InitList<T> __ils)
 {
     return __ils.end();
 }
 
-} /* namespace std */
+} /* namespace triton */
 
 #endif /* STD_H_ */

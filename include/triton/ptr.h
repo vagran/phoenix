@@ -19,7 +19,7 @@ namespace triton {
 /** Class for storing pointers to Triton objects. Whenever a pointer to an
  * object is created, passed or stored it should be wrapped into this class.
  */
-template <class T>
+template <class T, class AllocT = Allocator<T>>
 class Ptr {
 private:
     /** Pointer to referenced object. */
@@ -28,13 +28,14 @@ private:
      * pointers constructed by pointer to an object can be deleted.
      */
     bool _canDelete;
+    AllocT _alloc;
 
     /** Release reference to an object. */
     inline void
     _ReleaseObj()
     {
         if (_obj && !_obj->Release() && _canDelete) {
-            delete _obj;
+            _alloc.Free(_obj);
         }
         _obj = nullptr;
     }
@@ -57,6 +58,14 @@ public:
             objPtr->AddRef();
         }
         _obj = objPtr;
+        _canDelete = true;
+    }
+
+    template <typename... Args>
+    Ptr(Args&&... args)
+    {
+        _obj = _alloc.Allocate(forward<Args>(args)...);
+        _obj->AddRef();
         _canDelete = true;
     }
 
@@ -223,6 +232,16 @@ public:
         if (UNLIKELY(!_obj)) {
             throw NullPtrError();
         }
+        return _obj;
+    }
+
+    /** Cast to pointer operator.
+     *
+     * @return Pointer to referenced object.
+     */
+    inline
+    operator T *() const
+    {
         return _obj;
     }
 };

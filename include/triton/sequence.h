@@ -55,7 +55,7 @@ public:
      * @return Index of the first occurrence of @a value.
      */
     virtual index_t
-    index(T &&value) = 0;
+    index(const T &value) = 0;
 
     /** Get total number of occurrences of @a value in the sequence.
      *
@@ -63,14 +63,14 @@ public:
      * @return Total number of occurrences of @a value.
      */
     virtual size_t
-    count(T &&value) = 0;
+    count(const T &value) = 0;
 
     /** Append value to the end of the sequence.
      *
      * @param value Value to append.
      */
     virtual void
-    append(T &&value) = 0;
+    append(const T &value) = 0;
 
     /** Extend the sequence by values from provided iterable object. Values are
      * appended to the end of the sequence.
@@ -88,7 +88,7 @@ public:
      * @param value Value to insert.
      */
     virtual void
-    insert(index_t idx, T &&value) = 0;
+    insert(index_t idx, const T &value) = 0;
 };
 
 } /* namespace triton */

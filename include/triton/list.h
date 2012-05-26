@@ -57,7 +57,7 @@ protected:
     NodeBase *_firstNode = nullptr;
 
     inline size_t
-    __len__()
+    __len__() const
     {
         return _numNodes;
     }
@@ -129,13 +129,14 @@ public:
      */
     typedef decltype(Node::value) ValueType;
 
+    /** List items iterator. */
     class ListIterator: public IteratorImpl<ValueType> {
     private:
         typedef List<T, AllocatorT> ListT;
-        ListT &_list;
+        const ListT &_list;
         ListT::Node *_nextNode;
     public:
-        ListIterator(List<T, AllocatorT> &list) : _list(list)
+        ListIterator(const ListT &list) : _list(list)
         {
             _nextNode = static_cast<Node *>(_list._firstNode);
             this->_hasNext = _nextNode ? true : false;
@@ -149,6 +150,7 @@ public:
                 ValueType &v = _nextNode->value;
                 if (_nextNode->next == _list._firstNode) {
                     _nextNode = nullptr;
+                    this->_hasNext = false;
                 } else {
                     _nextNode = static_cast<Node *>(_nextNode->next);
                 }
@@ -158,15 +160,83 @@ public:
         }
     };
 
-    //XXX initializer list constructor
+    inline
+    List() {}
 
-    //XXX copy/move constructor
+    /** Create list from iterable object. */
+    inline
+    List(const Iterable<ValueType> &it)
+    {
+        for (auto &value: it) {
+            append(value);
+        }
+    }
 
-    //XXX assignment operators
+    /** Copy constructor. */
+    inline
+    List(const List<T, AllocatorT> &list):
+    List(static_cast<const Iterable<ValueType> &>(list)) {}
 
+    /** Move constructor. */
+    inline
+    List(List<T, AllocatorT> &&list)
+    {
+        _firstNode = list._firstNode;
+        _numNodes = list._numNodes;
+        list._firstNode = nullptr;
+        list._numNodes = 0;
+    }
+
+    /** Construct list from initializer list with values.
+     *
+     * @param il
+     */
+    inline
+    List(const InitList<T> &il)
+    {
+        for (auto &value: il) {
+            append(value);
+        }
+    }
+
+    inline
     ~List()
     {
         _ClearAll();
+    }
+
+    /** Assignment for initializer list. */
+    List<T, AllocatorT> &
+    operator =(const InitList<T> &il)
+    {
+        _ClearAll();
+        for (auto &value: il) {
+            append(value);
+        }
+        return *this;
+    }
+
+    /** Copy assignment. */
+    List<T, AllocatorT> &
+    operator =(const List<T, AllocatorT> &list)
+    {
+        _ClearAll();
+        for (auto &value: list) {
+            append(value);
+        }
+        return *this;
+    }
+
+    /** Move assignment. */
+    List<T, AllocatorT> &
+    operator =(List<T, AllocatorT> &&list)
+    {
+        _ClearAll();
+        _firstNode = list._firstNode;
+        _numNodes = list._numNodes;
+        list._firstNode = nullptr;
+        list._numNodes = 0;
+        return *this;
     }
 
     virtual const char *
@@ -183,14 +253,14 @@ public:
     }
 
     virtual size_t
-    __len__()
+    __len__() const
     {
         return ListBase::__len__();
     }
 
     virtual
     Iterator<ValueType>
-    __iter__(bool endIterator = false)
+    __iter__(bool endIterator = false) const
     {
         Iterator<ValueType> it;
         if (endIterator) {
@@ -221,23 +291,23 @@ public:
     }
 
     virtual index_t
-    index(T &&value)
+    index(const T &value)
     {
         //XXX
         return 0;
     }
 
     virtual size_t
-    count(T &&value)
+    count(const T &value)
     {
         //XXX
         return 0;
     }
 
     virtual void
-    append(T &&value)
+    append(const T &value)
     {
-        NodeBase *node = _alloc.Allocate(forward<T>(value));
+        NodeBase *node = _alloc.Allocate(value);
         _Append(node);
     }
 
@@ -245,9 +315,9 @@ public:
     extend(Iterable<T> &it) {}
 
     virtual void
-    insert(index_t idx, T &&value)
+    insert(index_t idx, const T &value)
     {
-        NodeBase *node = _alloc.Allocate(forward<T>(value));
+        NodeBase *node = _alloc.Allocate(value);
         _Insert(idx, node);
     }
 };
@@ -264,6 +334,20 @@ constexpr inline List<T, AllocatorT> &&
 object(List<T, AllocatorT> &&obj)
 {
     return static_cast<List<T, AllocatorT> &&>(obj);
+}
+
+template <typename T>
+constexpr inline List<T>
+object(const InitList<T> &il)
+{
+    return List<T>(il);
+}
+
+template <typename T, class AllocatorT = Allocator<T>>
+constexpr inline List<T>
+list(const InitList<T> &il)
+{
+    return List<T, AllocatorT>(il);
 }
 
 } /* namespace triton */

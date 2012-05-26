@@ -18,7 +18,7 @@ namespace triton {
 
 class Object {
 private:
-    int _refCount = 0;
+    mutable int _refCount = 0;
 public:
 
     Object() {}
@@ -32,7 +32,7 @@ public:
 
     /** Add reference to the object. */
     inline void
-    AddRef()
+    AddRef() const
     {
         _refCount++;
     }
@@ -41,7 +41,7 @@ public:
      * @return Object reference counter after releasing the reference.
      */
     inline int
-    Release()
+    Release() const
     {
         ASSERT(_refCount);
         return --_refCount;
@@ -77,7 +77,7 @@ public:
      * @return Number of elements in this object.
      */
     virtual size_t
-    __len__()
+    __len__() const
     {
         return 0;
     }

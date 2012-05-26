@@ -128,6 +128,9 @@ UT_TEST("Objects pointers")
     p3 = move(p4);
     UT(p2 == p2) == UT_TRUE;
     UT_BOOL(p4) == UT_FALSE;
+
+    Ptr<Int> intPtr(1);
+    UT(static_cast<int>(*intPtr)) == UT(1);
 }
 UT_TEST_END
 
