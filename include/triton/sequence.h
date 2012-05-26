@@ -24,6 +24,10 @@ public:
     /** Type of index of value in a sequence. */
     typedef long index_t;
 
+    enum {
+        MAX_INDEX = LONG_MAX
+    };
+
     /** Get minimal value in a sequence. @ref ValueError is raised if the
      * sequence is empty.
      * @return Minimal value.
@@ -52,10 +56,13 @@ public:
      * ValueError is raised if @a value is not present in a sequence.
      *
      * @param value Value to search.
+     * @param start Start index to search for a value.
+     * @param end End index. Value is searched until this index is reached (not
+     *      including).
      * @return Index of the first occurrence of @a value.
      */
     virtual index_t
-    index(const T &value) = 0;
+    index(const T &value, index_t start = 0, index_t end = MAX_INDEX) = 0;
 
     /** Get total number of occurrences of @a value in the sequence.
      *

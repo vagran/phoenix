@@ -174,6 +174,41 @@ UT_TEST("Basic lists operations")
     l9 = list({5, 6, 7});
     CheckList(l9, {5, 6, 7});
 
+    l = {5, 6, 6, 7, 7, 7};
+    UT(l.count(4)) == UT_SIZE(0);
+    UT(l.count(5)) == UT_SIZE(1);
+    UT(l.count(6)) == UT_SIZE(2);
+    UT(l.count(7)) == UT_SIZE(3);
+    UT(l.index(5)) == UT(0);
+    UT(l.index(6)) == UT(1);
+    UT(l.index(7)) == UT(3);
+    UT(l.index(6)) == UT(1);
+    UT(l.index(6, 2)) == UT(2);
+    UT(l.index(7, 4)) == UT(4);
+    UT(l.index(7, -2)) == UT(4);
+
+    bool catched = false;
+    try {
+        l.index(2);
+    } catch (ValueError &) {
+        catched = true;
+    }
+    UT(catched) == UT_TRUE;
+    catched = false;
+    try {
+        l.index(6, 4);
+    } catch (ValueError &) {
+        catched = true;
+    }
+    UT(catched) == UT_TRUE;
+    catched = false;
+    try {
+        l.index(7, 0, -3);
+    } catch (ValueError &) {
+        catched = true;
+    }
+    UT(catched) == UT_TRUE;
+
     //XXX list("abc");
 }
 UT_TEST_END

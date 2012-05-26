@@ -135,10 +135,37 @@ public:
         typedef List<T, AllocatorT> ListT;
         const ListT &_list;
         ListT::Node *_nextNode;
+        index_t _idx, _endIdx;
     public:
-        ListIterator(const ListT &list) : _list(list)
+        ListIterator(const ListT &list, index_t start = 0,
+                     index_t end = Sequence<T>::MAX_INDEX) : _list(list)
         {
+            if (start >= 0) {
+                _idx = start;
+            } else {
+                _idx = list._numNodes + start;
+            }
+            if (end == Sequence<T>::MAX_INDEX) {
+                _endIdx = list._numNodes;
+            } else if (end >= 0) {
+                _endIdx = end;
+            } else {
+                _endIdx = list._numNodes + end;
+            }
             _nextNode = static_cast<Node *>(_list._firstNode);
+            index_t curIdx = 0;
+            while (_nextNode && curIdx < _idx) {
+                if (_nextNode->next == _list._firstNode) {
+                    _nextNode = nullptr;
+                    break;
+                }
+                _nextNode = static_cast<Node *>(_nextNode->next);
+                curIdx++;
+                if (curIdx >= _endIdx) {
+                    _nextNode = nullptr;
+                    break;
+                }
+            }
             this->_hasNext = _nextNode ? true : false;
         }
 
@@ -148,7 +175,10 @@ public:
         {
             if (_nextNode) {
                 ValueType &v = _nextNode->value;
-                if (_nextNode->next == _list._firstNode) {
+                _idx++;
+                if (_nextNode->next == _list._firstNode ||
+                    _idx >= _endIdx) {
+
                     _nextNode = nullptr;
                     this->_hasNext = false;
                 } else {
@@ -291,17 +321,31 @@ public:
     }
 
     virtual index_t
-    index(const T &value)
+    index(const T &value, index_t start = 0, index_t end = Sequence<T>::MAX_INDEX)
     {
-        //XXX
-        return 0;
+        ListIterator it(*this, start, end);
+        if (start < 0) {
+            start = _numNodes + start;
+        }
+        while (it.__hasNext__()) {
+            if (value == it.__next__()) {
+                return start;
+            }
+            start++;
+        }
+        throw ValueError(/* XXX "x not in list" */);
     }
 
     virtual size_t
     count(const T &value)
     {
-        //XXX
-        return 0;
+        size_t num = 0;
+        for (auto &item: *this) {
+            if (value == item) {
+                num++;
+            }
+        }
+        return num;
     }
 
     virtual void
@@ -312,7 +356,10 @@ public:
     }
 
     virtual void
-    extend(Iterable<T> &it) {}
+    extend(Iterable<T> &it)
+    {
+        //XXX not implemented
+    }
 
     virtual void
     insert(index_t idx, const T &value)
