@@ -124,7 +124,8 @@
 //XXX should be removed after Eclipse will have 'constexpr' and 'nullptr' keyword recognized.
 #ifdef __CDT_PARSER__
 #define constexpr
-#define nullptr ((void *)0)
+#define nullptr 0
+#define noexcept
 #endif /* __CDT_PARSER__ */
 
 #endif /* DEFS_H_ */

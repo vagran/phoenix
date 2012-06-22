@@ -135,6 +135,7 @@ UT_TEST("Basic lists operations")
     l2.append(NEW Int(3));
     UT(len(l2)) == UT_SIZE(2);
     UT(static_cast<int>(*l2[1])) == UT(3);
+    hash(l2);
 
     /* Initializer list construction. */
     List<int> l3 {1, 2, 3, 4};
@@ -208,6 +209,12 @@ UT_TEST("Basic lists operations")
         catched = true;
     }
     UT(catched) == UT_TRUE;
+
+    l = {1, 2, 3};
+    l3 = {4, 5, 6};
+    l.extend(l3);
+    CheckList(l, {1, 2, 3, 4, 5, 6});
+    UT(hash(l)) == UT(hash(list({1, 2, 3, 4, 5, 6})));
 
     //XXX list("abc");
 }

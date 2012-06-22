@@ -278,8 +278,11 @@ public:
     virtual Object::hash_t
     __hash__() const
     {
-        //XXX
-        return 1;
+        Object::hash_t h = 0;
+        for (auto &value: *this) {
+            h += hash(value);
+        }
+        return h;
     }
 
     virtual size_t
@@ -358,7 +361,9 @@ public:
     virtual void
     extend(Iterable<T> &it)
     {
-        //XXX not implemented
+        for (auto &value: it) {
+            append(value);
+        }
     }
 
     virtual void
