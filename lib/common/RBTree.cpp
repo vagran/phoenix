@@ -102,6 +102,7 @@ RBTreeBase::_RebalanceInsertion(EntryBase *node)
         } else {
             /* Case 3 - rotate parent and transform to case 2. */
             _Rotate(node->parent, !dir);
+            y = node;
         }
         /* Case 2 - perform grandparent rotation. */
         EntryBase *x = y->parent;
@@ -145,10 +146,10 @@ RBTreeBase::_RebalanceDeletion(EntryBase *node)
              ((tmpNode = node->child[1]) && tmpNode->isRed && !node->child[0]))) {
 
             tmpNode->parent = node->parent;
-            if (nodeDir != -1) {
-                node->parent->child[nodeDir] = tmpNode;
-            }
-            break;
+            node->parent->child[nodeDir] = tmpNode;
+            tmpNode->isRed = false;
+            /* Node detached, all done. */
+            return;
         }
 
         do {
@@ -189,7 +190,7 @@ RBTreeBase::_RebalanceDeletion(EntryBase *node)
             /* Current sibling is black with one or two red children. */
             EntryBase *farNephewNode = siblNode->child[!nodeDir];
 
-            if (!farNephewNode->isRed) {
+            if (!farNephewNode || !farNephewNode->isRed) {
                 /* Far nephew is black, rotate around the sibling. */
                 _Rotate(siblNode, nodeDir);
                 siblNode = node->parent->child[!nodeDir];
